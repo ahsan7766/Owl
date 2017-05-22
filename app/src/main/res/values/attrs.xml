@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="ProfileCounterView">
+        <!--<attr name="backgroundColor" format="color"/>-->
+        <attr name="hootCount" format="integer"/>
+        <attr name="followerCount" format="integer"/>
+        <attr name="followingCount" format="integer" />
+    </declare-styleable>
+
+</resources>

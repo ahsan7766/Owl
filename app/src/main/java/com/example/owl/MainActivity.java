@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.flContent, new FeedFragment());
         fragmentTransaction.commit();
+        navigationView.getMenu().getItem(0).setChecked(true);
     }
 
     @Override

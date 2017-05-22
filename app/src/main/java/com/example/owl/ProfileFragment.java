@@ -26,6 +26,8 @@ public class ProfileFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    private ProfileCounterView mProfileCounterView;
+
     private OnFragmentInteractionListener mListener;
 
     public ProfileFragment() {
@@ -57,13 +59,21 @@ public class ProfileFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+        mProfileCounterView.setHootCount(57);
+        mProfileCounterView.setFollowerCount(181);
+        mProfileCounterView.setFollowingCount(132);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_profile, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_feed, container, false);
+
+        mProfileCounterView = (ProfileCounterView) rootView.findViewById(R.id.profile_counter);
+
+        return rootView;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
