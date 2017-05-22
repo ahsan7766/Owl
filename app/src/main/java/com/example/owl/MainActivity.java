@@ -1,8 +1,11 @@
 package com.example.owl;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,8 +16,12 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import layout.ProfileFragment;
+
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        FeedFragment.OnFragmentInteractionListener,
+        ProfileFragment.OnFragmentInteractionListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +87,7 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
+        /*
         if (id == R.id.nav_feed) {
             // Handle the camera action
         } else if (id == R.id.nav_profile) {
@@ -93,9 +101,60 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_send) {
 
         }
+        */
+
+        // Create a new fragment and specify the fragment to show based on nav item clicked
+        Fragment fragment = null;
+        Class fragmentClass;
+        switch (id) {
+            case R.id.nav_feed:
+                fragmentClass = FeedFragment.class;
+                break;
+            case R.id.nav_profile:
+                fragmentClass = ProfileFragment.class;
+                break;
+            case R.id.nav_canvas:
+                fragmentClass = FeedFragment.class;
+                break;
+            case R.id.nav_messages:
+                fragmentClass = FeedFragment.class;
+                break;
+            case R.id.nav_settings:
+                fragmentClass = FeedFragment.class;
+                break;
+            case R.id.nav_share:
+                fragmentClass = FeedFragment.class;
+                break;
+            case R.id.nav_send:
+                fragmentClass = FeedFragment.class;
+                break;
+            default:
+                fragmentClass = FeedFragment.class;
+        }
+
+        try {
+            fragment = (Fragment) fragmentClass.newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Insert the fragment by replacing any existing fragment
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.beginTransaction().replace(R.id.flContent, fragment).commit();
+
+        // Highlight the selected item has been done by NavigationView
+        item.setChecked(true);
+        // Set action bar title
+        setTitle(item.getTitle());
+
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri){
+
     }
 }
