@@ -4,6 +4,9 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +29,17 @@ public class FeedFragment extends Fragment{
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    private static final String TAG = "FeedFragment";
+    private static final int SPAN_COUNT = 2; // number of columns in the grid
+    private static final int DATASET_COUNT = 6;
+
+
+    protected RecyclerView mRecyclerView;
+    protected FeedRecyclerAdapter mAdapter;
+    protected RecyclerView.LayoutManager mLayoutManager;
+    protected String[] mDataset;
+
 
     private OnFragmentInteractionListener mListener;
 
@@ -58,13 +72,37 @@ public class FeedFragment extends Fragment{
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+        // Initialize dataset, this data would usually come from a local content provider or
+        initDataset();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        View rootView = inflater.inflate(R.layout.fragment_feed, container, false);
+        rootView.setTag(TAG);
+
+        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_feed);
+
+        // LinearLayoutManager is used here, this will layout the elements in a similar fashion
+        // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
+        // elements are laid out.
+        mLayoutManager = new LinearLayoutManager(getActivity());
+
+        // set up the RecyclerView
+        mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), SPAN_COUNT));
+        mAdapter = new FeedRecyclerAdapter(getActivity(), mDataset);
+        //mAdapter.setClickListener(this);
+
+        // Set CustomAdapter as the adapter for RecyclerView.
+        mRecyclerView.setAdapter(mAdapter);
+
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_feed, container, false);
+        //return inflater.inflate(R.layout.fragment_feed, container, false);
+        return rootView;
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -104,6 +142,13 @@ public class FeedFragment extends Fragment{
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+    private void initDataset() {
+        mDataset = new String[DATASET_COUNT];
+        for (int i = 0; i < DATASET_COUNT; i++) {
+            mDataset[i] = "This is element #" + i;
+        }
     }
 
 }

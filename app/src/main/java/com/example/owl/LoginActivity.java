@@ -93,6 +93,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+        // TODO remove
+        mEmailView.setText("test@test.com");
+        mPasswordView.setText("password");
     }
 
     private void populateAutoComplete() {

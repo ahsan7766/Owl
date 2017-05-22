@@ -1,4 +1,5 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:grid="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -6,8 +7,20 @@
 
     <!-- TODO: Update blank fragment layout -->
     <TextView
+        android:id="@+id/text_header"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:gravity="center_vertical|left"
+        android:padding="10dp"
+        android:text="Most Hooted"
+        android:textSize="25sp"
+        android:textStyle="bold" />
+
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_feed"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="Feed Fragment" />
+        android:layout_below="@id/text_header" />
 
-</FrameLayout>
+</RelativeLayout>
