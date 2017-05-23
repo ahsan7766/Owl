@@ -181,12 +181,12 @@ public class FeedCategoryView extends View {
         mHeaderTextPaint.setColor(Color.WHITE);
         mHeaderTextPaint.setTextAlign(Paint.Align.CENTER);
         mHeaderTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        mHeaderTextPaint.setTextSize(50);
+        mHeaderTextPaint.setTextSize(55);
 
         mSubheaderTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mSubheaderTextPaint.setColor(Color.WHITE);
         mSubheaderTextPaint.setTextAlign(Paint.Align.CENTER);
-        mSubheaderTextPaint.setTextSize(25);
+        mSubheaderTextPaint.setTextSize(30);
 
     }
 }
