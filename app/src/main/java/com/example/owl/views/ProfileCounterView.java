@@ -1,4 +1,4 @@
-package com.example.owl;
+package com.example.owl.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -9,6 +9,8 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.view.View;
+
+import com.example.owl.R;
 
 /**
  * Created by Zach on 5/22/17.
@@ -57,7 +59,7 @@ public class ProfileCounterView extends View {
      *
      * @param context
      * @param attrs   An attribute set which can contain attributes from
-     *                {@link com.example.owl.ProfileCounterView} as well as attributes inherited
+     *                {@link ProfileCounterView} as well as attributes inherited
      *                from {@link android.view.View}.
      */
     public ProfileCounterView(Context context, AttributeSet attrs) {
@@ -194,7 +196,7 @@ public class ProfileCounterView extends View {
         );
 
         // Hoots title text
-        String hootTitleString = getResources().getString(R.string.Hoots);
+        String hootTitleString = getResources().getString(R.string.hoots);
         mTitleTextPaint.getTextBounds(hootTitleString, 0, hootTitleString.length(), mHootTitleTextBounds);
         canvas.drawText(
                 hootTitleString,
@@ -204,7 +206,7 @@ public class ProfileCounterView extends View {
         );
 
         // Followers title text
-        String followerTitleString = getResources().getString(R.string.Followers);
+        String followerTitleString = getResources().getString(R.string.followers);
         mTitleTextPaint.getTextBounds(followerTitleString, 0, followerTitleString.length(), mFollowerTitleTextBounds);
         canvas.drawText(
                 followerTitleString,
@@ -214,7 +216,7 @@ public class ProfileCounterView extends View {
         );
 
         // Following title text
-        String followingTitleString = getResources().getString(R.string.Following);
+        String followingTitleString = getResources().getString(R.string.following);
         mTitleTextPaint.getTextBounds(followingTitleString, 0, followingTitleString.length(), mFollowingTitleTextBounds);
         canvas.drawText(
                 followingTitleString,

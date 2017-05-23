@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".ProfileFragment">
+    tools:context=".fragments.ProfileFragment">
 
     <TextView
         android:id="@+id/image_profile_picture"
@@ -34,7 +34,7 @@
         android:text="Software Developer"
         android:layout_marginBottom="20dp"/>
 
-    <com.example.owl.ProfileCounterView
+    <com.example.owl.views.ProfileCounterView
         android:id="@+id/profile_counter"
         android:layout_width="match_parent"
         android:layout_height="75dp"

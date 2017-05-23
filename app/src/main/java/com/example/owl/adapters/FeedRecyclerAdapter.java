@@ -1,4 +1,4 @@
-package com.example.owl;
+package com.example.owl.adapters;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
@@ -7,18 +7,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.example.owl.R;
+import com.example.owl.models.FeedCategory;
+import com.example.owl.views.FeedCategoryView;
+
 /**
  * Created by Zach on 5/22/17.
  */
 
 public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapter.ViewHolder> {
 
-    private String[] mData = new String[0];
+    private FeedCategory[] mData = new FeedCategory[0];
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
 
     // data is passed into the constructor
-    public FeedRecyclerAdapter(Context context, String[] data) {
+    public FeedRecyclerAdapter(Context context, FeedCategory[] data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
@@ -34,8 +38,9 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     // binds the data to the textview in each cell
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        String animal = mData[position];
-        holder.myTextView.setText(animal);
+        FeedCategory feedCategory = mData[position];
+        holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
+        holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
     }
 
     // total number of cells
@@ -47,11 +52,11 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        public TextView myTextView;
+        public FeedCategoryView mFeedCategoryView;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            myTextView = (TextView) itemView.findViewById(R.id.text_title);
+            mFeedCategoryView = (FeedCategoryView) itemView.findViewById(R.id.feed_category);
             itemView.setOnClickListener(this);
         }
 
@@ -62,7 +67,7 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     }
 
     // convenience method for getting data at click position
-    public String getItem(int id) {
+    public FeedCategory getItem(int id) {
         return mData[id];
     }
 
