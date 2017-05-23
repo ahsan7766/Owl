@@ -132,6 +132,7 @@ public class FeedCategoryView extends View {
                 ((getWidth() - length) / 2) + length,
                 ((getHeight() - length) / 2) + length);
 
+        // Draw background image
         Drawable drawable = ContextCompat.getDrawable(getContext(), R.drawable.dickbutt);
         drawable.setBounds(mOutlineRect);
         drawable.draw(canvas);

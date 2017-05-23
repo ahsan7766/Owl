@@ -5,21 +5,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".fragments.ProfileFragment">
 
-    <TextView
-        android:id="@+id/image_profile_picture"
+
+    <com.example.owl.views.ProfilePictureView
+        android:id="@+id/profile_picture"
         android:layout_width="match_parent"
-        android:layout_height="250dp"
-        android:gravity="center"
-        android:text="Profile Picture"
-        android:textSize="50sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="50dp"/>
+        android:layout_height="300dp"
+        android:layout_margin="10dp"/>
 
     <TextView
         android:id="@+id/text_profile_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/image_profile_picture"
+        android:layout_below="@id/profile_picture"
         android:gravity="center"
         android:text="John Doe"
         android:textSize="20sp"
