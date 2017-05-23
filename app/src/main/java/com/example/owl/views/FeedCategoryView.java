@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -130,12 +131,14 @@ public class FeedCategoryView extends View {
                 (getHeight() - length) / 2,
                 ((getWidth() - length) / 2) + length,
                 ((getHeight() - length) / 2) + length);
+
+        Drawable drawable = ContextCompat.getDrawable(getContext(), R.drawable.dickbutt);
+        drawable.setBounds(mOutlineRect);
+        drawable.draw(canvas);
+
         // Temp outline of border
         canvas.drawRect(
-                (getWidth() - length) / 2,
-                (getHeight() - length) / 2,
-                ((getWidth() - length) / 2) + length,
-                ((getHeight() - length) / 2) + length,
+                mOutlineRect,
                 mOutlinePaint
         );
 
@@ -171,16 +174,17 @@ public class FeedCategoryView extends View {
 
         mOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mOutlinePaint.setColor(Color.BLACK);
-        mOutlinePaint.setStyle(Paint.Style.STROKE);
+        mOutlinePaint.setStyle(Paint.Style.FILL);
+        mOutlinePaint.setAlpha(200);
 
         mHeaderTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mHeaderTextPaint.setColor(Color.BLACK);
+        mHeaderTextPaint.setColor(Color.WHITE);
         mHeaderTextPaint.setTextAlign(Paint.Align.CENTER);
         mHeaderTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
         mHeaderTextPaint.setTextSize(50);
 
         mSubheaderTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mSubheaderTextPaint.setColor(Color.BLACK);
+        mSubheaderTextPaint.setColor(Color.WHITE);
         mSubheaderTextPaint.setTextAlign(Paint.Align.CENTER);
         mSubheaderTextPaint.setTextSize(25);
 

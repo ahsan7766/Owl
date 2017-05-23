@@ -15,6 +15,8 @@ import com.example.owl.adapters.FeedRecyclerAdapter;
 import com.example.owl.R;
 import com.example.owl.models.FeedCategory;
 
+import java.util.Random;
+
 
 /**
  * A simple {@link Fragment} subclass.
@@ -36,7 +38,7 @@ public class FeedFragment extends Fragment{
 
     private static final String TAG = "FeedFragment";
     private static final int SPAN_COUNT = 2; // number of columns in the grid
-    private static final int DATASET_COUNT = 6;
+    private static final int DATASET_COUNT = 10;
 
 
     protected RecyclerView mRecyclerView;
@@ -151,7 +153,8 @@ public class FeedFragment extends Fragment{
     private void initDataset() {
         mDataset = new FeedCategory[DATASET_COUNT];
         for (int i = 0; i < DATASET_COUNT; i++) {
-            mDataset[i] = new FeedCategory("Category #" + i, i * 11);
+            Random r = new Random();
+            mDataset[i] = new FeedCategory("Category #" + i, r.nextInt(1000-50));
         }
     }
 
