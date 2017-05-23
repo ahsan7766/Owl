@@ -20,14 +20,15 @@ import android.view.MenuItem;
 import com.example.owl.R;
 import com.example.owl.fragments.CanvasFragment;
 import com.example.owl.fragments.FeedFragment;
+import com.example.owl.fragments.MessagesFragment;
 import com.example.owl.fragments.ProfileFragment;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         FeedFragment.OnFragmentInteractionListener,
         ProfileFragment.OnFragmentInteractionListener,
-
-        CanvasFragment.OnFragmentInteractionListener {
+        CanvasFragment.OnFragmentInteractionListener,
+        MessagesFragment.OnFragmentInteractionListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,22 +100,6 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        /*
-        if (id == R.id.nav_feed) {
-            // Handle the camera action
-        } else if (id == R.id.nav_profile) {
-
-        } else if (id == R.id.nav_canvas) {
-
-        } else if (id == R.id.nav_settings) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
-        }
-        */
-
         // Create a new fragment and specify the fragment to show based on nav item clicked
         Fragment fragment = null;
         Class fragmentClass;
@@ -126,10 +111,10 @@ public class MainActivity extends AppCompatActivity
                 fragmentClass = ProfileFragment.class;
                 break;
             case R.id.nav_canvas:
-                fragmentClass = FeedFragment.class;
+                fragmentClass = CanvasFragment.class;
                 break;
             case R.id.nav_messages:
-                fragmentClass = FeedFragment.class;
+                fragmentClass = MessagesFragment.class;
                 break;
             case R.id.nav_settings:
                 fragmentClass = FeedFragment.class;
@@ -158,7 +143,6 @@ public class MainActivity extends AppCompatActivity
         item.setChecked(true);
         // Set action bar title
         setTitle(item.getTitle());
-
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
