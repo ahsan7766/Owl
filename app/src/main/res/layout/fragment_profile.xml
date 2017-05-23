@@ -1,10 +1,9 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".fragments.ProfileFragment">
-
 
     <com.example.owl.views.ProfilePictureView
         android:id="@+id/profile_picture"
@@ -20,7 +19,7 @@
         android:gravity="center"
         android:text="John Doe"
         android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"/>
 
     <TextView
         android:id="@+id/text_profile_subtitle"
@@ -28,23 +27,23 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/text_profile_name"
         android:gravity="center"
-        android:text="Software Developer"
-        android:layout_marginBottom="20dp"/>
+        android:text="Software Developer"/>
 
     <com.example.owl.views.ProfileCounterView
         android:id="@+id/profile_counter"
         android:layout_width="match_parent"
         android:layout_height="75dp"
-        android:layout_below="@id/text_profile_subtitle"
-        android:layout_margin="20dp" />
+        android:layout_above="@+id/button_edit_follow"
+        android:layout_margin="10dp"/>
 
     <Button
+        android:id="@+id/button_edit_follow"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
-        android:layout_below="@id/profile_counter"
+        android:layout_alignParentBottom="true"
         android:layout_centerInParent="true"
-        android:layout_marginTop="10dp"
+        android:layout_margin="20dp"
         android:gravity="center"
-        android:text="Edit" />
+        android:text="Edit"/>
 
 </RelativeLayout>

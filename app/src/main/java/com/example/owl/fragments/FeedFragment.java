@@ -87,6 +87,7 @@ public class FeedFragment extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_feed, container, false);
         rootView.setTag(TAG);
 
@@ -105,7 +106,6 @@ public class FeedFragment extends Fragment{
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerView.setAdapter(mAdapter);
 
-        // Inflate the layout for this fragment
         //return inflater.inflate(R.layout.fragment_feed, container, false);
         return rootView;
 

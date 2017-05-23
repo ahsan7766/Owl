@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -247,7 +248,7 @@ public class ProfileCounterView extends View {
         mTitleTextPaint.setTextSize(50);
 
         mLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mLinePaint.setColor(Color.BLACK);
+        mLinePaint.setColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
         mLinePaint.setStyle(Paint.Style.STROKE);
         mLinePaint.setStrokeWidth(10);
 
