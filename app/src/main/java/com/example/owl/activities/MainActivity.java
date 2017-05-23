@@ -18,13 +18,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.example.owl.R;
+import com.example.owl.fragments.CanvasFragment;
 import com.example.owl.fragments.FeedFragment;
 import com.example.owl.fragments.ProfileFragment;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         FeedFragment.OnFragmentInteractionListener,
-        ProfileFragment.OnFragmentInteractionListener {
+        ProfileFragment.OnFragmentInteractionListener,
+
+        CanvasFragment.OnFragmentInteractionListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -163,7 +166,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onFragmentInteraction(Uri uri){
+    public void onFragmentInteraction(Uri uri) {
 
     }
 }
