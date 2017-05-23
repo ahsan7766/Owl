@@ -60,18 +60,19 @@ public class ProfileFragment extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
 
-        mProfileCounterView.setHootCount(57);
-        mProfileCounterView.setFollowerCount(181);
-        mProfileCounterView.setFollowingCount(132);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View rootView = inflater.inflate(R.layout.fragment_feed, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 
         mProfileCounterView = (ProfileCounterView) rootView.findViewById(R.id.profile_counter);
+
+        mProfileCounterView.setHootCount(57);
+        mProfileCounterView.setFollowerCount(181);
+        mProfileCounterView.setFollowingCount(132);
 
         return rootView;
     }
