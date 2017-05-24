@@ -1,6 +1,7 @@
 package com.example.owl.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -8,21 +9,24 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.owl.R;
+import com.example.owl.activities.StackActivity;
 import com.example.owl.fragments.CanvasFragment;
 import com.example.owl.models.CanvasTile;
 import com.example.owl.views.FeedCategoryView;
 
 import java.util.Random;
+import java.util.Stack;
 
 /**
  * Created by Zach on 5/23/17.
  */
 
-public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuterRecyclerAdapter.ViewHolder> {
+public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuterRecyclerAdapter.ViewHolder>
+        implements CanvasInnerRecyclerAdapter.ItemClickListener{
 
 
     //private static final int ROW_COUNT = 7;
-    private int rowCount = 0;
+    private int rowCount = 0; //iterator
 
     private RecyclerView mInnerRecyclerView;
     protected CanvasInnerRecyclerAdapter mAdapter;
@@ -54,10 +58,11 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         // set up the RecyclerView
         mInnerRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new CanvasInnerRecyclerAdapter(parent.getContext(), mDataset[rowCount]); //TODO get child num instead of passing 0 every time
+        mAdapter = new CanvasInnerRecyclerAdapter(parent.getContext(), mDataset[rowCount]);
 
-        rowCount++;
-        //mAdapter.setClickListener(this);
+        rowCount++; // iterate the row count so when (if) the next ViewHolder row is created it takes the next data row
+
+        mAdapter.setClickListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mInnerRecyclerView.setAdapter(mAdapter);
@@ -73,6 +78,8 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         return viewHolder;
     }
+
+
 
     // binds the data to the textview in each cell
     @Override
@@ -121,6 +128,13 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         void onItemClick(View view, int position);
     }
 
+
+    @Override
+    public void onItemClick(View view, int position) {
+        Intent intent = new Intent(view.getContext(), StackActivity.class);
+
+        view.getContext().startActivity(intent);
+    }
 
     /*
     private void initDataset() {

@@ -31,7 +31,7 @@ public class CanvasFragment extends Fragment {
 
     private static final String TAG = "CanvasFragment";
     public static final int COLUMN_COUNT = 10; // number of columns of pictures in the grid
-    public static final int ROW_COUNT = 7; // number of rows of pictures in the grid
+    public static final int ROW_COUNT = 12; // number of rows of pictures in the grid
 
 
     protected RecyclerView mRecyclerView;

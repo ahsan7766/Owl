@@ -1,7 +1,7 @@
 package com.example.owl.models;
 
 /**
- * Created by admin on 5/24/17.
+ * Created by Zach on 5/24/17.
  */
 
 public class CanvasTile {
