@@ -1,6 +1,7 @@
 package com.example.owl.fragments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -11,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.owl.activities.StackActivity;
 import com.example.owl.adapters.FeedRecyclerAdapter;
 import com.example.owl.R;
 import com.example.owl.models.FeedCategory;
@@ -26,7 +28,8 @@ import java.util.Random;
  * Use the {@link FeedFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class FeedFragment extends Fragment{
+public class FeedFragment extends Fragment
+        implements FeedRecyclerAdapter.ItemClickListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -37,7 +40,7 @@ public class FeedFragment extends Fragment{
     private String mParam2;
 
     private static final String TAG = "FeedFragment";
-    private static final int SPAN_COUNT = 2; // number of columns in the grid
+    private static final int SPAN_COUNT = 1; // number of columns in the grid
     private static final int DATASET_COUNT = 10;
 
 
@@ -101,7 +104,7 @@ public class FeedFragment extends Fragment{
         // set up the RecyclerView
         mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), SPAN_COUNT));
         mAdapter = new FeedRecyclerAdapter(getActivity(), mDataset);
-        //mAdapter.setClickListener(this);
+        mAdapter.setClickListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerView.setAdapter(mAdapter);
@@ -154,8 +157,13 @@ public class FeedFragment extends Fragment{
         mDataset = new FeedCategory[DATASET_COUNT];
         for (int i = 0; i < DATASET_COUNT; i++) {
             Random r = new Random();
-            mDataset[i] = new FeedCategory("Category #" + i, r.nextInt(1000-50));
+            mDataset[i] = new FeedCategory("Category #" + i, r.nextInt(50));
         }
     }
 
+    @Override
+    public void onItemClick(View view, int position) {
+        Intent intent = new Intent(getContext(), StackActivity.class);
+        view.getContext().startActivity(intent);
+    }
 }

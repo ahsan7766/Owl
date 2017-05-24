@@ -20,7 +20,7 @@ import android.view.MenuItem;
 import com.example.owl.R;
 import com.example.owl.fragments.CanvasFragment;
 import com.example.owl.fragments.FeedFragment;
-import com.example.owl.fragments.MessagesFragment;
+import com.example.owl.fragments.FriendsFragment;
 import com.example.owl.fragments.ProfileFragment;
 
 public class MainActivity extends AppCompatActivity
@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity
         FeedFragment.OnFragmentInteractionListener,
         ProfileFragment.OnFragmentInteractionListener,
         CanvasFragment.OnFragmentInteractionListener,
-        MessagesFragment.OnFragmentInteractionListener {
+        FriendsFragment.OnFragmentInteractionListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,8 +115,8 @@ public class MainActivity extends AppCompatActivity
             case R.id.nav_canvas:
                 fragmentClass = CanvasFragment.class;
                 break;
-            case R.id.nav_messages:
-                fragmentClass = MessagesFragment.class;
+            case R.id.nav_friends:
+                fragmentClass = FriendsFragment.class;
                 break;
             case R.id.nav_settings:
                 fragmentClass = FeedFragment.class;

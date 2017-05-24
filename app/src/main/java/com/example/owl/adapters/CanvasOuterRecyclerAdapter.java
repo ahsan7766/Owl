@@ -132,7 +132,6 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     @Override
     public void onItemClick(View view, int position) {
         Intent intent = new Intent(view.getContext(), StackActivity.class);
-
         view.getContext().startActivity(intent);
     }
 

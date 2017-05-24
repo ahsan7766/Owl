@@ -25,7 +25,7 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <!-- FeedCategoryView -->
-    <string name="posts">Posts</string>
+    <string name="photos">Photos</string>
 
     <!-- ProfileCounterView -->
     <string name="hoots">Hoots</string>

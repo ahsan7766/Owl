@@ -154,7 +154,7 @@ public class FeedCategoryView extends View {
         );
 
         // Sub-header text
-        String postCountString = getPostCount().toString() + " " + getResources().getString(R.string.posts);
+        String postCountString = getPostCount().toString() + " " + getResources().getString(R.string.photos);
         mSubheaderTextPaint.getTextBounds(postCountString, 0, postCountString.length(), mSubheaderTextBounds);
         canvas.drawText(
                 postCountString,
