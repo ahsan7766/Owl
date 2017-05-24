@@ -4,7 +4,6 @@ import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,8 +12,7 @@ import android.view.ViewGroup;
 
 import com.example.owl.R;
 import com.example.owl.adapters.CanvasOuterRecyclerAdapter;
-import com.example.owl.adapters.FeedRecyclerAdapter;
-import com.example.owl.models.FeedCategory;
+import com.example.owl.models.CanvasTile;
 
 /**
  * Created by Zach on 5/23/17.
@@ -32,14 +30,14 @@ public class CanvasFragment extends Fragment {
     private String mParam2;
 
     private static final String TAG = "CanvasFragment";
-    private static final int SPAN_COUNT = 2; // number of columns in the grid
-    private static final int DATASET_COUNT = 10;
+    public static final int COLUMN_COUNT = 10; // number of columns of pictures in the grid
+    public static final int ROW_COUNT = 7; // number of rows of pictures in the grid
 
 
     protected RecyclerView mRecyclerView;
     protected CanvasOuterRecyclerAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
-    protected String[] mDataset;
+    protected CanvasTile[][] mDataset;
 
 
     private OnFragmentInteractionListener mListener;
@@ -149,9 +147,16 @@ public class CanvasFragment extends Fragment {
     }
 
     private void initDataset() {
-        mDataset = new String[DATASET_COUNT];
-        for (int i = 0; i < DATASET_COUNT; i++) {
-            mDataset[i] = "#" + i;
+        mDataset = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
+        for (int i = 0; i < ROW_COUNT; i++) {
+            mDataset[i] = new CanvasTile[COLUMN_COUNT];
+
+
+            for (int x = 0; x < COLUMN_COUNT; x++) {
+                mDataset[i][x] = new CanvasTile("ROW " + i + " COL " + x);
+            }
+
+
         }
     }
 

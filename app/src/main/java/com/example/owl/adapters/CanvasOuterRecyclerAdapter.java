@@ -8,7 +8,11 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.owl.R;
+import com.example.owl.fragments.CanvasFragment;
+import com.example.owl.models.CanvasTile;
 import com.example.owl.views.FeedCategoryView;
+
+import java.util.Random;
 
 /**
  * Created by Zach on 5/23/17.
@@ -17,18 +21,19 @@ import com.example.owl.views.FeedCategoryView;
 public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuterRecyclerAdapter.ViewHolder> {
 
 
-    private static final int DATASET_COUNT = 7;
+    //private static final int ROW_COUNT = 7;
+    private int rowCount = 0;
 
     private RecyclerView mInnerRecyclerView;
     protected CanvasInnerRecyclerAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
 
-    private String[] mDataset = new String[0];
+    private CanvasTile[][] mDataset = new CanvasTile[0][0];
     private LayoutInflater mInflater;
     private CanvasOuterRecyclerAdapter.ItemClickListener mClickListener;
 
     // data is passed into the constructor
-    public CanvasOuterRecyclerAdapter(Context context, String[] data) {
+    public CanvasOuterRecyclerAdapter(Context context, CanvasTile[][] data) {
         this.mInflater = LayoutInflater.from(context);
         this.mDataset = data;
     }
@@ -49,11 +54,19 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         // set up the RecyclerView
         mInnerRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new CanvasInnerRecyclerAdapter(parent.getContext(), mDataset);
+        mAdapter = new CanvasInnerRecyclerAdapter(parent.getContext(), mDataset[rowCount]); //TODO get child num instead of passing 0 every time
+
+        rowCount++;
         //mAdapter.setClickListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mInnerRecyclerView.setAdapter(mAdapter);
+
+
+
+        ViewGroup.LayoutParams params =  mInnerRecyclerView.getLayoutParams();
+        Random r = new Random();
+
 
 
         //initDataset();
@@ -64,11 +77,9 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     // binds the data to the textview in each cell
     @Override
     public void onBindViewHolder(CanvasOuterRecyclerAdapter.ViewHolder holder, int position) {
-        String string = mDataset[position];
+        CanvasTile[] canvasTile = mDataset[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
         //holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
-
-
 
         //initDataset();
     }
@@ -78,7 +89,6 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     public int getItemCount() {
         return mDataset.length;
     }
-
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -97,7 +107,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     }
 
     // convenience method for getting data at click position
-    public String getItem(int id) {
+    public CanvasTile[] getItem(int id) {
         return mDataset[id];
     }
 
@@ -111,10 +121,14 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         void onItemClick(View view, int position);
     }
 
+
+    /*
     private void initDataset() {
-        mDataset = new String[DATASET_COUNT];
-        for (int i = 0; i < DATASET_COUNT; i++) {
-            mDataset[i] = "Category #" + i;
+        mDataset = new CanvasTile[CanvasFragment.COLUMN_COUNT];
+        for (int i = 0; i < CanvasFragment.COLUMN_COUNT; i++) {
+            mDataset[i] = new CanvasTile("#" + i);
         }
     }
+    */
+
 }

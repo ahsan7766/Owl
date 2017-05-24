@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.owl.R;
+import com.example.owl.models.CanvasTile;
 import com.example.owl.views.FeedCategoryView;
 
 /**
@@ -17,12 +18,12 @@ import com.example.owl.views.FeedCategoryView;
 
 public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInnerRecyclerAdapter.ViewHolder> {
 
-    private String[] mData = new String[0];
+    private CanvasTile[] mData = new CanvasTile[0];
     private LayoutInflater mInflater;
     private CanvasInnerRecyclerAdapter.ItemClickListener mClickListener;
 
     // data is passed into the constructor
-    public CanvasInnerRecyclerAdapter(Context context, String[] data) {
+    public CanvasInnerRecyclerAdapter(Context context, CanvasTile[] data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
@@ -38,10 +39,11 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     // binds the data to the textview in each cell
     @Override
     public void onBindViewHolder(CanvasInnerRecyclerAdapter.ViewHolder holder, int position) {
-        String string = mData[position];
+        CanvasTile canvasTile = mData[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
         //holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
-        holder.mTextView.setText(string);
+
+        holder.mTextView.setText(canvasTile.getText());
     }
 
     // total number of cells
@@ -70,7 +72,7 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     }
 
     // convenience method for getting data at click position
-    public String getItem(int id) {
+    public CanvasTile getItem(int id) {
         return mData[id];
     }
 
