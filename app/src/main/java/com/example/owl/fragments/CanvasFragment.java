@@ -86,12 +86,14 @@ public class CanvasFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_canvas, container, false);
         rootView.setTag(TAG);
 
+
+
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_canvas_outer);
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
-        mLayoutManager = new LinearLayoutManager(getActivity());
+        mLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
 
         // set up the RecyclerView
         mRecyclerView.setLayoutManager(mLayoutManager);
@@ -100,6 +102,7 @@ public class CanvasFragment extends Fragment {
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerView.setAdapter(mAdapter);
+
 
         //return inflater.inflate(R.layout.fragment_feed, container, false);
         return rootView;
@@ -148,7 +151,7 @@ public class CanvasFragment extends Fragment {
     private void initDataset() {
         mDataset = new String[DATASET_COUNT];
         for (int i = 0; i < DATASET_COUNT; i++) {
-            mDataset[i] = "Category #" + i;
+            mDataset[i] = "#" + i;
         }
     }
 

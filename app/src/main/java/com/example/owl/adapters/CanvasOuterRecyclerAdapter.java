@@ -39,13 +39,13 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         View view = mInflater.inflate(R.layout.recycler_item_canvas_outer, parent, false);
         CanvasOuterRecyclerAdapter.ViewHolder viewHolder = new CanvasOuterRecyclerAdapter.ViewHolder(view);
 
-        /*
+
         mInnerRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_canvas_inner);
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
-        mLayoutManager = new LinearLayoutManager(parent.getContext());
+        mLayoutManager = new LinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
 
         // set up the RecyclerView
         mInnerRecyclerView.setLayoutManager(mLayoutManager);
@@ -54,7 +54,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mInnerRecyclerView.setAdapter(mAdapter);
-        */
+
 
         //initDataset();
 
@@ -67,30 +67,6 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         String string = mDataset[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
         //holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
-
-
-
-
-
-        /*
-        mInnerRecyclerView = (RecyclerView) holder.mRecycler;
-
-        // LinearLayoutManager is used here, this will layout the elements in a similar fashion
-        // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
-        // elements are laid out.
-        mLayoutManager = new LinearLayoutManager();
-
-        // set up the RecyclerView
-        mInnerRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new CanvasInnerRecyclerAdapter(parent.getContext(), mDataset);
-        //mAdapter.setClickListener(this);
-
-        // Set CustomAdapter as the adapter for RecyclerView.
-        mInnerRecyclerView.setAdapter(mAdapter);
-        */
-
-
-
 
 
 

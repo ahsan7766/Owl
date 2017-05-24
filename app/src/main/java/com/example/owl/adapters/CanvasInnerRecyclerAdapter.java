@@ -1,10 +1,12 @@
 package com.example.owl.adapters;
 
 import android.content.Context;
+import android.support.v4.widget.TextViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.example.owl.R;
 import com.example.owl.views.FeedCategoryView;
@@ -39,6 +41,7 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
         String string = mData[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
         //holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
+        holder.mTextView.setText(string);
     }
 
     // total number of cells
@@ -50,11 +53,13 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        public FeedCategoryView mFeedCategoryView;
+        public TextView mTextView;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            mFeedCategoryView = (FeedCategoryView) itemView.findViewById(R.id.feed_category);
+            //mFeedCategoryView = (FeedCategoryView) itemView.findViewById(R.id.feed_category);
+            mTextView = (TextView) itemView.findViewById(R.id.text);
+
             itemView.setOnClickListener(this);
         }
 
