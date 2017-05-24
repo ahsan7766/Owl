@@ -121,14 +121,14 @@ public class ProfilePictureView extends View {
         mOuterCirclePaint.setColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
         //mOuterCirclePaint.setColor(Color.BLUE);
         mOuterCirclePaint.setStyle(Paint.Style.STROKE);
-        mOuterCirclePaint.setStrokeWidth(125);
+        mOuterCirclePaint.setStrokeWidth(30);
         mOuterCirclePaint.setAlpha(200);
 
         mInnerCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mInnerCirclePaint.setColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
         //mInnerCirclePaint.setColor(Color.RED);
         mInnerCirclePaint.setStyle(Paint.Style.STROKE);
-        mInnerCirclePaint.setStrokeWidth(50);
+        mInnerCirclePaint.setStrokeWidth(10);
         //mInnerCirclePaint.setAlpha(100);
 
 

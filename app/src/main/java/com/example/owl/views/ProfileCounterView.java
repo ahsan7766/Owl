@@ -136,8 +136,9 @@ public class ProfileCounterView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        // Outer border for visualization while testing
+
         /*
+        // Outer border for visualization while testing
         canvas.drawRect(
                 0,
                 0,
@@ -145,24 +146,38 @@ public class ProfileCounterView extends View {
                 getHeight(),
                 mLinePaint
         );
+        // Shows the outer border after padding for testing
+        canvas.drawRect(
+                getPaddingStart(),
+                getPaddingTop(),
+                getWidth() - getPaddingEnd(),
+                getHeight() - getPaddingBottom(),
+                mLinePaint
+        );
         */
+
+
+
+        
+        int width = getWidth() - getPaddingStart() - getPaddingEnd();
+        int height = getHeight() - getPaddingTop() - getPaddingBottom();
 
 
         // First divider line
         canvas.drawLine(
-                getWidth() / 3,
-                0,
-                getWidth() / 3,
-                getHeight(),
+                (width / 3) + getPaddingStart(),
+                getPaddingTop(),
+                (width / 3) + getPaddingStart(),
+                height + getPaddingBottom(),
                 mLinePaint
         );
-
+        
         // Second divider line
         canvas.drawLine(
-                (getWidth() / 3) * 2,
-                0,
-                (getWidth() / 3) * 2,
-                getHeight(),
+                ((width / 3) * 2) + getPaddingStart(),
+                getPaddingTop(),
+                ((width / 3) * 2) + getPaddingStart(),
+                height + getPaddingBottom(),
                 mLinePaint
         );
 
@@ -171,8 +186,8 @@ public class ProfileCounterView extends View {
         mCountTextPaint.getTextBounds(hootCountString, 0, hootCountString.length(), mHootCountTextBounds);
         canvas.drawText(
                 hootCountString,
-                (getWidth() / 6), // - mHootCountTextBounds.exactCenterX(),
-                (getHeight() / 3), // - mHootCountTextBounds.exactCenterY(),
+                (width / 6) + ((getPaddingStart() + getPaddingEnd()) / 2), // - mHootCountTextBounds.exactCenterX(),
+                (height / 3) + ((getPaddingTop() + getPaddingBottom()) / 2), // - mHootCountTextBounds.exactCenterY(),
                 mCountTextPaint
         );
 
@@ -181,8 +196,8 @@ public class ProfileCounterView extends View {
         mCountTextPaint.getTextBounds(followerCountString, 0, followerCountString.length(), mFollowerCountTextBounds);
         canvas.drawText(
                 followerCountString,
-                ((getWidth() / 6) * 3), // - mFollowerCountTextBounds.exactCenterX(),
-                (getHeight() / 3), // - mFollowerCountTextBounds.exactCenterY(),
+                ((width / 6) * 3) + ((getPaddingStart() + getPaddingEnd()) / 2), // - mFollowerCountTextBounds.exactCenterX(),
+                (height / 3) + ((getPaddingTop() + getPaddingBottom()) / 2), // - mFollowerCountTextBounds.exactCenterY(),
                 mCountTextPaint
         );
 
@@ -191,8 +206,8 @@ public class ProfileCounterView extends View {
         mCountTextPaint.getTextBounds(followingCountString, 0, followingCountString.length(), mFollowingCountTextBounds);
         canvas.drawText(
                 followingCountString,
-                ((getWidth() / 6) * 5), //- mFollowingCountTextBounds.exactCenterX(),
-                (getHeight() / 3), // - mFollowingCountTextBounds.exactCenterY(),
+                ((width / 6) * 5) + ((getPaddingStart() + getPaddingEnd()) / 2), //- mFollowingCountTextBounds.exactCenterX(),
+                (height / 3) + ((getPaddingTop() + getPaddingBottom()) / 2), // - mFollowingCountTextBounds.exactCenterY(),
                 mCountTextPaint
         );
 
@@ -201,8 +216,8 @@ public class ProfileCounterView extends View {
         mTitleTextPaint.getTextBounds(hootTitleString, 0, hootTitleString.length(), mHootTitleTextBounds);
         canvas.drawText(
                 hootTitleString,
-                (getWidth() / 6), // - mHootTitleTextBounds.exactCenterX(),
-                ((getHeight() / 8) * 7), // - mHootTitleTextBounds.exactCenterY(),
+                (width / 6) + ((getPaddingStart() + getPaddingEnd()) / 2), // - mHootTitleTextBounds.exactCenterX(),
+                ((height / 8) * 7) + ((getPaddingTop() + getPaddingBottom()) / 2), // - mHootTitleTextBounds.exactCenterY(),
                 mTitleTextPaint
         );
 
@@ -211,8 +226,8 @@ public class ProfileCounterView extends View {
         mTitleTextPaint.getTextBounds(followerTitleString, 0, followerTitleString.length(), mFollowerTitleTextBounds);
         canvas.drawText(
                 followerTitleString,
-                ((getWidth() / 6) * 3), // - mFollowerTitleTextBounds.exactCenterX(),
-                ((getHeight() / 8) * 7), // - mFollowerTitleTextBounds.exactCenterY(),
+                ((width / 6) * 3) + ((getPaddingStart() + getPaddingEnd()) / 2), // - mFollowerTitleTextBounds.exactCenterX(),
+                ((height / 8) * 7) + ((getPaddingTop() + getPaddingBottom()) / 2), // - mFollowerTitleTextBounds.exactCenterY(),
                 mTitleTextPaint
         );
 
@@ -221,8 +236,8 @@ public class ProfileCounterView extends View {
         mTitleTextPaint.getTextBounds(followingTitleString, 0, followingTitleString.length(), mFollowingTitleTextBounds);
         canvas.drawText(
                 followingTitleString,
-                ((getWidth() / 6) * 5), // - mFollowingTitleTextBounds.exactCenterX(),
-                ((getHeight() / 8) * 7), // - mFollowingTitleTextBounds.exactCenterY(),
+                ((width / 6) * 5) + ((getPaddingStart() + getPaddingEnd()) / 2), // - mFollowingTitleTextBounds.exactCenterX(),
+                ((height / 8) * 7) + ((getPaddingTop() + getPaddingBottom()) / 2), // - mFollowingTitleTextBounds.exactCenterY(),
                 mTitleTextPaint
         );
     }
@@ -240,12 +255,12 @@ public class ProfileCounterView extends View {
         mCountTextPaint.setColor(Color.BLACK);
         mCountTextPaint.setTextAlign(Paint.Align.CENTER);
         mCountTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        mCountTextPaint.setTextSize(50);
+        mCountTextPaint.setTextSize(40);
 
         mTitleTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mTitleTextPaint.setColor(Color.BLACK);
         mTitleTextPaint.setTextAlign(Paint.Align.CENTER);
-        mTitleTextPaint.setTextSize(50);
+        mTitleTextPaint.setTextSize(40);
 
         mLinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mLinePaint.setColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
