@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector
     xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/tab_dot_selected"
+    <item android:drawable="@drawable/selector_stack_tab_selected"
           android:state_selected="true"/>
 
-    <item android:drawable="@drawable/tab_dot_default"/>
+    <item android:drawable="@drawable/selector_stack_tab_default"/>
 </selector>

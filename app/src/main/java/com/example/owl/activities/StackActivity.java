@@ -7,6 +7,10 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.example.owl.R;
 import com.example.owl.adapters.StackPhotoPagerAdapter;
@@ -32,6 +36,8 @@ public class StackActivity extends AppCompatActivity
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout_stack);
         tabLayout.setupWithViewPager(pager, true);
+
+
     }
 
 
