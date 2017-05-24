@@ -1,12 +1,20 @@
 package com.example.owl.activities;
 
+import android.net.Uri;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
 
 import com.example.owl.R;
+import com.example.owl.adapters.StackPhotoPagerAdapter;
 
-public class StackActivity extends AppCompatActivity {
+import layout.StackPhotoPagerFragment;
+
+public class StackActivity extends AppCompatActivity
+    implements StackPhotoPagerFragment.OnFragmentInteractionListener{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,6 +25,13 @@ public class StackActivity extends AppCompatActivity {
         if(getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+
+        ViewPager pager = (ViewPager) findViewById(R.id.view_pager_stack);
+        PagerAdapter adapter = new StackPhotoPagerAdapter(getSupportFragmentManager());
+        pager.setAdapter(adapter);
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout_stack);
+        tabLayout.setupWithViewPager(pager, true);
     }
 
 
@@ -33,5 +48,10 @@ public class StackActivity extends AppCompatActivity {
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
     }
 }
