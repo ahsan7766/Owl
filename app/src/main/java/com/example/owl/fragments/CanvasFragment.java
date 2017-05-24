@@ -111,7 +111,7 @@ public class CanvasFragment extends Fragment {
         mProfileCounterView.setHootCount(57);
         mProfileCounterView.setFollowerCount(181);
         mProfileCounterView.setFollowingCount(132);
-
+        
 
         //return inflater.inflate(R.layout.fragment_feed, container, false);
         return rootView;
