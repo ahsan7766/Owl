@@ -14,11 +14,13 @@ import android.widget.Button;
 
 import com.example.owl.R;
 import com.example.owl.adapters.StackPhotoPagerAdapter;
+import com.example.owl.views.ProfileCounterView;
 
 import layout.StackPhotoPagerFragment;
 
 public class StackActivity extends AppCompatActivity
     implements StackPhotoPagerFragment.OnFragmentInteractionListener{
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

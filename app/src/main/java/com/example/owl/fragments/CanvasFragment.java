@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import com.example.owl.R;
 import com.example.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.example.owl.models.CanvasTile;
+import com.example.owl.views.ProfileCounterView;
 
 /**
  * Created by Zach on 5/23/17.
@@ -33,6 +34,7 @@ public class CanvasFragment extends Fragment {
     public static final int COLUMN_COUNT = 10; // number of columns of pictures in the grid
     public static final int ROW_COUNT = 12; // number of rows of pictures in the grid
 
+    private ProfileCounterView mProfileCounterView;
 
     protected RecyclerView mRecyclerView;
     protected CanvasOuterRecyclerAdapter mAdapter;
@@ -74,6 +76,7 @@ public class CanvasFragment extends Fragment {
 
         // Initialize dataset, this data would usually come from a local content provider or
         initDataset();
+
     }
 
     @Override
@@ -100,6 +103,14 @@ public class CanvasFragment extends Fragment {
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerView.setAdapter(mAdapter);
+
+
+
+        // Set Profile Counters
+        mProfileCounterView = (ProfileCounterView)  rootView.findViewById(R.id.profile_counter);
+        mProfileCounterView.setHootCount(57);
+        mProfileCounterView.setFollowerCount(181);
+        mProfileCounterView.setFollowingCount(132);
 
 
         //return inflater.inflate(R.layout.fragment_feed, container, false);
