@@ -99,10 +99,10 @@ public class FeedFragment extends Fragment
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
-        mLayoutManager = new LinearLayoutManager(getActivity());
+        mLayoutManager = new GridLayoutManager(getActivity(), SPAN_COUNT);
 
         // set up the RecyclerView
-        mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), SPAN_COUNT));
+        mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new FeedRecyclerAdapter(getActivity(), mDataset);
         mAdapter.setClickListener(this);
 

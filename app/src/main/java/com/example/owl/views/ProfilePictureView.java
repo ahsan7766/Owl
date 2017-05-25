@@ -2,12 +2,17 @@ package com.example.owl.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.OvalShape;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
@@ -20,7 +25,10 @@ import com.example.owl.R;
 
 public class ProfilePictureView extends View {
 
-    private Drawable mBackgroundDrawable;
+
+    private int mBackgroundPicture;
+
+    private Bitmap mBitmap;
 
     private Paint mOuterCirclePaint;
     private Paint mInnerCirclePaint;
@@ -71,6 +79,7 @@ public class ProfilePictureView extends View {
             // The R.styleable.ProfilePictureView_* constants represent the index for
             // each custom attribute in the R.styleable.FeedCategoryView array.
             //mHeaderString = a.getString(R.styleable.ProfilePictureView_Header);
+            mBackgroundPicture = a.getInt(R.styleable.ProfilePictureView_backgroundPicture, -1);
         } finally {
             // release the TypedArray so that it can be reused.
             a.recycle();
@@ -79,27 +88,71 @@ public class ProfilePictureView extends View {
         init();
     }
 
+
+    public int getBackgroundPicture() {
+        return mBackgroundPicture;
+    }
+
+    public void setBackgroundPicture(int backgroundPicture) {
+        mBackgroundPicture = backgroundPicture;
+        mBitmap = BitmapFactory.decodeResource(getContext().getResources(), getBackgroundPicture());
+        invalidate();
+    }
+
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        // Draw square of perimeter for testing
+        /*
+        canvas.drawRect(
+                0,
+                0,
+                getWidth(),
+                getHeight(),
+                mInnerCirclePaint
+        );
+        */
+
+        int circleRadius = Math.min(getWidth(), getHeight()) / 2;
+
+
         // Draw profile picture
-        int halfRect = getWidth() / 5;
-        Drawable drawable = ContextCompat.getDrawable(getContext(), R.drawable.dickbutt);
-        drawable.setBounds(
+        // If getBackgroundPicture is -1, then it wasn't set, so don't draw picture
+        if(getBackgroundPicture() != -1) {
+            int halfRect =  (8 * circleRadius) / 5; // The size of the bitmap profile picture
+
+            //mBitmap = BitmapFactory.decodeResource(getContext().getResources(), getBackgroundPicture());
+
+            // Crop bitmap to be size of circle
+            mBitmap = getResizedBitmap(mBitmap, halfRect, halfRect);
+
+            canvas.drawBitmap(getCroppedBitmap(mBitmap),
+                    (getWidth() / 2) - (mBitmap.getWidth() / 2),
+                    getHeight() / 2 - (mBitmap.getHeight() / 2),
+                    mInnerCirclePaint
+            );
+        }
+
+
+        /*
+        mBackgroundPicture = ContextCompat.getDrawable(getContext(), R.drawable.trees);
+        mBackgroundPicture.setBounds(
                 (getWidth() / 2) - halfRect,
                 (getHeight() / 2) - halfRect,
                 (getWidth() / 2) + halfRect,
                 (getHeight() / 2) + halfRect
         );
-        drawable.draw(canvas);
+        mBackgroundPicture.draw(canvas);
+        */
 
 
         // Outer circle
         canvas.drawCircle(
                 getWidth() / 2,
                 getHeight() / 2,
-                getWidth() / 4,
+                circleRadius - 22,
                 mOuterCirclePaint
         );
 
@@ -108,7 +161,7 @@ public class ProfilePictureView extends View {
         canvas.drawCircle(
                 getWidth() / 2,
                 getHeight() / 2,
-                getWidth() / 4,
+                circleRadius - 22,
                 mInnerCirclePaint
         );
 
@@ -117,12 +170,16 @@ public class ProfilePictureView extends View {
 
     private void init() {
 
+
+        mBitmap = BitmapFactory.decodeResource(getContext().getResources(), getBackgroundPicture());
+
+
         mOuterCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mOuterCirclePaint.setColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
         //mOuterCirclePaint.setColor(Color.BLUE);
         mOuterCirclePaint.setStyle(Paint.Style.STROKE);
-        mOuterCirclePaint.setStrokeWidth(30);
-        mOuterCirclePaint.setAlpha(200);
+        mOuterCirclePaint.setStrokeWidth(32);
+        mOuterCirclePaint.setAlpha(140);
 
         mInnerCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mInnerCirclePaint.setColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
@@ -131,6 +188,62 @@ public class ProfilePictureView extends View {
         mInnerCirclePaint.setStrokeWidth(10);
         //mInnerCirclePaint.setAlpha(100);
 
+    }
 
+    public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        // CREATE A MATRIX FOR THE MANIPULATION
+        Matrix matrix = new Matrix();
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight);
+
+        // "RECREATE" THE NEW BITMAP
+        Bitmap resizedBitmap = Bitmap.createBitmap(
+                bm, 0, 0, width, height, matrix, false);
+        bm.recycle();
+        return resizedBitmap;
+    }
+
+    public static Bitmap getClip(Bitmap bitmap) {
+        Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
+                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        canvas.drawCircle(bitmap.getWidth() / 2, bitmap.getHeight() / 2,
+                bitmap.getWidth() / 2, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+        return output;
+    }
+
+
+    public Bitmap getCroppedBitmap(Bitmap bitmap) {
+        Bitmap output = Bitmap.createBitmap(bitmap.getWidth(),
+                bitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        final int color = 0xff424242;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        // canvas.drawRoundRect(rectF, roundPx, roundPx, paint);
+        canvas.drawCircle(bitmap.getWidth() / 2, bitmap.getHeight() / 2,
+                bitmap.getWidth() / 2, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+        //Bitmap _bmp = Bitmap.createScaledBitmap(output, 60, 60, false);
+        //return _bmp;
+        return output;
     }
 }

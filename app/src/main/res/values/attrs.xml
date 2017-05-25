@@ -13,7 +13,7 @@
     </declare-styleable>
 
     <declare-styleable name="ProfilePictureView">
-
+        <attr name="backgroundPicture" format="integer"/>
     </declare-styleable>
 
 </resources>

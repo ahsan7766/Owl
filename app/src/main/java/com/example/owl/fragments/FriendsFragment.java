@@ -1,20 +1,28 @@
 package com.example.owl.fragments;
 
+import android.content.Intent;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.owl.R;
+import com.example.owl.activities.StackActivity;
+import com.example.owl.adapters.FeedRecyclerAdapter;
+import com.example.owl.adapters.FriendsRecyclerAdapter;
 
 /**
  * Created by Zach on 5/23/17.
  */
 
-public class FriendsFragment extends Fragment {
+public class FriendsFragment extends Fragment
+    implements FriendsRecyclerAdapter.ItemClickListener {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -26,9 +34,12 @@ public class FriendsFragment extends Fragment {
     private String mParam2;
 
     private static final String TAG = "FriendsFragment";
-    private static final int SPAN_COUNT = 2; // number of columns in the grid
-    private static final int DATASET_COUNT = 10;
+    private static final int SPAN_COUNT = 3; // number of columns in the grid
+    private static final int DATASET_COUNT = 50;
 
+    protected RecyclerView mRecyclerView;
+    protected FriendsRecyclerAdapter mAdapter;
+    protected RecyclerView.LayoutManager mLayoutManager;
     protected String[] mDataset;
 
 
@@ -76,6 +87,20 @@ public class FriendsFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_friends, container, false);
         rootView.setTag(TAG);
 
+        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_friends);
+
+        // LinearLayoutManager is used here, this will layout the elements in a similar fashion
+        // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
+        // elements are laid out.
+        mLayoutManager = new GridLayoutManager(getActivity(), SPAN_COUNT);
+
+        // set up the RecyclerView
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mAdapter = new FriendsRecyclerAdapter(getActivity(), mDataset);
+        mAdapter.setClickListener(this);
+
+        // Set CustomAdapter as the adapter for RecyclerView.
+        mRecyclerView.setAdapter(mAdapter);
 
         //return inflater.inflate(R.layout.fragment_friends, container, false);
         return rootView;
@@ -128,4 +153,9 @@ public class FriendsFragment extends Fragment {
         }
     }
 
+    @Override
+    public void onItemClick(View view, int position) {
+        //Intent intent = new Intent(getContext(), StackActivity.class);
+        //view.getContext().startActivity(intent);
+    }
 }

@@ -14,6 +14,7 @@ import com.example.owl.R;
 import com.example.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.example.owl.models.CanvasTile;
 import com.example.owl.views.ProfileCounterView;
+import com.example.owl.views.ProfilePictureView;
 
 /**
  * Created by Zach on 5/23/17.
@@ -34,6 +35,7 @@ public class CanvasFragment extends Fragment {
     public static final int COLUMN_COUNT = 10; // number of columns of pictures in the grid
     public static final int ROW_COUNT = 12; // number of rows of pictures in the grid
 
+    private ProfilePictureView mProfilePictureView;
     private ProfileCounterView mProfileCounterView;
 
     protected RecyclerView mRecyclerView;
@@ -105,13 +107,16 @@ public class CanvasFragment extends Fragment {
         mRecyclerView.setAdapter(mAdapter);
 
 
+        // Set the profile picture
+        mProfilePictureView = (ProfilePictureView) rootView.findViewById(R.id.profile_picture);
+        mProfilePictureView.setBackgroundPicture(R.drawable.trees);
 
         // Set Profile Counters
-        mProfileCounterView = (ProfileCounterView)  rootView.findViewById(R.id.profile_counter);
+        mProfileCounterView = (ProfileCounterView) rootView.findViewById(R.id.profile_counter);
         mProfileCounterView.setHootCount(57);
         mProfileCounterView.setFollowerCount(181);
         mProfileCounterView.setFollowingCount(132);
-        
+
 
         //return inflater.inflate(R.layout.fragment_feed, container, false);
         return rootView;
