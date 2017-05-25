@@ -121,7 +121,7 @@ public class ProfilePictureView extends View {
         // Draw profile picture
         // If getBackgroundPicture is -1, then it wasn't set, so don't draw picture
         if(getBackgroundPicture() != -1) {
-            int halfRect =  (8 * circleRadius) / 5; // The size of the bitmap profile picture
+            int halfRect =  ((16 * circleRadius) / 9) - 22; // The size of the bitmap profile picture
 
             //mBitmap = BitmapFactory.decodeResource(getContext().getResources(), getBackgroundPicture());
 
@@ -147,6 +147,8 @@ public class ProfilePictureView extends View {
         mBackgroundPicture.draw(canvas);
         */
 
+        mOuterCirclePaint.setStrokeWidth(circleRadius / 3);
+        mInnerCirclePaint.setStrokeWidth(circleRadius / 8);
 
         // Outer circle
         canvas.drawCircle(
@@ -178,7 +180,7 @@ public class ProfilePictureView extends View {
         mOuterCirclePaint.setColor(ContextCompat.getColor(getContext(), R.color.colorPrimary));
         //mOuterCirclePaint.setColor(Color.BLUE);
         mOuterCirclePaint.setStyle(Paint.Style.STROKE);
-        mOuterCirclePaint.setStrokeWidth(32);
+        mOuterCirclePaint.setStrokeWidth(22);
         mOuterCirclePaint.setAlpha(140);
 
         mInnerCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
