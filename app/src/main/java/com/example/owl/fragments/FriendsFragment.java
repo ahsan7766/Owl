@@ -5,6 +5,7 @@ import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -153,9 +154,40 @@ public class FriendsFragment extends Fragment
         }
     }
 
+    /**
+     * Called when the fragment is visible to the user and actively running.
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Set title bar
+        getActivity().setTitle(getString(R.string.title_fragment_following));
+    }
+
     @Override
     public void onItemClick(View view, int position) {
-        //Intent intent = new Intent(getContext(), StackActivity.class);
-        //view.getContext().startActivity(intent);
+
+        // Profile picture was pressed
+        // Go to the canvas of that profile
+
+        // Start profile fragment
+        Fragment fragment = null;
+        Class fragmentClass = ProfileFragment.class;
+
+        try {
+            fragment = (Fragment) fragmentClass.newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Insert the fragment by replacing any existing fragment
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        fragmentManager.
+                beginTransaction()
+                .replace(R.id.flContent, fragment)
+                .addToBackStack(null)
+                .commit();
+
+
     }
 }

@@ -2,6 +2,8 @@ package com.example.owl.activities;
 
 import android.net.Uri;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -12,6 +14,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.example.owl.R;
+import com.example.owl.fragments.ProfileFragment;
 import com.example.owl.models.Comment;
 import com.example.owl.adapters.CommentsRecyclerAdapter;
 import com.example.owl.adapters.StackPhotoPagerAdapter;
@@ -20,7 +23,8 @@ import layout.StackPhotoPagerFragment;
 
 public class StackActivity extends AppCompatActivity
     implements StackPhotoPagerFragment.OnFragmentInteractionListener,
-        CommentsRecyclerAdapter.ItemClickListener {
+        CommentsRecyclerAdapter.ItemClickListener,
+        ProfileFragment.OnFragmentInteractionListener{
 
     private RecyclerView mRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -85,7 +89,29 @@ public class StackActivity extends AppCompatActivity
 
     @Override
     public void onItemClick(View view, int position) {
+        // Profile picture was pressed
+        // Go to the canvas of that profile
 
+        /*
+        // Start profile fragment
+        Fragment fragment = null;
+        Class fragmentClass = ProfileFragment.class;
+
+        try {
+            fragment = (Fragment) fragmentClass.newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Insert the fragment by replacing any existing fragment
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.
+                beginTransaction()
+                .replace(R.id.flContent, fragment)
+                .addToBackStack(null)
+                .commit();
+        */
+        // TODO Convert Profile Fragment to an activity
     }
 
     @Override

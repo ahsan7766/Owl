@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 
 import com.example.owl.R;
 import com.example.owl.views.ProfileCounterView;
+import com.example.owl.views.ProfilePictureView;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -29,6 +30,7 @@ public class ProfileFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    private ProfilePictureView mProfilePictureView;
     private ProfileCounterView mProfileCounterView;
 
     private OnFragmentInteractionListener mListener;
@@ -71,6 +73,9 @@ public class ProfileFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 
+        mProfilePictureView = (ProfilePictureView) rootView.findViewById(R.id.profile_picture);
+        mProfilePictureView.setBackgroundPicture(R.drawable.trees);
+
         mProfileCounterView = (ProfileCounterView) rootView.findViewById(R.id.profile_counter);
 
         mProfileCounterView.setHootCount(57);
@@ -102,6 +107,16 @@ public class ProfileFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    /**
+     * Called when the fragment is visible to the user and actively running.
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Set title bar
+        getActivity().setTitle(getString(R.string.title_fragment_profile));
     }
 
     /**

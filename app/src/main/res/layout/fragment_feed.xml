@@ -18,6 +18,7 @@
         android:textStyle="bold"/>
         -->
 
+    <!--
     <TextView
         android:id="@+id/text_subheader"
         android:layout_width="match_parent"
@@ -26,11 +27,18 @@
         android:gravity="center_vertical|start"
         android:text="Hello, John Doe"
         android:textSize="20sp"/>
+        -->
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycler_feed"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/text_subheader"/>
+        android:layout_height="match_parent">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_feed"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </android.support.v4.widget.SwipeRefreshLayout>
 
 </RelativeLayout>

@@ -69,11 +69,6 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
 
 
-        ViewGroup.LayoutParams params =  mInnerRecyclerView.getLayoutParams();
-        Random r = new Random();
-
-
-
         //initDataset();
 
         return viewHolder;

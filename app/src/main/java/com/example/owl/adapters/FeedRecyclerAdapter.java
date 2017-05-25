@@ -20,10 +20,23 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
 
+
     // data is passed into the constructor
     public FeedRecyclerAdapter(Context context, FeedCategory[] data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
+    }
+
+    // Clean all elements of the recycler
+    public void clear() {
+        mData = new FeedCategory[0];
+        notifyDataSetChanged();
+    }
+
+    // Add a list of items
+    public void addAll(FeedCategory[] data) {
+        mData = data;
+        notifyDataSetChanged();
     }
 
     // inflates the cell layout from xml when needed

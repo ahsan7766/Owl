@@ -1,16 +1,20 @@
 package com.example.owl.fragments;
 
+import android.content.Intent;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.example.owl.R;
+import com.example.owl.activities.StackActivity;
 import com.example.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.example.owl.models.CanvasTile;
 import com.example.owl.views.ProfileCounterView;
@@ -37,6 +41,7 @@ public class CanvasFragment extends Fragment {
 
     private ProfilePictureView mProfilePictureView;
     private ProfileCounterView mProfileCounterView;
+    private Button mButtonViewProfile;
 
     protected RecyclerView mRecyclerView;
     protected CanvasOuterRecyclerAdapter mAdapter;
@@ -111,11 +116,44 @@ public class CanvasFragment extends Fragment {
         mProfilePictureView = (ProfilePictureView) rootView.findViewById(R.id.profile_picture);
         mProfilePictureView.setBackgroundPicture(R.drawable.trees);
 
+        /*
         // Set Profile Counters
         mProfileCounterView = (ProfileCounterView) rootView.findViewById(R.id.profile_counter);
         mProfileCounterView.setHootCount(57);
         mProfileCounterView.setFollowerCount(181);
         mProfileCounterView.setFollowingCount(132);
+        */
+
+
+        mButtonViewProfile = (Button) rootView.findViewById(R.id.button_view_profile);
+        mButtonViewProfile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Start profile fragment
+                Fragment fragment = null;
+                Class fragmentClass = ProfileFragment.class;
+
+                try {
+                    fragment = (Fragment) fragmentClass.newInstance();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                // Insert the fragment by replacing any existing fragment
+                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                fragmentManager.
+                        beginTransaction()
+                        .replace(R.id.flContent, fragment)
+                        .addToBackStack(null)
+                        .commit();
+
+                // Set action bar title
+                getActivity().setTitle("Profile");
+            }
+        });
+
+
+
 
 
         //return inflater.inflate(R.layout.fragment_feed, container, false);
@@ -145,6 +183,16 @@ public class CanvasFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    /**
+     * Called when the fragment is visible to the user and actively running.
+     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Set title bar
+        getActivity().setTitle(getString(R.string.title_fragment_canvas));
     }
 
     /**

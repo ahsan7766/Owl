@@ -13,6 +13,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
+import android.support.annotation.IdRes;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
@@ -52,6 +53,7 @@ public class ProfilePictureView extends View {
         super(context);
         init();
     }
+
 
     /**
      * Class constructor taking a context and an attribute set. This constructor
@@ -115,13 +117,16 @@ public class ProfilePictureView extends View {
         );
         */
 
-        int circleRadius = Math.min(getWidth(), getHeight()) / 2;
+        int circleRadius = (Math.min(getWidth(), getHeight()) / 2);
+        circleRadius -= circleRadius / 10;
+        circleRadius -= 22;
 
 
         // Draw profile picture
         // If getBackgroundPicture is -1, then it wasn't set, so don't draw picture
         if(getBackgroundPicture() != -1) {
-            int halfRect =  ((16 * circleRadius) / 9) - 22; // The size of the bitmap profile picture
+            //int halfRect =  ((16 * circleRadius) / 9) - 22; // The size of the bitmap profile picture
+            int halfRect = circleRadius * 2;
 
             //mBitmap = BitmapFactory.decodeResource(getContext().getResources(), getBackgroundPicture());
 
@@ -154,7 +159,7 @@ public class ProfilePictureView extends View {
         canvas.drawCircle(
                 getWidth() / 2,
                 getHeight() / 2,
-                circleRadius - 22,
+                circleRadius,
                 mOuterCirclePaint
         );
 
@@ -163,7 +168,7 @@ public class ProfilePictureView extends View {
         canvas.drawCircle(
                 getWidth() / 2,
                 getHeight() / 2,
-                circleRadius - 22,
+                circleRadius,
                 mInnerCirclePaint
         );
 
