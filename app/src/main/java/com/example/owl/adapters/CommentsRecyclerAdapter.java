@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.owl.R;
+import com.example.owl.models.Comment;
 import com.example.owl.models.FeedCategory;
 import com.example.owl.views.FeedCategoryView;
 import com.example.owl.views.ProfilePictureView;
@@ -17,12 +18,12 @@ import com.example.owl.views.ProfilePictureView;
 
 public class CommentsRecyclerAdapter extends RecyclerView.Adapter<CommentsRecyclerAdapter.ViewHolder> {
 
-    private String[] mData = new String[0];
+    private Comment[] mData = new Comment[0];
     private LayoutInflater mInflater;
     private CommentsRecyclerAdapter.ItemClickListener mClickListener;
 
     // data is passed into the constructor
-    public CommentsRecyclerAdapter(Context context, String[] data) {
+    public CommentsRecyclerAdapter(Context context, Comment[] data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
@@ -38,7 +39,7 @@ public class CommentsRecyclerAdapter extends RecyclerView.Adapter<CommentsRecycl
     // binds the data to the textview in each cell
     @Override
     public void onBindViewHolder(CommentsRecyclerAdapter.ViewHolder holder, int position) {
-        String string = mData[position];
+        Comment comment = mData[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
         //holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
         holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
@@ -68,7 +69,7 @@ public class CommentsRecyclerAdapter extends RecyclerView.Adapter<CommentsRecycl
     }
 
     // convenience method for getting data at click position
-    public String getItem(int id) {
+    public Comment getItem(int id) {
         return mData[id];
     }
 

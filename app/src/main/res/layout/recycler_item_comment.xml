@@ -5,8 +5,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:layout_margin="5dp">
+    android:layout_margin="5dp"
+    android:orientation="vertical">
 
     <com.example.owl.views.ProfilePictureView
         android:id="@+id/profile_picture"
@@ -14,6 +14,7 @@
         android:layout_height="50dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"/>
 
@@ -24,9 +25,9 @@
         android:layout_marginLeft="26dp"
         android:layout_marginStart="26dp"
         android:layout_marginTop="0dp"
+        android:gravity="center_vertical"
         android:text="John Doe"
         android:textStyle="bold"
-        android:gravity="center_vertical"
         app:layout_constraintLeft_toRightOf="@+id/profile_picture"
         app:layout_constraintTop_toTopOf="@+id/profile_picture"
         tools:layout_editor_absoluteX="82dp"/>
@@ -56,8 +57,6 @@
         app:layout_constraintLeft_toLeftOf="@+id/text_name"
         app:layout_constraintRight_toRightOf="@+id/text_date"
         app:layout_constraintTop_toBottomOf="@+id/text_name"/>
-
-
 
 
 </android.support.constraint.ConstraintLayout>
