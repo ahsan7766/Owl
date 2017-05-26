@@ -10,36 +10,34 @@ import com.example.owl.R;
 import com.example.owl.views.ProfilePictureView;
 
 /**
- * Created by Zach on 5/25/17.
+ * Created by Zach on 5/26/17.
  */
 
-public class FriendsRecyclerAdapter extends RecyclerView.Adapter<FriendsRecyclerAdapter.ViewHolder> {
+public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhotosRecyclerAdapter.ViewHolder> {
 
     private String[] mData = new String[0];
     private LayoutInflater mInflater;
-    private FriendsRecyclerAdapter.ItemClickListener mClickListener;
+    private UploadPhotosRecyclerAdapter.ItemClickListener mClickListener;
 
     // data is passed into the constructor
-    public FriendsRecyclerAdapter(Context context, String[] data) {
+    public UploadPhotosRecyclerAdapter(Context context, String[] data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
 
     // inflates the cell layout from xml when needed
     @Override
-    public FriendsRecyclerAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = mInflater.inflate(R.layout.recycler_item_friends, parent, false);
-        FriendsRecyclerAdapter.ViewHolder viewHolder = new FriendsRecyclerAdapter.ViewHolder(view);
+    public UploadPhotosRecyclerAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = mInflater.inflate(R.layout.recycler_item_upload_photos, parent, false);
+        UploadPhotosRecyclerAdapter.ViewHolder viewHolder = new UploadPhotosRecyclerAdapter.ViewHolder(view);
         return viewHolder;
     }
 
     // binds the data to the textview in each cell
     @Override
-    public void onBindViewHolder(FriendsRecyclerAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(UploadPhotosRecyclerAdapter.ViewHolder holder, int position) {
         String string = mData[position];
-        //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
-        //holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
-        holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
+        //holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
 
     }
 
@@ -52,12 +50,12 @@ public class FriendsRecyclerAdapter extends RecyclerView.Adapter<FriendsRecycler
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        public ProfilePictureView mProfilePictureView;
+        //public ProfilePictureView mProfilePictureView;
 
         public ViewHolder(View itemView) {
             super(itemView);
             //mFeedCategoryView = (FeedCategoryView) itemView.findViewById(R.id.feed_category);
-            mProfilePictureView = (ProfilePictureView) itemView.findViewById(R.id.profile_picture);
+            //mProfilePictureView = (ProfilePictureView) itemView.findViewById(R.id.profile_picture);
             itemView.setOnClickListener(this);
         }
 
@@ -73,7 +71,7 @@ public class FriendsRecyclerAdapter extends RecyclerView.Adapter<FriendsRecycler
     }
 
     // allows clicks events to be caught
-    public void setClickListener(FriendsRecyclerAdapter.ItemClickListener itemClickListener) {
+    public void setClickListener(UploadPhotosRecyclerAdapter.ItemClickListener itemClickListener) {
         this.mClickListener = itemClickListener;
     }
 
@@ -81,5 +79,4 @@ public class FriendsRecyclerAdapter extends RecyclerView.Adapter<FriendsRecycler
     public interface ItemClickListener {
         void onItemClick(View view, int position);
     }
-
 }

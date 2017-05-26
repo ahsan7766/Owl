@@ -33,6 +33,12 @@
             android:name=".activities.StackActivity"
             android:label="@string/title_activity_stack"
             android:screenOrientation="portrait"/>
+
+        <activity
+            android:name=".activities.UploadActivity"
+            android:label="@string/title_activity_upload"
+            android:screenOrientation="portrait">
+        </activity>
     </application>
 
 </manifest>
