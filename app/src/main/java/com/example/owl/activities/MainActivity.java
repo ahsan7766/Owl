@@ -30,6 +30,8 @@ public class MainActivity extends AppCompatActivity
         CanvasFragment.OnFragmentInteractionListener,
         FriendsFragment.OnFragmentInteractionListener {
 
+    public static final String OPEN_FRAGMENT_CANVAS = "OPEN_FRAGMENT_CANVAS";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,6 +63,34 @@ public class MainActivity extends AppCompatActivity
         fragmentTransaction.commit();
         navigationView.getMenu().getItem(0).setChecked(true);
     }
+
+    /**
+     * Dispatch onResume() to fragments.  Note that for better inter-operation
+     * with older versions of the platform, at the point of this call the
+     * fragments attached to the activity are <em>not</em> resumed.  This means
+     * that in some cases the previous state may still be saved, not allowing
+     * fragment transactions that modify the state.  To correctly interact
+     * with fragments in their proper state, you should instead override
+     * {@link #onResumeFragments()}.
+     */
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // If given the extra indication to start profile fragment, do it
+        if (getIntent().getBooleanExtra(OPEN_FRAGMENT_CANVAS, false)) {
+            Fragment fragment = new CanvasFragment();
+            // Insert the fragment by replacing any existing fragment
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.
+                    beginTransaction()
+                    .replace(R.id.flContent, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        }
+
+    }
+
 
     @Override
     public void onBackPressed() {
