@@ -1,6 +1,5 @@
 package com.example.owl.activities;
 
-import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -9,17 +8,22 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.example.owl.R;
-import com.example.owl.adapters.CommentsRecyclerAdapter;
 import com.example.owl.adapters.UploadPhotosRecyclerAdapter;
-import com.example.owl.models.Comment;
+import com.example.owl.adapters.UploadStackRecyclerAdapter;
 
 public class UploadActivity extends AppCompatActivity
-        implements UploadPhotosRecyclerAdapter.ItemClickListener {
+        implements UploadPhotosRecyclerAdapter.ItemClickListener,
+        UploadStackRecyclerAdapter.ItemClickListener {
 
-    private RecyclerView mRecyclerView;
-    private RecyclerView.LayoutManager mLayoutManager;
-    private UploadPhotosRecyclerAdapter mAdapter;
-    private String[] mDataset = new String[4];
+    private RecyclerView mRecyclerViewPhotos;
+    private RecyclerView.LayoutManager mLayoutManagerPhotos;
+    private UploadPhotosRecyclerAdapter mAdapterPhotos;
+    private String[] mDatasetPhotos = new String[4];
+
+    private RecyclerView mRecyclerViewStack;
+    private RecyclerView.LayoutManager mLayoutManagerStack;
+    private UploadStackRecyclerAdapter mAdapterStack;
+    private String[] mDatasetStack = new String[4];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,13 +31,13 @@ public class UploadActivity extends AppCompatActivity
         setContentView(R.layout.activity_upload);
 
         // Enable the up navigation button in the action bar
-        if(getSupportActionBar() != null) {
+        if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-
+        // Setup Photos Recycler
         // Initialize RecyclerView
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_upload_photos);
+        mRecyclerViewPhotos = (RecyclerView) findViewById(R.id.recycler_upload_photos);
 
         // Initialize Dataset
         // TODO
@@ -41,15 +45,36 @@ public class UploadActivity extends AppCompatActivity
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
-        mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        mLayoutManagerPhotos = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
 
         // set up the RecyclerView
-        mRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new UploadPhotosRecyclerAdapter(this, mDataset);
-        mAdapter.setClickListener(this);
+        mRecyclerViewPhotos.setLayoutManager(mLayoutManagerPhotos);
+        mAdapterPhotos = new UploadPhotosRecyclerAdapter(this, mDatasetPhotos);
+        mAdapterPhotos.setClickListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
-        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerViewPhotos.setAdapter(mAdapterPhotos);
+
+
+        // Setup Stack Recycler
+        // Initialize RecyclerView
+        mRecyclerViewStack = (RecyclerView) findViewById(R.id.recycler_upload_stack);
+
+        // Initialize Dataset
+        // TODO
+
+        // LinearLayoutManager is used here, this will layout the elements in a similar fashion
+        // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
+        // elements are laid out.
+        mLayoutManagerStack = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+
+        // set up the RecyclerView
+        mRecyclerViewStack.setLayoutManager(mLayoutManagerStack);
+        mAdapterStack = new UploadStackRecyclerAdapter(this, mDatasetStack);
+        mAdapterStack.setClickListener(this);
+
+        // Set CustomAdapter as the adapter for RecyclerView.
+        mRecyclerViewStack.setAdapter(mAdapterStack);
 
 
         /*
