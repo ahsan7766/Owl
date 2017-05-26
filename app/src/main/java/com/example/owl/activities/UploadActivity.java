@@ -2,6 +2,7 @@ package com.example.owl.activities;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
@@ -16,12 +17,12 @@ public class UploadActivity extends AppCompatActivity
         UploadStackRecyclerAdapter.ItemClickListener {
 
     private RecyclerView mRecyclerViewPhotos;
-    private RecyclerView.LayoutManager mLayoutManagerPhotos;
+    private LinearLayoutManager mLayoutManagerPhotos;
     private UploadPhotosRecyclerAdapter mAdapterPhotos;
     private String[] mDatasetPhotos = new String[4];
 
     private RecyclerView mRecyclerViewStack;
-    private RecyclerView.LayoutManager mLayoutManagerStack;
+    private LinearLayoutManager mLayoutManagerStack;
     private UploadStackRecyclerAdapter mAdapterStack;
     private String[] mDatasetStack = new String[4];
 
@@ -52,8 +53,14 @@ public class UploadActivity extends AppCompatActivity
         mAdapterPhotos = new UploadPhotosRecyclerAdapter(this, mDatasetPhotos);
         mAdapterPhotos.setClickListener(this);
 
+        // Set divider
+        DividerItemDecoration dividerItemDecorationPhotos = new DividerItemDecoration(mRecyclerViewPhotos.getContext(),
+                mLayoutManagerPhotos.getOrientation());
+        mRecyclerViewPhotos.addItemDecoration(dividerItemDecorationPhotos);
+
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerViewPhotos.setAdapter(mAdapterPhotos);
+
 
 
         // Setup Stack Recycler
@@ -72,6 +79,11 @@ public class UploadActivity extends AppCompatActivity
         mRecyclerViewStack.setLayoutManager(mLayoutManagerStack);
         mAdapterStack = new UploadStackRecyclerAdapter(this, mDatasetStack);
         mAdapterStack.setClickListener(this);
+
+        // Set divider
+        DividerItemDecoration dividerItemDecorationStack = new DividerItemDecoration(mRecyclerViewStack.getContext(),
+                mLayoutManagerStack.getOrientation());
+        mRecyclerViewStack.addItemDecoration(dividerItemDecorationStack);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerViewStack.setAdapter(mAdapterStack);
