@@ -8,6 +8,8 @@
     android:orientation="vertical"
     tools:context="com.example.owl.activities.StackActivity">
 
+
+
     <android.support.v4.view.ViewPager
         android:id="@+id/view_pager_stack"
         android:layout_width="300dp"

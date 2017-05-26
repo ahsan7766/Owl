@@ -1,5 +1,6 @@
 package com.example.owl.activities;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -92,8 +93,9 @@ public class StackActivity extends AppCompatActivity
         // Profile picture was pressed
         // Go to the canvas of that profile
 
-        /*
+
         // Start profile fragment
+        /*
         Fragment fragment = null;
         Class fragmentClass = ProfileFragment.class;
 
@@ -110,8 +112,12 @@ public class StackActivity extends AppCompatActivity
                 .replace(R.id.flContent, fragment)
                 .addToBackStack(null)
                 .commit();
+
         */
-        // TODO Convert Profile Fragment to an activity
+
+        Intent openFragmentBIntent = new Intent(this, MainActivity.class);
+        openFragmentBIntent.putExtra(MainActivity.OPEN_FRAGMENT_CANVAS, true);
+        startActivity(openFragmentBIntent);
     }
 
     @Override

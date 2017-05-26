@@ -172,7 +172,7 @@ public class FriendsFragment extends Fragment
 
         // Start profile fragment
         Fragment fragment = null;
-        Class fragmentClass = ProfileFragment.class;
+        Class fragmentClass = CanvasFragment.class;
 
         try {
             fragment = (Fragment) fragmentClass.newInstance();
@@ -187,7 +187,6 @@ public class FriendsFragment extends Fragment
                 .replace(R.id.flContent, fragment)
                 .addToBackStack(null)
                 .commit();
-
 
     }
 }
