@@ -127,7 +127,7 @@ public class FeedFragment extends Fragment
 
 
         // Set up show/hide animation for fab
-        final FloatingActionButton fab = (FloatingActionButton) ((MainActivity) getActivity()).getFloatingActionButton();
+        final FloatingActionButton fab = ((MainActivity) getActivity()).getFloatingActionButton();
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy){

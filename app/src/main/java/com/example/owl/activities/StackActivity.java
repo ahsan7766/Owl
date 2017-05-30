@@ -3,8 +3,6 @@ package com.example.owl.activities;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -55,7 +53,7 @@ public class StackActivity extends AppCompatActivity
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_comments);
 
         // Initialize Dataset
-        // TODO
+        // TODO Initialize Dataset
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how

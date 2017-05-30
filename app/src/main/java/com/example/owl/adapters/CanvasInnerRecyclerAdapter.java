@@ -1,8 +1,6 @@
 package com.example.owl.adapters;
 
 import android.content.Context;
-import android.content.Intent;
-import android.support.v4.widget.TextViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,9 +8,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.example.owl.R;
-import com.example.owl.activities.StackActivity;
 import com.example.owl.models.CanvasTile;
-import com.example.owl.views.FeedCategoryView;
 
 /**
  * Created by Zach on 5/23/17.

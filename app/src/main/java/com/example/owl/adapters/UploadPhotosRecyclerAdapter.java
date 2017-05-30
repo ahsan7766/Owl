@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.owl.R;
-import com.example.owl.views.ProfilePictureView;
 
 /**
  * Created by Zach on 5/26/17.

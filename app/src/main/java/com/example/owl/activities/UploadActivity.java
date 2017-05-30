@@ -41,7 +41,7 @@ public class UploadActivity extends AppCompatActivity
         mRecyclerViewPhotos = (RecyclerView) findViewById(R.id.recycler_upload_photos);
 
         // Initialize Dataset
-        // TODO
+        // TODO Initialize Dataset
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
@@ -68,7 +68,7 @@ public class UploadActivity extends AppCompatActivity
         mRecyclerViewStack = (RecyclerView) findViewById(R.id.recycler_upload_stack);
 
         // Initialize Dataset
-        // TODO
+        // TODO Initialize Dataset
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how

@@ -10,12 +10,7 @@ import android.view.ViewGroup;
 
 import com.example.owl.R;
 import com.example.owl.activities.StackActivity;
-import com.example.owl.fragments.CanvasFragment;
 import com.example.owl.models.CanvasTile;
-import com.example.owl.views.FeedCategoryView;
-
-import java.util.Random;
-import java.util.Stack;
 
 /**
  * Created by Zach on 5/23/17.

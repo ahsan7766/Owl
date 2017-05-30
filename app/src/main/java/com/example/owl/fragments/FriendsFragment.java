@@ -1,6 +1,5 @@
 package com.example.owl.fragments;
 
-import android.content.Intent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.content.Context;
@@ -8,7 +7,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,8 +14,6 @@ import android.view.ViewGroup;
 
 import com.example.owl.R;
 import com.example.owl.activities.MainActivity;
-import com.example.owl.activities.StackActivity;
-import com.example.owl.adapters.FeedRecyclerAdapter;
 import com.example.owl.adapters.FriendsRecyclerAdapter;
 
 /**
@@ -106,7 +102,7 @@ public class FriendsFragment extends Fragment
         mRecyclerView.setAdapter(mAdapter);
 
 
-        final FloatingActionButton fab = (FloatingActionButton) ((MainActivity) getActivity()).getFloatingActionButton();
+        final FloatingActionButton fab = ((MainActivity) getActivity()).getFloatingActionButton();
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy){

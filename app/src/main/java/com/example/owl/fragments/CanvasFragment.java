@@ -1,6 +1,5 @@
 package com.example.owl.fragments;
 
-import android.content.Intent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.content.Context;
@@ -16,7 +15,6 @@ import android.widget.Button;
 
 import com.example.owl.R;
 import com.example.owl.activities.MainActivity;
-import com.example.owl.activities.StackActivity;
 import com.example.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.example.owl.models.CanvasTile;
 import com.example.owl.views.ProfileCounterView;
@@ -155,7 +153,7 @@ public class CanvasFragment extends Fragment {
         });
 
 
-        final FloatingActionButton fab = (FloatingActionButton) ((MainActivity) getActivity()).getFloatingActionButton();
+        final FloatingActionButton fab = ((MainActivity) getActivity()).getFloatingActionButton();
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy){

@@ -8,8 +8,6 @@ import android.view.ViewGroup;
 
 import com.example.owl.R;
 import com.example.owl.models.Comment;
-import com.example.owl.models.FeedCategory;
-import com.example.owl.views.FeedCategoryView;
 import com.example.owl.views.ProfilePictureView;
 
 /**
@@ -36,7 +34,7 @@ public class CommentsRecyclerAdapter extends RecyclerView.Adapter<CommentsRecycl
         return viewHolder;
     }
 
-    // binds the data to the textview in each cell
+    // binds the data to the TextView in each cell
     @Override
     public void onBindViewHolder(CommentsRecyclerAdapter.ViewHolder holder, int position) {
         Comment comment = mData[position];
