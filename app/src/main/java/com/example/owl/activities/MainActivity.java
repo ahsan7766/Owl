@@ -8,6 +8,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -23,6 +24,7 @@ import com.example.owl.fragments.CanvasFragment;
 import com.example.owl.fragments.FeedFragment;
 import com.example.owl.fragments.FriendsFragment;
 import com.example.owl.fragments.ProfileFragment;
+import com.example.owl.fragments.SettingsFragment;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
@@ -30,6 +32,8 @@ public class MainActivity extends AppCompatActivity
         ProfileFragment.OnFragmentInteractionListener,
         CanvasFragment.OnFragmentInteractionListener,
         FriendsFragment.OnFragmentInteractionListener {
+
+    private static final String TAG = MainActivity.class.getName();
 
     public static final String OPEN_FRAGMENT_CANVAS = "OPEN_FRAGMENT_CANVAS";
 
@@ -122,6 +126,12 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            fragmentManager.
+                    beginTransaction()
+                    .replace(R.id.flContent, new SettingsFragment())
+                    .addToBackStack(null)
+                    .commit();
             return true;
         }
 
@@ -153,7 +163,7 @@ public class MainActivity extends AppCompatActivity
                 fragmentClass = FriendsFragment.class;
                 break;
             case R.id.nav_settings:
-                fragmentClass = FeedFragment.class;
+                fragmentClass = SettingsFragment.class;
                 break;
             case R.id.nav_share:
                 fragmentClass = FeedFragment.class;
