@@ -19,12 +19,12 @@ public class UploadActivity extends AppCompatActivity
     private RecyclerView mRecyclerViewPhotos;
     private LinearLayoutManager mLayoutManagerPhotos;
     private UploadPhotosRecyclerAdapter mAdapterPhotos;
-    private String[] mDatasetPhotos = new String[4];
+    private String[] mDatasetPhotos = new String[8];
 
     private RecyclerView mRecyclerViewStack;
     private LinearLayoutManager mLayoutManagerStack;
     private UploadStackRecyclerAdapter mAdapterStack;
-    private String[] mDatasetStack = new String[4];
+    private String[] mDatasetStack = new String[8];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

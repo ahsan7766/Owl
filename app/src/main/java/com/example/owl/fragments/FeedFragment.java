@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
@@ -12,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.owl.activities.MainActivity;
 import com.example.owl.activities.StackActivity;
 import com.example.owl.adapters.FeedRecyclerAdapter;
 import com.example.owl.R;
@@ -120,6 +122,19 @@ public class FeedFragment extends Fragment
                 // Make sure you call swipeContainer.setRefreshing(false)
                 // once the network request has completed successfully.
                 fetchTimelineAsync(0);
+            }
+        });
+
+
+        // Set up show/hide animation for fab
+        final FloatingActionButton fab = (FloatingActionButton) ((MainActivity) getActivity()).getFloatingActionButton();
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy){
+                if (dy > 0)
+                    fab.hide();
+                else if (dy < 0)
+                    fab.show();
             }
         });
 
