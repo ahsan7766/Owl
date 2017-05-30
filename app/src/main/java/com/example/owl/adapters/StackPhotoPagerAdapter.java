@@ -4,7 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
-import layout.StackPhotoPagerFragment;
+import com.example.owl.fragments.StackPhotoPagerFragment;
 
 /**
  * Created by admin on 5/24/17.

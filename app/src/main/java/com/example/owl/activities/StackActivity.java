@@ -18,7 +18,7 @@ import com.example.owl.models.Comment;
 import com.example.owl.adapters.CommentsRecyclerAdapter;
 import com.example.owl.adapters.StackPhotoPagerAdapter;
 
-import layout.StackPhotoPagerFragment;
+import com.example.owl.fragments.StackPhotoPagerFragment;
 
 public class StackActivity extends AppCompatActivity
     implements StackPhotoPagerFragment.OnFragmentInteractionListener,

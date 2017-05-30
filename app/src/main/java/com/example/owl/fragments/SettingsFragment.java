@@ -7,7 +7,6 @@ import android.util.Log;
 import android.view.View;
 
 import com.example.owl.R;
-import com.example.owl.activities.MainActivity;
 
 /**
  * Created by Zach on 5/30/17.

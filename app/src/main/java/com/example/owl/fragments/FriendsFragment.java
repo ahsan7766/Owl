@@ -34,7 +34,7 @@ public class FriendsFragment extends Fragment
 
     private static final String TAG = "FriendsFragment";
     private static final int SPAN_COUNT = 3; // number of columns in the grid
-    private static final int DATASET_COUNT = 50;
+    private static final int DATASET_COUNT = 20;
 
     protected RecyclerView mRecyclerView;
     protected FriendsRecyclerAdapter mAdapter;
