@@ -1,12 +1,19 @@
 package com.example.owl.adapters;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.example.owl.R;
+import com.example.owl.activities.UploadActivity;
+
+import java.util.ArrayList;
 
 /**
  * Created by Zach on 5/26/17.
@@ -14,12 +21,14 @@ import com.example.owl.R;
 
 public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhotosRecyclerAdapter.ViewHolder> {
 
-    private String[] mData = new String[0];
+    private ArrayList<String> mData = new ArrayList<>();
     private LayoutInflater mInflater;
     private UploadPhotosRecyclerAdapter.ItemClickListener mClickListener;
 
+    private Context mContext;
+
     // data is passed into the constructor
-    public UploadPhotosRecyclerAdapter(Context context, String[] data) {
+    public UploadPhotosRecyclerAdapter(Context context, ArrayList<String> data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
@@ -29,32 +38,57 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
     public UploadPhotosRecyclerAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = mInflater.inflate(R.layout.recycler_item_upload_photos, parent, false);
         UploadPhotosRecyclerAdapter.ViewHolder viewHolder = new UploadPhotosRecyclerAdapter.ViewHolder(view);
+
+        mContext = view.getContext();
         return viewHolder;
     }
 
     // binds the data to the textview in each cell
     @Override
     public void onBindViewHolder(UploadPhotosRecyclerAdapter.ViewHolder holder, int position) {
-        String string = mData[position];
-        //holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
+
+        // If it is the last item in the list, then it is the "Add Photo" item
+        if(position == mData.size()) {
+            holder.mImageView.setImageResource(R.drawable.ic_add);
+            final int padding = 10;
+            holder.mImageView.setPadding(padding, padding, padding, padding);
+
+            holder.mImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Allow user to select photo(s)
+                    Intent intent = new Intent();
+                    intent.setType("image/*");
+                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    ((Activity) mContext).startActivityForResult(Intent.createChooser(intent,"Select Picture"), 100);
+                }
+            });
+        } else {
+            // Otherwise, set the photo
+            String string = mData.get(position);
+            //holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
+        }
 
     }
 
     // total number of cells
     @Override
     public int getItemCount() {
-        return mData.length;
+        return mData.size() +  1;
     }
 
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         //public ProfilePictureView mProfilePictureView;
+        public ImageView mImageView;
 
         public ViewHolder(View itemView) {
             super(itemView);
             //mFeedCategoryView = (FeedCategoryView) itemView.findViewById(R.id.feed_category);
             //mProfilePictureView = (ProfilePictureView) itemView.findViewById(R.id.profile_picture);
+            mImageView = (ImageView) itemView.findViewById(R.id.image);
             itemView.setOnClickListener(this);
         }
 
@@ -66,7 +100,7 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
 
     // convenience method for getting data at click position
     public String getItem(int id) {
-        return mData[id];
+        return mData.get(id);
     }
 
     // allows clicks events to be caught
@@ -78,4 +112,5 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
     public interface ItemClickListener {
         void onItemClick(View view, int position);
     }
+
 }

@@ -1,5 +1,13 @@
 package com.example.owl.activities;
 
+import android.content.ClipData;
+import android.content.Intent;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Parcelable;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
@@ -7,10 +15,15 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.example.owl.R;
 import com.example.owl.adapters.UploadPhotosRecyclerAdapter;
 import com.example.owl.adapters.UploadStackRecyclerAdapter;
+
+import java.io.File;
+import java.util.ArrayList;
 
 public class UploadActivity extends AppCompatActivity
         implements UploadPhotosRecyclerAdapter.ItemClickListener,
@@ -19,7 +32,7 @@ public class UploadActivity extends AppCompatActivity
     private RecyclerView mRecyclerViewPhotos;
     private LinearLayoutManager mLayoutManagerPhotos;
     private UploadPhotosRecyclerAdapter mAdapterPhotos;
-    private String[] mDatasetPhotos = new String[8];
+    private ArrayList<String> mDatasetPhotos = new ArrayList<>();
 
     private RecyclerView mRecyclerViewStack;
     private LinearLayoutManager mLayoutManagerStack;
@@ -118,5 +131,97 @@ public class UploadActivity extends AppCompatActivity
     @Override
     public void onItemClick(View view, int position) {
 
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
+        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
+        switch(requestCode) {
+            case 100:
+                if(resultCode == RESULT_OK){
+                    //Uri selectedImage = imageReturnedIntent.getData();
+                    //imageview.setImageURI(selectedImage);
+
+                    Uri selectedImage = imageReturnedIntent.getData();
+                    //String[] filePathColumn = { MediaStore.Images.Media.DATA };
+
+
+                    if(selectedImage != null) {
+                        // One image was selected
+
+                        /*
+                        File imgFile = new File("/sdcard/Images/test_image.jpg");
+
+                        if(imgFile.exists()){
+
+                            Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+
+                            ImageView myImage = (ImageView) findViewById(R.id.imageviewTest);
+
+                            myImage.setImageBitmap(myBitmap);
+
+                        }
+                        */
+
+                        //Toast.makeText(this, 1 + "", Toast.LENGTH_SHORT).show();
+
+                    } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
+                        // Multiple images selected/
+
+                        ClipData clipData = imageReturnedIntent.getClipData();
+
+                        for(int i = 0; i < clipData.getItemCount(); i++) {
+                            ClipData.Item item = clipData.getItemAt(i);
+                        }
+
+
+
+                        //Toast.makeText(this, clipData.getItemCount() + "", Toast.LENGTH_SHORT).show();
+                    }
+
+                    /*
+                    ClipData clipData = imageReturnedIntent.getClipData();
+                    for (int i = 0; i < clipData.getItemCount(); i++)
+                    {
+                        Uri uri = clipData.getItemAt(i).getUri();
+                    }
+                    */
+
+                    /*
+                    ArrayList<Parcelable> list = imageReturnedIntent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+                    for (Parcelable parcel : list) {
+                        Uri uri = (Uri) parcel;
+                        /// do things here.
+                    }
+                    */
+
+                    /*
+                    ClipData clipData = imageReturnedIntent.getClipData();
+                    for(int i = 0; i < clipData.getItemCount(); i++) {
+                        ClipData.Item item =  clipData.getItemAt(i);
+                        Uri uri = item.getUri();
+
+                        // Process the uri...
+                    }
+                    */
+
+
+
+                    /*
+                    Cursor cursor = getContentResolver().query(selectedImage,
+                            filePathColumn, null, null, null);
+                    cursor.moveToFirst();
+
+                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                    String picturePath = cursor.getString(columnIndex);
+                    cursor.close();
+                    */
+
+
+                    //ImageView imageView = (ImageView) findViewById(R.id.imageView);
+                    //imageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+                }
+                break;
+        }
     }
 }
