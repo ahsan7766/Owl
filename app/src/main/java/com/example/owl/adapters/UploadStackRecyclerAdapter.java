@@ -20,7 +20,7 @@ public class UploadStackRecyclerAdapter extends RecyclerView.Adapter<UploadStack
     private UploadStackRecyclerAdapter.ItemClickListener mClickListener;
 
 
-    private int mSelectedPos;
+    private int mSelectedPos = -1;
 
     // data is passed into the constructor
     public UploadStackRecyclerAdapter(Context context, String[] data) {
