@@ -5,6 +5,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RadioButton;
 
 import com.example.owl.R;
 
@@ -17,6 +18,9 @@ public class UploadStackRecyclerAdapter extends RecyclerView.Adapter<UploadStack
     private String[] mData = new String[0];
     private LayoutInflater mInflater;
     private UploadStackRecyclerAdapter.ItemClickListener mClickListener;
+
+
+    private int mSelectedPos;
 
     // data is passed into the constructor
     public UploadStackRecyclerAdapter(Context context, String[] data) {
@@ -34,9 +38,17 @@ public class UploadStackRecyclerAdapter extends RecyclerView.Adapter<UploadStack
 
     // binds the data to the textview in each cell
     @Override
-    public void onBindViewHolder(UploadStackRecyclerAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(final UploadStackRecyclerAdapter.ViewHolder holder, final int position) {
         String string = mData[position];
-        //holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
+        holder.mRadioButton.setChecked(position == mSelectedPos);
+
+        holder.mRadioButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mSelectedPos = position;
+                notifyDataSetChanged();
+            }
+        });
 
     }
 
@@ -50,11 +62,13 @@ public class UploadStackRecyclerAdapter extends RecyclerView.Adapter<UploadStack
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         //public ProfilePictureView mProfilePictureView;
+        public RadioButton mRadioButton;
 
         public ViewHolder(View itemView) {
             super(itemView);
             //mFeedCategoryView = (FeedCategoryView) itemView.findViewById(R.id.feed_category);
             //mProfilePictureView = (ProfilePictureView) itemView.findViewById(R.id.profile_picture);
+            mRadioButton = (RadioButton) itemView.findViewById(R.id.radio_button);
             itemView.setOnClickListener(this);
         }
 
