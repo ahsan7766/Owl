@@ -1,13 +1,23 @@
 package com.example.owl.activities;
 
+import android.Manifest;
 import android.content.ClipData;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Parcelable;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.PermissionChecker;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
@@ -23,11 +33,16 @@ import com.example.owl.adapters.UploadPhotosRecyclerAdapter;
 import com.example.owl.adapters.UploadStackRecyclerAdapter;
 
 import java.io.File;
+import java.net.URI;
+import java.security.Permission;
+import java.security.PermissionCollection;
 import java.util.ArrayList;
 
 public class UploadActivity extends AppCompatActivity
         implements UploadPhotosRecyclerAdapter.ItemClickListener,
         UploadStackRecyclerAdapter.ItemClickListener {
+
+    public static final int REQUEST_SELECT_PHOTOS = 100;
 
     private RecyclerView mRecyclerViewPhotos;
     private LinearLayoutManager mLayoutManagerPhotos;
@@ -75,7 +90,6 @@ public class UploadActivity extends AppCompatActivity
         mRecyclerViewPhotos.setAdapter(mAdapterPhotos);
 
 
-
         // Setup Stack Recycler
         // Initialize RecyclerView
         mRecyclerViewStack = (RecyclerView) findViewById(R.id.recycler_upload_stack);
@@ -102,14 +116,61 @@ public class UploadActivity extends AppCompatActivity
         mRecyclerViewStack.setAdapter(mAdapterStack);
 
 
-        /*
-        // Allow user to select photo(s)
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent,"Select Picture"), 1);
-        */
+        // Check for READ_EXTERNAL_STORAGE permission to read photos
+        // Note: After Research (as of SDK 25) if any permission is changed to denied while in an
+        // application, and that app is returned to, then the activity that was running is
+        // automatically restarted.  This means permission checks can be safely placed in the
+        // onCreate of activities, and do NOT need to checked every time the activity is resumed
+        checkPermissionReadExternalStorage();
+
+    }
+
+
+    /**
+     * Callback for the result from requesting permissions. This method
+     * is invoked for every call on {@link #requestPermissions(String[], int)}.
+     * <p>
+     * <strong>Note:</strong> It is possible that the permissions request interaction
+     * with the user is interrupted. In this case you will receive empty permissions
+     * and results arrays which should be treated as a cancellation.
+     * </p>
+     *
+     * @param requestCode  The request code passed in {@link #requestPermissions(String[], int)}.
+     * @param permissions  The requested permissions. Never null.
+     * @param grantResults The grant results for the corresponding permissions
+     *                     which is either {@link PackageManager#PERMISSION_GRANTED}
+     *                     or {@link PackageManager#PERMISSION_DENIED}. Never null.
+     * @see #requestPermissions(String[], int)
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case MainActivity.PERMISSION_READ_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    //Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+
+                    //Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
+                    // Finish the activity
+                    finish();
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
     @Override
@@ -136,92 +197,101 @@ public class UploadActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
         super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
-        switch(requestCode) {
-            case 100:
-                if(resultCode == RESULT_OK){
-                    //Uri selectedImage = imageReturnedIntent.getData();
-                    //imageview.setImageURI(selectedImage);
-
+        switch (requestCode) {
+            case REQUEST_SELECT_PHOTOS:
+                if (resultCode == RESULT_OK) {
                     Uri selectedImage = imageReturnedIntent.getData();
                     //String[] filePathColumn = { MediaStore.Images.Media.DATA };
 
-
-                    if(selectedImage != null) {
+                    if (selectedImage != null) {
                         // One image was selected
 
-                        /*
-                        File imgFile = new File("/sdcard/Images/test_image.jpg");
-
-                        if(imgFile.exists()){
-
-                            Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-
-                            ImageView myImage = (ImageView) findViewById(R.id.imageviewTest);
-
-                            myImage.setImageBitmap(myBitmap);
-
-                        }
-                        */
-
-                        //Toast.makeText(this, 1 + "", Toast.LENGTH_SHORT).show();
-
+                        String path = getRealPathFromURI(selectedImage);
+                        mDatasetPhotos.add(path);
                     } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
                         // Multiple images selected/
 
                         ClipData clipData = imageReturnedIntent.getClipData();
 
-                        for(int i = 0; i < clipData.getItemCount(); i++) {
+                        for (int i = 0; i < clipData.getItemCount(); i++) {
                             ClipData.Item item = clipData.getItemAt(i);
+                            String path = getRealPathFromURI(item.getUri());
+                            mDatasetPhotos.add(path);
                         }
-
-
-
-                        //Toast.makeText(this, clipData.getItemCount() + "", Toast.LENGTH_SHORT).show();
                     }
 
-                    /*
-                    ClipData clipData = imageReturnedIntent.getClipData();
-                    for (int i = 0; i < clipData.getItemCount(); i++)
-                    {
-                        Uri uri = clipData.getItemAt(i).getUri();
-                    }
-                    */
-
-                    /*
-                    ArrayList<Parcelable> list = imageReturnedIntent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-                    for (Parcelable parcel : list) {
-                        Uri uri = (Uri) parcel;
-                        /// do things here.
-                    }
-                    */
-
-                    /*
-                    ClipData clipData = imageReturnedIntent.getClipData();
-                    for(int i = 0; i < clipData.getItemCount(); i++) {
-                        ClipData.Item item =  clipData.getItemAt(i);
-                        Uri uri = item.getUri();
-
-                        // Process the uri...
-                    }
-                    */
-
-
-
-                    /*
-                    Cursor cursor = getContentResolver().query(selectedImage,
-                            filePathColumn, null, null, null);
-                    cursor.moveToFirst();
-
-                    int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
-                    String picturePath = cursor.getString(columnIndex);
-                    cursor.close();
-                    */
-
-
-                    //ImageView imageView = (ImageView) findViewById(R.id.imageView);
-                    //imageView.setImageBitmap(BitmapFactory.decodeFile(picturePath));
+                    mAdapterPhotos.notifyDataSetChanged();
                 }
                 break;
         }
+    }
+
+    private void checkPermissionReadExternalStorage() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PermissionChecker.PERMISSION_GRANTED) {
+            // The permission is not granted.  Request from the user.
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                AlertDialog dialog = new AlertDialog.Builder(this)
+                        .setTitle(getString(R.string.dialog_title_permission_requested))
+                        .setMessage(getString(R.string.permission_rationale_storage))
+                        .setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Positive button has same
+                                dialog.dismiss();
+                            }
+                        })
+                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                                // When the dialog is dismissed, request the permission
+                                ActivityCompat.requestPermissions(UploadActivity.this,
+                                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
+                            }
+                        })
+                        .create();
+                dialog.show(); // Show the dialog
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
+            }
+
+        }
+    }
+
+    public String getRealPathFromURI(Uri uri) {
+        String filePath = "";
+        String wholeID = DocumentsContract.getDocumentId(uri);
+
+        // Split at colon, use second item in the array
+        String id = wholeID.split(":")[1];
+
+        String[] column = {MediaStore.Images.Media.DATA};
+
+        // where id is equal to
+        String sel = MediaStore.Images.Media._ID + "=?";
+
+        Cursor cursor = this.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                column, sel, new String[]{id}, null);
+
+        int columnIndex = cursor.getColumnIndex(column[0]);
+
+        if (cursor.moveToFirst()) {
+            filePath = cursor.getString(columnIndex);
+        }
+        cursor.close();
+        return filePath;
     }
 }
