@@ -1,8 +1,13 @@
 package com.example.owl.adapters;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.PermissionChecker;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +18,7 @@ import android.widget.Toast;
 import com.example.owl.R;
 import com.example.owl.activities.UploadActivity;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -48,7 +54,7 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
     public void onBindViewHolder(UploadPhotosRecyclerAdapter.ViewHolder holder, int position) {
 
         // If it is the last item in the list, then it is the "Add Photo" item
-        if(position == mData.size()) {
+        if (position == mData.size()) {
             holder.mImageView.setImageResource(R.drawable.ic_add);
             final int padding = 10;
             holder.mImageView.setPadding(padding, padding, padding, padding);
@@ -56,18 +62,32 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
             holder.mImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+
                     // Allow user to select photo(s)
                     Intent intent = new Intent();
                     intent.setType("image/*");
                     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                     intent.setAction(Intent.ACTION_GET_CONTENT);
-                    ((Activity) mContext).startActivityForResult(Intent.createChooser(intent,"Select Picture"), 100);
+                    ((Activity) mContext).startActivityForResult(
+                            Intent.createChooser(intent, "Select Picture"),
+                            UploadActivity.REQUEST_SELECT_PHOTOS);
                 }
             });
         } else {
-            // Otherwise, set the photo
-            String string = mData.get(position);
+            // Otherwise, set the ImageView to the selected photo
+            String path = mData.get(position); // Path to the selected image
             //holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
+
+            File imgFile = new File(path);
+
+            if (imgFile.exists()) {
+
+                Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+
+                holder.mImageView.setImageBitmap(myBitmap);
+
+            }
+
         }
 
     }
@@ -75,7 +95,7 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
     // total number of cells
     @Override
     public int getItemCount() {
-        return mData.size() +  1;
+        return mData.size() + 1;
     }
 
 

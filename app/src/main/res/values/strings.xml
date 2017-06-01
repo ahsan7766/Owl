@@ -36,4 +36,9 @@
     <string name="hoots">Hoots</string>
     <string name="followers">Followers</string>
     <string name="following">Following</string>
+
+
+    <string name="dialog_title_permission_requested">Permission Request</string>
+    <string name="permission_rationale_storage">Device storage permissions
+        are needed for uploading photos.</string>
 </resources>

@@ -35,6 +35,8 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG = MainActivity.class.getName();
 
     public static final String OPEN_FRAGMENT_CANVAS = "OPEN_FRAGMENT_CANVAS";
+    public static final int PERMISSION_READ_EXTERNAL_STORAGE = 100;
+
 
     private FloatingActionButton mFab;
 
