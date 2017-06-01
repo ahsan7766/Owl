@@ -27,14 +27,14 @@ import java.util.ArrayList;
 
 public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhotosRecyclerAdapter.ViewHolder> {
 
-    private ArrayList<String> mData = new ArrayList<>();
+    private ArrayList<Bitmap> mData = new ArrayList<>();
     private LayoutInflater mInflater;
     private UploadPhotosRecyclerAdapter.ItemClickListener mClickListener;
 
     private Context mContext;
 
     // data is passed into the constructor
-    public UploadPhotosRecyclerAdapter(Context context, ArrayList<String> data) {
+    public UploadPhotosRecyclerAdapter(Context context, ArrayList<Bitmap> data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
@@ -56,7 +56,7 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
         // If it is the last item in the list, then it is the "Add Photo" item
         if (position == mData.size()) {
             holder.mImageView.setImageResource(R.drawable.ic_add);
-            final int padding = 10;
+            final int padding = 25;
             holder.mImageView.setPadding(padding, padding, padding, padding);
 
             holder.mImageView.setOnClickListener(new View.OnClickListener() {
@@ -75,6 +75,7 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
             });
         } else {
             // Otherwise, set the ImageView to the selected photo
+            /*
             String path = mData.get(position); // Path to the selected image
             //holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
 
@@ -82,11 +83,39 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
 
             if (imgFile.exists()) {
 
-                Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                // Crop bitmap before displaying
+                Bitmap srcBmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                Bitmap dstBmp;
 
-                holder.mImageView.setImageBitmap(myBitmap);
+                if (srcBmp.getWidth() >= srcBmp.getHeight()){
+
+                    dstBmp = Bitmap.createBitmap(
+                            srcBmp,
+                            srcBmp.getWidth()/2 - srcBmp.getHeight()/2,
+                            0,
+                            srcBmp.getHeight(),
+                            srcBmp.getHeight()
+                    );
+
+                }else{
+
+                    dstBmp = Bitmap.createBitmap(
+                            srcBmp,
+                            0,
+                            srcBmp.getHeight()/2 - srcBmp.getWidth()/2,
+                            srcBmp.getWidth(),
+                            srcBmp.getWidth()
+                    );
+                }
+
+                holder.mImageView.setImageBitmap(dstBmp);
+
 
             }
+            */
+
+            Bitmap bitmap = mData.get(position);
+            holder.mImageView.setImageBitmap(bitmap);
 
         }
 
@@ -101,13 +130,10 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        //public ProfilePictureView mProfilePictureView;
         public ImageView mImageView;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            //mFeedCategoryView = (FeedCategoryView) itemView.findViewById(R.id.feed_category);
-            //mProfilePictureView = (ProfilePictureView) itemView.findViewById(R.id.profile_picture);
             mImageView = (ImageView) itemView.findViewById(R.id.image);
             itemView.setOnClickListener(this);
         }
@@ -119,7 +145,7 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
     }
 
     // convenience method for getting data at click position
-    public String getItem(int id) {
+    public Bitmap getItem(int id) {
         return mData.get(id);
     }
 

@@ -47,12 +47,12 @@ public class UploadActivity extends AppCompatActivity
     private RecyclerView mRecyclerViewPhotos;
     private LinearLayoutManager mLayoutManagerPhotos;
     private UploadPhotosRecyclerAdapter mAdapterPhotos;
-    private ArrayList<String> mDatasetPhotos = new ArrayList<>();
+    private ArrayList<Bitmap> mDatasetPhotos = new ArrayList<>();
 
     private RecyclerView mRecyclerViewStack;
     private LinearLayoutManager mLayoutManagerStack;
     private UploadStackRecyclerAdapter mAdapterStack;
-    private String[] mDatasetStack = new String[8];
+    private String[] mDatasetStack = new String[0];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,12 +90,16 @@ public class UploadActivity extends AppCompatActivity
         mRecyclerViewPhotos.setAdapter(mAdapterPhotos);
 
 
+
+
+
         // Setup Stack Recycler
         // Initialize RecyclerView
         mRecyclerViewStack = (RecyclerView) findViewById(R.id.recycler_upload_stack);
 
-        // Initialize Dataset
+        // Initialize Stack Dataset
         // TODO Initialize Dataset
+        initDatasetStacks();
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
@@ -114,6 +118,7 @@ public class UploadActivity extends AppCompatActivity
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerViewStack.setAdapter(mAdapterStack);
+
 
 
         // Check for READ_EXTERNAL_STORAGE permission to read photos
@@ -205,18 +210,23 @@ public class UploadActivity extends AppCompatActivity
 
                     if (selectedImage != null) {
                         // One image was selected
-
                         String path = getRealPathFromURI(selectedImage);
-                        mDatasetPhotos.add(path);
+                        Bitmap bitmap = generateCroppedBitmap(path);
+                        if(bitmap != null) {
+                            mDatasetPhotos.add(bitmap);
+                        }
                     } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
-                        // Multiple images selected/
+                        // Multiple images selected
 
                         ClipData clipData = imageReturnedIntent.getClipData();
 
                         for (int i = 0; i < clipData.getItemCount(); i++) {
                             ClipData.Item item = clipData.getItemAt(i);
                             String path = getRealPathFromURI(item.getUri());
-                            mDatasetPhotos.add(path);
+                            Bitmap bitmap = generateCroppedBitmap(path);
+                            if(bitmap != null) {
+                                mDatasetPhotos.add(bitmap);
+                            }
                         }
                     }
 
@@ -293,5 +303,48 @@ public class UploadActivity extends AppCompatActivity
         }
         cursor.close();
         return filePath;
+    }
+
+    private Bitmap generateCroppedBitmap(String path) {
+        File imgFile = new File(path);
+
+        if (!imgFile.exists()) {
+            return null;
+        }
+
+        Bitmap srcBmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+        Bitmap dstBmp;
+
+        if (srcBmp.getWidth() >= srcBmp.getHeight()){
+
+            dstBmp = Bitmap.createBitmap(
+                    srcBmp,
+                    srcBmp.getWidth()/2 - srcBmp.getHeight()/2,
+                    0,
+                    srcBmp.getHeight(),
+                    srcBmp.getHeight()
+            );
+
+        }else{
+
+            dstBmp = Bitmap.createBitmap(
+                    srcBmp,
+                    0,
+                    srcBmp.getHeight()/2 - srcBmp.getWidth()/2,
+                    srcBmp.getWidth(),
+                    srcBmp.getWidth()
+            );
+        }
+        return dstBmp;
+    }
+
+    /**
+     *  Initialize stack dataset
+     *  Retrieve the list of the user's stacks
+     */
+    private void initDatasetStacks() {
+        // TODO replace fake data generation with pull form web
+        mDatasetStack =  new String[] { "Stack Name 1", "Stack Name 2", "Stack Name 3", "Stack Name 4", "Stack Name 5"};
+
     }
 }

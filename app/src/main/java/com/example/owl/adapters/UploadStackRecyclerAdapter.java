@@ -6,8 +6,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RadioButton;
+import android.widget.TextView;
 
 import com.example.owl.R;
+
+import org.w3c.dom.Text;
 
 /**
  * Created by Zach on 5/26/17.
@@ -18,7 +21,6 @@ public class UploadStackRecyclerAdapter extends RecyclerView.Adapter<UploadStack
     private String[] mData = new String[0];
     private LayoutInflater mInflater;
     private UploadStackRecyclerAdapter.ItemClickListener mClickListener;
-
 
     private int mSelectedPos = -1;
 
@@ -40,8 +42,9 @@ public class UploadStackRecyclerAdapter extends RecyclerView.Adapter<UploadStack
     @Override
     public void onBindViewHolder(final UploadStackRecyclerAdapter.ViewHolder holder, final int position) {
         String string = mData[position];
-        holder.mRadioButton.setChecked(position == mSelectedPos);
 
+        holder.mTextStackName.setText(string);
+        holder.mRadioButton.setChecked(position == mSelectedPos);
         holder.mRadioButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -61,13 +64,12 @@ public class UploadStackRecyclerAdapter extends RecyclerView.Adapter<UploadStack
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        //public ProfilePictureView mProfilePictureView;
+        public TextView mTextStackName;
         public RadioButton mRadioButton;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            //mFeedCategoryView = (FeedCategoryView) itemView.findViewById(R.id.feed_category);
-            //mProfilePictureView = (ProfilePictureView) itemView.findViewById(R.id.profile_picture);
+            mTextStackName = (TextView) itemView.findViewById(R.id.text_stack_name);
             mRadioButton = (RadioButton) itemView.findViewById(R.id.radio_button);
             itemView.setOnClickListener(this);
         }
