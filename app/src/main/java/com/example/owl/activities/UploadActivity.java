@@ -10,10 +10,13 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
@@ -23,24 +26,38 @@ import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.Bucket;
 import com.example.owl.R;
 import com.example.owl.adapters.UploadPhotosRecyclerAdapter;
 import com.example.owl.adapters.UploadStackRecyclerAdapter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.util.ArrayList;
+import java.util.List;
 
 public class UploadActivity extends AppCompatActivity
         implements UploadPhotosRecyclerAdapter.ItemClickListener,
         UploadStackRecyclerAdapter.ItemClickListener {
+
+    private static final String TAG = UploadActivity.class.getName();
 
     public static final int REQUEST_SELECT_PHOTOS = 100;
 
@@ -53,6 +70,8 @@ public class UploadActivity extends AppCompatActivity
     private LinearLayoutManager mLayoutManagerStack;
     private UploadStackRecyclerAdapter mAdapterStack;
     private String[] mDatasetStack = new String[0];
+
+    private FloatingActionButton mFab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +140,101 @@ public class UploadActivity extends AppCompatActivity
 
 
 
+        // When the FAB is clicked, upload the photos
+        mFab = (FloatingActionButton) findViewById(R.id.fab);
+        mFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                // Do not allow upload if no photos are selected
+                if(mDatasetPhotos.size() <= 0) {
+                    Toast.makeText(UploadActivity.this, "No Photos Selected", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // Do not allow upload if no stack is selected
+                if(mAdapterStack.getSelectedPos() <= -1) {
+                    Toast.makeText(UploadActivity.this, "No Stack Selected", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+
+
+                // Initialize the Amazon Cognito credentials provider
+                CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                        getApplicationContext(),
+                        "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e", // Identity Pool ID
+                        Regions.US_EAST_1 // Region
+                );
+
+                AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
+                TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
+
+
+
+                //new TempTask().execute();
+
+                // Loop through each file to upload
+                int count = 1;
+                for(Bitmap bitmap : mDatasetPhotos) {
+                    // Convert bitmap to file
+
+                    try {
+                        /*
+                        File f = new File(getCacheDir(), "test"); // Test is file name
+                        f.createNewFile();
+
+                        //Convert bitmap to byte array
+                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        bitmap.compress(Bitmap.CompressFormat.PNG, 0 , bos); // Quality is ignored for PNGs
+                        byte[] bitmapdata = bos.toByteArray();
+
+                        //write the bytes in file
+                        FileOutputStream fos = new FileOutputStream(f);
+                        fos.write(bitmapdata);
+                        fos.flush();
+                        fos.close();
+                        */
+
+
+                        File f = new File(getCacheDir(), "test"); // Test is file name
+                        FileOutputStream fos = new FileOutputStream(f);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos);
+
+
+                        // Upload file
+                        TransferObserver observer = transferUtility.upload(
+                                "owl-aws",     /* The bucket to upload to */
+                                Integer.toString(count),    /* The key for the uploaded object */
+                                f        /* The file where the data to upload exists */
+                        );
+
+
+                        Toast.makeText(UploadActivity.this, "Photo Uploaded.. " + observer.getBytesTotal(), Toast.LENGTH_SHORT).show();
+
+                        
+                        /*
+                        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + "trees.jpg");
+
+                        TransferObserver observer2 = transferUtility.download(
+                                "owl-aws",     // The bucket to download from
+                                "trees.jpg",    // The key for the object to download
+                                file        // The file to download the object to
+                        );
+                        */
+
+                    }catch (IOException e) {
+                        Log.e(TAG, "Error during conversion from bitmap to file.");
+                    }
+                    count++;
+                }
+
+
+            }
+        });
+
+
+
         // Check for READ_EXTERNAL_STORAGE permission to read photos
         // Note: After Research (as of SDK 25) if any permission is changed to denied while in an
         // application, and that app is returned to, then the activity that was running is
@@ -128,6 +242,50 @@ public class UploadActivity extends AppCompatActivity
         // onCreate of activities, and do NOT need to checked every time the activity is resumed
         checkPermissionReadExternalStorage();
 
+    }
+
+
+    class TempTask extends AsyncTask<String, Void, String> {
+
+        protected String doInBackground(String... urls) {
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getApplicationContext(),
+                    "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e", // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
+            TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
+
+
+            try {
+
+
+                Bitmap bitmap = mDatasetPhotos.get(0);
+                File f = new File(getCacheDir(), "test"); // Test is file name
+                FileOutputStream fos = new FileOutputStream(f);
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos);
+
+
+                // Upload file
+                TransferObserver observer = transferUtility.upload(
+                        "owl-aws",     /* The bucket to upload to */
+                        "1",    /* The key for the uploaded object */
+                        f        /* The file where the data to upload exists */
+                );
+            } catch (Exception e){
+                Log.e(TAG, "problem");
+            }
+
+            return "";
+        }
+
+        protected void onPostExecute(String string) {
+            // TODO: check this.exception
+            // TODO: do something with the feed
+        }
     }
 
 
@@ -347,4 +505,5 @@ public class UploadActivity extends AppCompatActivity
         mDatasetStack =  new String[] { "Stack Name 1", "Stack Name 2", "Stack Name 3", "Stack Name 4", "Stack Name 5"};
 
     }
+
 }

@@ -94,4 +94,8 @@ public class UploadStackRecyclerAdapter extends RecyclerView.Adapter<UploadStack
     public interface ItemClickListener {
         void onItemClick(View view, int position);
     }
+
+    public int getSelectedPos() {
+        return mSelectedPos;
+    }
 }
