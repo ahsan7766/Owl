@@ -2,7 +2,6 @@ package com.example.owl.activities;
 
 import android.Manifest;
 import android.content.ClipData;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,8 +10,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Environment;
-import android.os.Parcelable;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -29,29 +26,24 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.Bucket;
 import com.example.owl.R;
 import com.example.owl.adapters.UploadPhotosRecyclerAdapter;
 import com.example.owl.adapters.UploadStackRecyclerAdapter;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.security.Permission;
-import java.security.PermissionCollection;
 import java.util.ArrayList;
-import java.util.List;
 
 public class UploadActivity extends AppCompatActivity
         implements UploadPhotosRecyclerAdapter.ItemClickListener,
@@ -172,7 +164,7 @@ public class UploadActivity extends AppCompatActivity
 
 
 
-                //new TempTask().execute();
+                new UploadTask().execute();
 
                 // Loop through each file to upload
                 int count = 1;
@@ -205,14 +197,14 @@ public class UploadActivity extends AppCompatActivity
                         // Upload file
                         TransferObserver observer = transferUtility.upload(
                                 "owl-aws",     /* The bucket to upload to */
-                                Integer.toString(count),    /* The key for the uploaded object */
+                                count + ".jpg",    /* The key for the uploaded object */
                                 f        /* The file where the data to upload exists */
                         );
 
 
-                        Toast.makeText(UploadActivity.this, "Photo Uploaded.. " + observer.getBytesTotal(), Toast.LENGTH_SHORT).show();
+                        Toast.makeText(UploadActivity.this, "Photo Uploaded", Toast.LENGTH_SHORT).show();
 
-                        
+
                         /*
                         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + "trees.jpg");
 
@@ -245,9 +237,9 @@ public class UploadActivity extends AppCompatActivity
     }
 
 
-    class TempTask extends AsyncTask<String, Void, String> {
+    private class UploadTask extends AsyncTask<Void, Void, Void> {
 
-        protected String doInBackground(String... urls) {
+        protected Void doInBackground(Void... urls) {
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
@@ -264,7 +256,7 @@ public class UploadActivity extends AppCompatActivity
 
 
                 Bitmap bitmap = mDatasetPhotos.get(0);
-                File f = new File(getCacheDir(), "test"); // Test is file name
+                File f = new File(getCacheDir(), "temp"); // Test is file name
                 FileOutputStream fos = new FileOutputStream(f);
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos);
 
@@ -272,17 +264,51 @@ public class UploadActivity extends AppCompatActivity
                 // Upload file
                 TransferObserver observer = transferUtility.upload(
                         "owl-aws",     /* The bucket to upload to */
-                        "1",    /* The key for the uploaded object */
+                        "1" + ".jpg",    /* The key for the uploaded object */
                         f        /* The file where the data to upload exists */
                 );
+
+
+                observer.setTransferListener(new TransferListener() {
+                    @Override
+                    public void onStateChanged(int id, TransferState state) {
+                        Log.d(TAG, "StateChanged: " + state);
+                        if (TransferState.COMPLETED.equals(state)) {
+                            // Upload Completed
+                            Log.d(TAG, "Upload finished");
+
+
+                            // TODO Go to the stack/photo that was just uploaded and also show a message saying upload is complete
+                            finish();
+                        }
+                    }
+
+                    @Override
+                    public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
+                        // TODO make a progress bar that uses this data
+                    }
+
+                    @Override
+                    public void onError(int id, Exception ex) {
+                        Log.e(TAG, "Error on upload: " + ex);
+
+                    }
+                });
+
             } catch (Exception e){
                 Log.e(TAG, "problem");
             }
 
-            return "";
+            return null;
         }
 
-        protected void onPostExecute(String string) {
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Void result) {
             // TODO: check this.exception
             // TODO: do something with the feed
         }
