@@ -38,7 +38,7 @@ public class FriendsRecyclerAdapter extends RecyclerView.Adapter<FriendsRecycler
     public void onBindViewHolder(FriendsRecyclerAdapter.ViewHolder holder, int position) {
         String string = mData[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
-        //holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
+        //holder.mFeedCategoryView.setPhotoCount(feedCategory.getPhotoCount());
         holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
 
     }

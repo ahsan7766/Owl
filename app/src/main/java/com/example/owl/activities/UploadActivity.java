@@ -152,6 +152,7 @@ public class UploadActivity extends AppCompatActivity
 
 
 
+                /*
                 // Initialize the Amazon Cognito credentials provider
                 CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                         getApplicationContext(),
@@ -161,51 +162,33 @@ public class UploadActivity extends AppCompatActivity
 
                 AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
                 TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
+                */
 
 
 
                 new UploadTask().execute();
 
+                /*
                 // Loop through each file to upload
                 int count = 1;
                 for(Bitmap bitmap : mDatasetPhotos) {
                     // Convert bitmap to file
 
                     try {
-                        /*
                         File f = new File(getCacheDir(), "test"); // Test is file name
-                        f.createNewFile();
-
-                        //Convert bitmap to byte array
-                        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        bitmap.compress(Bitmap.CompressFormat.PNG, 0 , bos); // Quality is ignored for PNGs
-                        byte[] bitmapdata = bos.toByteArray();
-
-                        //write the bytes in file
-                        FileOutputStream fos = new FileOutputStream(f);
-                        fos.write(bitmapdata);
-                        fos.flush();
-                        fos.close();
-                        */
-
-
-                        File f = new File(getCacheDir(), "test"); // Test is file name
-                        FileOutputStream fos = new FileOutputStream(f);
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos);
-
+                        FileOutputStream fos = new FileOutputStream(f);  // TODO flush and close fos
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos); //Note: quality is ignored for PNGs
 
                         // Upload file
                         TransferObserver observer = transferUtility.upload(
-                                "owl-aws",     /* The bucket to upload to */
-                                count + ".jpg",    /* The key for the uploaded object */
-                                f        /* The file where the data to upload exists */
+                                "owl-aws",     // The bucket to upload to
+                                count + ".jpg",    // The key for the uploaded object
+                                f        // The file where the data to upload exists
                         );
-
 
                         Toast.makeText(UploadActivity.this, "Photo Uploaded", Toast.LENGTH_SHORT).show();
 
 
-                        /*
                         File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + "trees.jpg");
 
                         TransferObserver observer2 = transferUtility.download(
@@ -213,14 +196,14 @@ public class UploadActivity extends AppCompatActivity
                                 "trees.jpg",    // The key for the object to download
                                 file        // The file to download the object to
                         );
-                        */
+
 
                     }catch (IOException e) {
                         Log.e(TAG, "Error during conversion from bitmap to file.");
                     }
                     count++;
                 }
-
+                */
 
             }
         });
@@ -264,7 +247,7 @@ public class UploadActivity extends AppCompatActivity
                 // Upload file
                 TransferObserver observer = transferUtility.upload(
                         "owl-aws",     /* The bucket to upload to */
-                        "1" + ".jpg",    /* The key for the uploaded object */
+                        "1" + ".bmp",    /* The key for the uploaded object */
                         f        /* The file where the data to upload exists */
                 );
 

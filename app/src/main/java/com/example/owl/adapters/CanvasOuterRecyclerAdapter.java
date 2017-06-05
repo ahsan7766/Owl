@@ -76,7 +76,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     public void onBindViewHolder(CanvasOuterRecyclerAdapter.ViewHolder holder, int position) {
         CanvasTile[] canvasTile = mDataset[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
-        //holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
+        //holder.mFeedCategoryView.setPhotoCount(feedCategory.getPhotoCount());
 
         //initDataset();
     }

@@ -39,7 +39,7 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     public void onBindViewHolder(CanvasInnerRecyclerAdapter.ViewHolder holder, int position) {
         CanvasTile canvasTile = mData[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
-        //holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
+        //holder.mFeedCategoryView.setPhotoCount(feedCategory.getPhotoCount());
 
         holder.mTextView.setText(canvasTile.getText());
     }

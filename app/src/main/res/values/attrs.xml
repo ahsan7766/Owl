@@ -7,9 +7,9 @@
         <attr name="followingCount" format="integer" />
     </declare-styleable>
 
-    <declare-styleable name="FeedCategoryView">
-        <attr name="Header" format="string"/>
-        <attr name="postCount" format="integer"/>
+    <declare-styleable name="FeedItemView">
+        <attr name="header" format="string"/>
+        <attr name="photoCount" format="integer"/>
     </declare-styleable>
 
     <declare-styleable name="ProfilePictureView">

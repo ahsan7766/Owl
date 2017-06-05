@@ -7,8 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.owl.R;
-import com.example.owl.models.FeedCategory;
-import com.example.owl.views.FeedCategoryView;
+import com.example.owl.models.FeedItem;
+import com.example.owl.views.FeedItemView;
+
+import java.util.ArrayList;
 
 /**
  * Created by Zach on 5/22/17.
@@ -16,25 +18,25 @@ import com.example.owl.views.FeedCategoryView;
 
 public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapter.ViewHolder> {
 
-    private FeedCategory[] mData = new FeedCategory[0];
+    private ArrayList<FeedItem> mData = new ArrayList<>();
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
 
 
     // data is passed into the constructor
-    public FeedRecyclerAdapter(Context context, FeedCategory[] data) {
+    public FeedRecyclerAdapter(Context context, ArrayList<FeedItem> data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
 
     // Clean all elements of the recycler
     public void clear() {
-        mData = new FeedCategory[0];
+        mData = new ArrayList<>();
         notifyDataSetChanged();
     }
 
     // Add a list of items
-    public void addAll(FeedCategory[] data) {
+    public void addAll(ArrayList<FeedItem> data) {
         mData = data;
         notifyDataSetChanged();
     }
@@ -50,25 +52,26 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     // binds the data to the textview in each cell
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        FeedCategory feedCategory = mData[position];
-        holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
-        holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
+        FeedItem feedItem = mData.get(position);
+        holder.mFeedItemView.setHeader(feedItem.getHeader());
+        holder.mFeedItemView.setPhotoCount(feedItem.getPhotoCount());
+
     }
 
     // total number of cells
     @Override
     public int getItemCount() {
-        return mData.length;
+        return mData.size();
     }
 
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        public FeedCategoryView mFeedCategoryView;
+        public FeedItemView mFeedItemView;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            mFeedCategoryView = (FeedCategoryView) itemView.findViewById(R.id.feed_category);
+            mFeedItemView = (FeedItemView) itemView.findViewById(R.id.feed_category);
             itemView.setOnClickListener(this);
         }
 
@@ -79,8 +82,8 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     }
 
     // convenience method for getting data at click position
-    public FeedCategory getItem(int id) {
-        return mData[id];
+    public FeedItem getItem(int id) {
+        return mData.get(id);
     }
 
     // allows clicks events to be caught

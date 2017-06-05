@@ -5,29 +5,6 @@
     android:layout_height="match_parent"
     tools:context="com.example.owl.fragments.FeedFragment">
 
-    <!--
-    <TextView
-        android:id="@+id/text_header"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginLeft="40dp"
-        android:layout_marginStart="40dp"
-        android:gravity="center_vertical|start"
-        android:text="Most Hooted"
-        android:textSize="40sp"
-        android:textStyle="bold"/>
-        -->
-
-    <!--
-    <TextView
-        android:id="@+id/text_subheader"
-        android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:layout_margin="10dp"
-        android:gravity="center_vertical|start"
-        android:text="Hello, John Doe"
-        android:textSize="20sp"/>
-        -->
 
     <android.support.v4.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresh"

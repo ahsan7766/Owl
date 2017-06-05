@@ -5,7 +5,7 @@
     android:layout_height="350dp"
     android:orientation="vertical">
 
-    <com.example.owl.views.FeedCategoryView
+    <com.example.owl.views.FeedItemView
         android:id="@+id/feed_category"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

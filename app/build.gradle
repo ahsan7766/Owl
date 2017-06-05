@@ -37,7 +37,10 @@ dependencies {
     compile 'com.amazonaws:aws-android-sdk-s3:2.4.3'
     compile 'com.amazonaws:aws-android-sdk-cognito:2.4.3'
     compile 'com.amazonaws:aws-android-sdk-cognitoidentityprovider:2.4.3'
-    compile 'com.amazonaws:aws-android-sdk-sdb:2.4.3'
+    compile 'com.amazonaws:aws-android-sdk-ddb:2.4.3'
+    compile 'com.amazonaws:aws-android-sdk-ddb-mapper:2.4.3'
+
+    compile 'joda-time:joda-time:2.9.9'
 
     compile 'io.reactivex.rxjava2:rxjava:2.1.0'
 

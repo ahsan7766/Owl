@@ -36,7 +36,7 @@ public class ProfilePictureView extends View {
      * item changes.
      */
     public interface OnCurrentItemChangedListener {
-        void OnCurrentItemChanged(FeedCategoryView source, int currentItem);
+        void OnCurrentItemChanged(FeedItemView source, int currentItem);
     }
 
     /**

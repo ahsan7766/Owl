@@ -39,7 +39,7 @@ public class CommentsRecyclerAdapter extends RecyclerView.Adapter<CommentsRecycl
     public void onBindViewHolder(CommentsRecyclerAdapter.ViewHolder holder, int position) {
         Comment comment = mData[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
-        //holder.mFeedCategoryView.setPostCount(feedCategory.getPostCount());
+        //holder.mFeedCategoryView.setPhotoCount(feedCategory.getPhotoCount());
         holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
     }
 

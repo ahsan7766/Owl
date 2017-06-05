@@ -2,6 +2,7 @@ package com.example.owl.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -18,12 +19,13 @@ import com.example.owl.R;
  * Created by Zach on 5/23/17.
  */
 
-public class FeedCategoryView extends View {
+public class FeedItemView extends View {
 
     private Drawable mBackgroundDrawable;
 
     private String mHeaderString;
-    private int mPostCount;
+    private int mPhotoCount;
+    private Bitmap mBackground;
 
     private Paint mOutlinePaint;
     private Paint mHeaderTextPaint;
@@ -38,36 +40,36 @@ public class FeedCategoryView extends View {
      * item changes.
      */
     public interface OnCurrentItemChangedListener {
-        void OnCurrentItemChanged(FeedCategoryView source, int currentItem);
+        void OnCurrentItemChanged(FeedItemView source, int currentItem);
     }
 
     /**
      * Class constructor taking only a context. Use this constructor to create
-     * {@link FeedCategoryView} objects from your own code.
+     * {@link FeedItemView} objects from your own code.
      *
      * @param context
      */
-    public FeedCategoryView(Context context) {
+    public FeedItemView(Context context) {
         super(context);
         init();
     }
 
     /**
      * Class constructor taking a context and an attribute set. This constructor
-     * is used by the layout engine to construct a {@link FeedCategoryView} from a set of
+     * is used by the layout engine to construct a {@link FeedItemView} from a set of
      * XML attributes.
      *
      * @param context
      * @param attrs   An attribute set which can contain attributes from
-     *                {@link FeedCategoryView} as well as attributes inherited
+     *                {@link FeedItemView} as well as attributes inherited
      *                from {@link android.view.View}.
      */
-    public FeedCategoryView(Context context, AttributeSet attrs) {
+    public FeedItemView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         TypedArray a = context.getTheme().obtainStyledAttributes(
                 attrs,
-                R.styleable.ProfileCounterView,
+                R.styleable.FeedItemView,
                 0, 0
         );
 
@@ -92,8 +94,8 @@ public class FeedCategoryView extends View {
             mBackgroundColor = a.getColor(R.styleable.BowlingFrame_backgroundColor, Color.TRANSPARENT);
             mFrameColor = a.getColor(R.styleable.BowlingFrame_frameColor, Color.BLACK);
             */
-            mHeaderString = a.getString(R.styleable.FeedCategoryView_Header);
-            mPostCount = a.getInt(R.styleable.FeedCategoryView_postCount, 0);
+            mHeaderString = a.getString(R.styleable.FeedItemView_header);
+            mPhotoCount = a.getInt(R.styleable.FeedItemView_photoCount, 0);
         } finally {
             // release the TypedArray so that it can be reused.
             a.recycle();
@@ -111,12 +113,12 @@ public class FeedCategoryView extends View {
         invalidate();
     }
 
-    private Integer getPostCount() {
-        return mPostCount;
+    private Integer getPhotoCount() {
+        return mPhotoCount;
     }
 
-    public void setPostCount(Integer postCount) {
-        mPostCount = postCount;
+    public void setPhotoCount(Integer photoCount) {
+        mPhotoCount = photoCount;
         invalidate();
     }
 
@@ -154,7 +156,7 @@ public class FeedCategoryView extends View {
         );
 
         // Sub-header text
-        String postCountString = getPostCount().toString() + " " + getResources().getString(R.string.photos);
+        String postCountString = getPhotoCount().toString() + " " + getResources().getString(R.string.photos);
         mSubheaderTextPaint.getTextBounds(postCountString, 0, postCountString.length(), mSubheaderTextBounds);
         canvas.drawText(
                 postCountString,
