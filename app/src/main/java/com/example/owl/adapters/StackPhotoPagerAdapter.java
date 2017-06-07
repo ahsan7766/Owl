@@ -7,7 +7,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import com.example.owl.fragments.StackPhotoPagerFragment;
 
 /**
- * Created by admin on 5/24/17.
+ * Created by Zach on 5/24/17.
  */
 
 public class StackPhotoPagerAdapter extends FragmentStatePagerAdapter {

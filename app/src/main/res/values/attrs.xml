@@ -10,6 +10,7 @@
     <declare-styleable name="FeedItemView">
         <attr name="header" format="string"/>
         <attr name="photoCount" format="integer"/>
+        <attr name="photo" format="string"/>
     </declare-styleable>
 
     <declare-styleable name="ProfilePictureView">

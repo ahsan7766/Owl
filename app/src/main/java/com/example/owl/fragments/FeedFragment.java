@@ -3,6 +3,7 @@ package com.example.owl.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,12 +22,19 @@ import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
+import com.amazonaws.services.dynamodbv2.model.Condition;
+import com.amazonaws.services.dynamodbv2.model.QueryRequest;
+import com.amazonaws.services.dynamodbv2.model.QueryResult;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.example.owl.activities.MainActivity;
@@ -45,6 +54,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 
@@ -76,7 +87,7 @@ public class FeedFragment extends Fragment
     protected RecyclerView mRecyclerView;
     protected FeedRecyclerAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
-    protected ArrayList<FeedItem> mDataset;
+    protected ArrayList<FeedItem> mDataset = new ArrayList<>();
 
 
     private OnFragmentInteractionListener mListener;
@@ -250,15 +261,16 @@ public class FeedFragment extends Fragment
     private void initDataset() {
 
 
-
         new DownloadTask().execute();
 
 
+        /*
         mDataset = new ArrayList<>();
         for (int i = 0; i < DATASET_COUNT; i++) {
             Random r = new Random();
             mDataset.add(new FeedItem(1, "Category #" + i, r.nextInt(50)));
         }
+        */
 
 
     }
@@ -344,18 +356,52 @@ public class FeedFragment extends Fragment
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
 
-            // Get date string
-            DateTime dt = new DateTime(DateTimeZone.UTC);
-            DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
-            String str = fmt.print(dt);
+            // Query for photos
+            Photo queryPhoto = new Photo();
+            queryPhoto.setUserId("0");
 
-            // Test writing to DB
-            Photo photo = new Photo();
-            photo.setPhotoId("1");
-            photo.setUploadDate(str);
+            // Create our map of values
+            Map keyConditions = new HashMap();
+
+            String userId = "0";
+
+            // Specify the key conditions
+            Condition hashKeyCondition = new Condition()
+                    .withComparisonOperator(ComparisonOperator.EQ.toString())
+                    .withAttributeValueList(new AttributeValue().withS(userId));
+
+            //keyConditions.put("UserId", hashKeyCondition);
 
 
-            mapper.save(photo);
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    .withIndexName("UserId-UploadDate-index")
+                    .withHashKeyValues(queryPhoto)
+                    //.withRangeKeyCondition("Title", rangeKeyCondition)
+                    .withConsistentRead(false);
+
+            PaginatedQueryList<Photo> result = mapper.query(Photo.class, queryExpression);
+
+
+            // Convert the photo list to a FeedItem list
+            for (Photo photo : result) {
+                // Convert the photo string to a bitmap
+                String photoString = photo.getPhoto();
+                Bitmap bitmap;
+                if (photoString == null || photoString.length() <= 0) {
+                    continue;
+                }
+                try {
+                    byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
+                    bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+                } catch (Exception e) {
+                    Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+                    continue;
+                }
+
+                FeedItem feedItem = new FeedItem(photo.getPhotoId(), bitmap, "Stack Title", 4);
+                mDataset.add(feedItem);
+            }
+
 
             return null;
         }
@@ -369,6 +415,7 @@ public class FeedFragment extends Fragment
         protected void onPostExecute(Void result) {
             // TODO: check this.exception
             // TODO: do something with the feed
+            mAdapter.notifyDataSetChanged();
         }
     }
 

@@ -1,6 +1,7 @@
 package com.example.owl.activities;
 
 import android.Manifest;
+import android.app.Instrumentation;
 import android.content.ClipData;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -23,23 +24,33 @@ import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.example.owl.R;
 import com.example.owl.adapters.UploadPhotosRecyclerAdapter;
 import com.example.owl.adapters.UploadStackRecyclerAdapter;
+import com.example.owl.models.Photo;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -224,6 +235,7 @@ public class UploadActivity extends AppCompatActivity
 
         protected Void doInBackground(Void... urls) {
 
+
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getApplicationContext(),
@@ -231,13 +243,19 @@ public class UploadActivity extends AppCompatActivity
                     Regions.US_EAST_1 // Region
             );
 
-            AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
-            TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
+            //AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
+            //TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
+
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
 
 
             try {
 
-
+                /*
                 Bitmap bitmap = mDatasetPhotos.get(0);
                 File f = new File(getCacheDir(), "temp"); // Test is file name
                 FileOutputStream fos = new FileOutputStream(f);
@@ -246,9 +264,9 @@ public class UploadActivity extends AppCompatActivity
 
                 // Upload file
                 TransferObserver observer = transferUtility.upload(
-                        "owl-aws",     /* The bucket to upload to */
-                        "1" + ".bmp",    /* The key for the uploaded object */
-                        f        /* The file where the data to upload exists */
+                        "owl-aws",     // The bucket to upload to
+                        "1" + ".bmp",    // The key for the uploaded object
+                        f        // The file where the data to upload exists
                 );
 
 
@@ -277,10 +295,37 @@ public class UploadActivity extends AppCompatActivity
 
                     }
                 });
+                */
+
+                // Convert bitmap to String
+                Bitmap bitmap = mDatasetPhotos.get(0);
+                ByteArrayOutputStream baos = new  ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 10, baos);
+                byte [] b=baos.toByteArray();
+                String photoString = Base64.encodeToString(b, Base64.DEFAULT);
+
+                // Get date string
+                DateTime dt = new DateTime(DateTimeZone.UTC);
+                DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                String str = fmt.print(dt);
+
+
+                Log.d(TAG, "String size: " + str.length() );
+
+                // Test writing to DB
+                Photo photo = new Photo();
+                //photo.setPhotoId("1");
+                photo.setUserId("0");
+                photo.setUploadDate(str);
+                photo.setPhoto(photoString);
+
+                mapper.save(photo);
+
 
             } catch (Exception e){
-                Log.e(TAG, "problem");
+                Log.e(TAG, "Error on Upload Photo: " + e);
             }
+
 
             return null;
         }

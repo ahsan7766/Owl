@@ -1,30 +1,42 @@
 package com.example.owl.models;
 
+import android.graphics.Bitmap;
+
 /**
  * Created by Zach on 5/23/17.
  */
 
 public class FeedItem {
 
+    private String mPhotoId;
+    private Bitmap mPhoto;
     private String mHeader;
     private int mPhotoCount;
-    private int mPhotoId;
 
     public FeedItem() {
     }
 
-    public FeedItem(int photoId, String header, int photoCount) {
+    public FeedItem(String photoId, Bitmap photo, String header, int photoCount) {
         mPhotoId = photoId;
+        mPhoto = photo;
         mHeader = header;
         mPhotoCount = photoCount;
     }
 
-    public int getPhotoId() {
+    public String getPhotoId() {
         return mPhotoId;
     }
 
-    public void setPhotoId(int photoId) {
+    public void setPhotoId(String photoId) {
         mPhotoId = photoId;
+    }
+
+    public Bitmap getPhoto() {
+        return mPhoto;
+    }
+
+    public void setPhoto(Bitmap photo) {
+        mPhoto = photo;
     }
 
     public String getHeader() {

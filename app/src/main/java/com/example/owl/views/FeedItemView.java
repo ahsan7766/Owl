@@ -3,6 +3,7 @@ package com.example.owl.views;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -11,6 +12,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 
 import com.example.owl.R;
@@ -21,11 +24,13 @@ import com.example.owl.R;
 
 public class FeedItemView extends View {
 
+    private static final String TAG = "FeedFragment";
+
     private Drawable mBackgroundDrawable;
 
     private String mHeaderString;
     private int mPhotoCount;
-    private Bitmap mBackground;
+    private Bitmap mPhoto;
 
     private Paint mOutlinePaint;
     private Paint mHeaderTextPaint;
@@ -94,6 +99,14 @@ public class FeedItemView extends View {
             mBackgroundColor = a.getColor(R.styleable.BowlingFrame_backgroundColor, Color.TRANSPARENT);
             mFrameColor = a.getColor(R.styleable.BowlingFrame_frameColor, Color.BLACK);
             */
+            String photoString = a.getString(R.styleable.FeedItemView_photo);
+            try {
+                byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
+                mPhoto = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+            } catch (Exception e) {
+                Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+            }
+
             mHeaderString = a.getString(R.styleable.FeedItemView_header);
             mPhotoCount = a.getInt(R.styleable.FeedItemView_photoCount, 0);
         } finally {
@@ -102,6 +115,14 @@ public class FeedItemView extends View {
         }
 
         init();
+    }
+
+    public Bitmap getPhoto() {
+        return mPhoto;
+    }
+
+    public void setPhoto(Bitmap photo) {
+        mPhoto = photo;
     }
 
     private String getHeader() {
@@ -135,9 +156,13 @@ public class FeedItemView extends View {
                 ((getHeight() - length) / 2) + length);
 
         // Draw background image
+        /*
         Drawable drawable = ContextCompat.getDrawable(getContext(), R.drawable.dickbutt);
         drawable.setBounds(mOutlineRect);
         drawable.draw(canvas);
+        */
+
+        canvas.drawBitmap(getPhoto(), null, mOutlineRect, mOutlinePaint);
 
         // Temp outline of border
         canvas.drawRect(
@@ -178,7 +203,7 @@ public class FeedItemView extends View {
         mOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mOutlinePaint.setColor(Color.BLACK);
         mOutlinePaint.setStyle(Paint.Style.FILL);
-        mOutlinePaint.setAlpha(200);
+        mOutlinePaint.setAlpha(125);
 
         mHeaderTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mHeaderTextPaint.setColor(Color.WHITE);
