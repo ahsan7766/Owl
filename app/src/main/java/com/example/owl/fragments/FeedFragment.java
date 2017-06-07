@@ -78,7 +78,7 @@ public class FeedFragment extends Fragment
     private String mParam1;
     private String mParam2;
 
-    private static final String TAG = "FeedFragment";
+    private static final String TAG = FeedFragment.class.getName();
     private static final int SPAN_COUNT = 1; // number of columns in the grid
     private static final int DATASET_COUNT = 10;
 
@@ -205,7 +205,8 @@ public class FeedFragment extends Fragment
             }
         });
         */
-        mSwipeRefreshLayout.setRefreshing(false);
+
+        initDataset();
     }
 
 
@@ -259,20 +260,7 @@ public class FeedFragment extends Fragment
     }
 
     private void initDataset() {
-
-
         new DownloadTask().execute();
-
-
-        /*
-        mDataset = new ArrayList<>();
-        for (int i = 0; i < DATASET_COUNT; i++) {
-            Random r = new Random();
-            mDataset.add(new FeedItem(1, "Category #" + i, r.nextInt(50)));
-        }
-        */
-
-
     }
 
 
@@ -382,6 +370,8 @@ public class FeedFragment extends Fragment
             PaginatedQueryList<Photo> result = mapper.query(Photo.class, queryExpression);
 
 
+            mDataset.clear();
+
             // Convert the photo list to a FeedItem list
             for (Photo photo : result) {
                 // Convert the photo string to a bitmap
@@ -416,12 +406,15 @@ public class FeedFragment extends Fragment
             // TODO: check this.exception
             // TODO: do something with the feed
             mAdapter.notifyDataSetChanged();
+
+            mSwipeRefreshLayout.setRefreshing(false);
         }
     }
 
     @Override
     public void onItemClick(View view, int position) {
         Intent intent = new Intent(getContext(), StackActivity.class);
+        intent.putExtra("photoId", mDataset.get(position).getPhotoId());
         view.getContext().startActivity(intent);
     }
 

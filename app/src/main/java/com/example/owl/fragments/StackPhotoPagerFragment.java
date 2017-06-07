@@ -1,12 +1,15 @@
 package com.example.owl.fragments;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import com.example.owl.R;
 
@@ -29,6 +32,8 @@ public class StackPhotoPagerFragment extends Fragment {
     private String mParam2;
 
     private OnFragmentInteractionListener mListener;
+
+    private ImageView mImageView;
 
     public StackPhotoPagerFragment() {
         // Required empty public constructor
@@ -65,7 +70,27 @@ public class StackPhotoPagerFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_stack_photo_pager, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_stack_photo_pager, container, false);
+
+        Bundle args = getArguments();
+
+        mImageView = (ImageView) rootView.findViewById(R.id.image);
+
+        // Get byte array of image, convert to image, and set it
+        //byte[] bytes = args.getByteArray("image");
+        Bitmap bitmap = args.getParcelable("imageBitmap");
+        //if(bytes != null && bytes.length > 0) {
+        // If bitmap is found, set the image to it
+        if(bitmap != null) {
+            //Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+            mImageView.setImageBitmap(bitmap);
+        } else {
+            // TODO handle when image is not found
+        }
+
+
+        //return inflater.inflate(R.layout.fragment_stack_photo_pager, container, false);
+        return rootView;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
