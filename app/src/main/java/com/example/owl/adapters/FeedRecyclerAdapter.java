@@ -1,6 +1,7 @@
 package com.example.owl.adapters;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -56,7 +57,6 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
         holder.mFeedItemView.setPhoto(feedItem.getPhoto());
         holder.mFeedItemView.setHeader(feedItem.getHeader());
         holder.mFeedItemView.setPhotoCount(feedItem.getPhotoCount());
-
     }
 
     // total number of cells

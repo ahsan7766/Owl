@@ -55,6 +55,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -121,6 +122,28 @@ public class FeedFragment extends Fragment
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
+
+        // Get max available VM memory, exceeding this amount will throw an
+        // OutOfMemory exception. Stored in kilobytes as LruCache takes an
+        // int in its constructor.
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
+
+        /*
+        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getByteCount() / 1024;
+            }
+        };
+        */
+
+
 
         // Initialize dataset, this data would usually come from a local content provider or
         initDataset();
@@ -264,10 +287,9 @@ public class FeedFragment extends Fragment
     }
 
 
-    private class DownloadTask extends AsyncTask<Void, Void, Void> {
+    private class DownloadTask extends AsyncTask<Void, Void, List<FeedItem>> {
 
-        protected Void doInBackground(Void... urls) {
-
+        protected List<FeedItem> doInBackground(Void... urls) {
 
             /*
             // Initialize the Amazon Cognito credentials provider
@@ -367,33 +389,40 @@ public class FeedFragment extends Fragment
                     //.withRangeKeyCondition("Title", rangeKeyCondition)
                     .withConsistentRead(false);
 
+            queryExpression.setScanIndexForward(false);
+
             PaginatedQueryList<Photo> result = mapper.query(Photo.class, queryExpression);
 
 
-            mDataset.clear();
 
+            // ArrayList that the feed items will be stored in for the updated dataset
+            ArrayList<FeedItem> feedItems = new ArrayList<>();
+
+
+            Bitmap bitmap = null;
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            //options.inSampleSize = 4;
             // Convert the photo list to a FeedItem list
             for (Photo photo : result) {
                 // Convert the photo string to a bitmap
                 String photoString = photo.getPhoto();
-                Bitmap bitmap;
                 if (photoString == null || photoString.length() <= 0) {
                     continue;
                 }
                 try {
                     byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
-                    bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+                    bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, options);
+
                 } catch (Exception e) {
                     Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
                     continue;
                 }
 
                 FeedItem feedItem = new FeedItem(photo.getPhotoId(), bitmap, "Stack Title", 4);
-                mDataset.add(feedItem);
+                feedItems.add(feedItem);
             }
 
-
-            return null;
+            return feedItems;
         }
 
         @Override
@@ -402,9 +431,12 @@ public class FeedFragment extends Fragment
             super.onPreExecute();
         }
 
-        protected void onPostExecute(Void result) {
+        protected void onPostExecute(List<FeedItem> result) {
             // TODO: check this.exception
             // TODO: do something with the feed
+            // Clear dataset, add new items, then notify
+            mDataset.clear();
+            mDataset.addAll(result);
             mAdapter.notifyDataSetChanged();
 
             mSwipeRefreshLayout.setRefreshing(false);

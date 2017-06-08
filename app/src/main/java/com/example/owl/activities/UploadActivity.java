@@ -300,7 +300,7 @@ public class UploadActivity extends AppCompatActivity
                 // Convert bitmap to String
                 Bitmap bitmap = mDatasetPhotos.get(0);
                 ByteArrayOutputStream baos = new  ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 10, baos);
+                bitmap.compress(Bitmap.CompressFormat.WEBP, 10, baos);
                 byte [] b=baos.toByteArray();
                 String photoString = Base64.encodeToString(b, Base64.DEFAULT);
 
@@ -310,7 +310,6 @@ public class UploadActivity extends AppCompatActivity
                 String str = fmt.print(dt);
 
 
-                Log.d(TAG, "String size: " + str.length() );
 
                 // Test writing to DB
                 Photo photo = new Photo();
@@ -320,6 +319,7 @@ public class UploadActivity extends AppCompatActivity
                 photo.setPhoto(photoString);
 
                 mapper.save(photo);
+
 
 
             } catch (Exception e){
@@ -339,6 +339,10 @@ public class UploadActivity extends AppCompatActivity
         protected void onPostExecute(Void result) {
             // TODO: check this.exception
             // TODO: do something with the feed
+
+            Toast.makeText(UploadActivity.this, "Done Uploading", Toast.LENGTH_SHORT).show();
+
+            finish();
         }
     }
 
@@ -524,7 +528,9 @@ public class UploadActivity extends AppCompatActivity
             return null;
         }
 
-        Bitmap srcBmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 2;
+        Bitmap srcBmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath(), options);
         Bitmap dstBmp;
 
         if (srcBmp.getWidth() >= srcBmp.getHeight()){

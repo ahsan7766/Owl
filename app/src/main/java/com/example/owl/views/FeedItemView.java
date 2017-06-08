@@ -24,7 +24,7 @@ import com.example.owl.R;
 
 public class FeedItemView extends View {
 
-    private static final String TAG = "FeedFragment";
+    private static final String TAG = FeedItemView.class.getName();
 
     private Drawable mBackgroundDrawable;
 
@@ -100,12 +100,17 @@ public class FeedItemView extends View {
             mFrameColor = a.getColor(R.styleable.BowlingFrame_frameColor, Color.BLACK);
             */
             String photoString = a.getString(R.styleable.FeedItemView_photo);
-            try {
-                byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
-                mPhoto = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
-            } catch (Exception e) {
-                Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+            if(photoString != null) {
+                try {
+                    byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
+                    mPhoto = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+                } catch (Exception e) {
+                    Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+                }
+            } else {
+                // TODO set the photo to the default photo for "Not found"
             }
+
 
             mHeaderString = a.getString(R.styleable.FeedItemView_header);
             mPhotoCount = a.getInt(R.styleable.FeedItemView_photoCount, 0);
