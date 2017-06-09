@@ -24,7 +24,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryLi
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.example.owl.R;
-import com.example.owl.fragments.ProfileFragment;
+import com.example.owl.fragments.CanvasFragment;
 import com.example.owl.models.Comment;
 import com.example.owl.adapters.CommentsRecyclerAdapter;
 import com.example.owl.adapters.StackPhotoPagerAdapter;
@@ -37,7 +37,7 @@ import java.util.ArrayList;
 public class StackActivity extends AppCompatActivity
         implements StackPhotoPagerFragment.OnFragmentInteractionListener,
         CommentsRecyclerAdapter.ItemClickListener,
-        ProfileFragment.OnFragmentInteractionListener {
+        CanvasFragment.OnFragmentInteractionListener {
 
 
     private static final String TAG = StackActivity.class.getName();
@@ -78,7 +78,9 @@ public class StackActivity extends AppCompatActivity
 
 
         ViewPager pager = (ViewPager) findViewById(R.id.view_pager_stack);
-        mPagerAdapter = new StackPhotoPagerAdapter(getSupportFragmentManager(), mDatasetPhotos);
+        //mPagerAdapter = new StackPhotoPagerAdapter(getSupportFragmentManager(), mDatasetPhotos);
+
+        mPagerAdapter = new StackPhotoPagerAdapter(this, mDatasetPhotos);
         pager.setAdapter(mPagerAdapter);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout_stack);
@@ -128,10 +130,38 @@ public class StackActivity extends AppCompatActivity
         // Go to the canvas of that profile
 
 
-        // Start profile fragment
+        /*
+        // Start canvas fragment
+        Fragment fragment = null;
+        Class fragmentClass = CanvasFragment.class;
+
+        try {
+            fragment = (Fragment) fragmentClass.newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // Insert the fragment by replacing any existing fragment
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        fragmentManager.
+                beginTransaction()
+                //.replace(R.id.flContent, fragment)
+                .addToBackStack(null)
+                .commit();
+
+        */
+
+
+        // Start the canvas fragment via the main activity
+        Intent openFragmentBIntent = new Intent(this, MainActivity.class);
+        openFragmentBIntent.putExtra(MainActivity.OPEN_FRAGMENT_CANVAS, true);
+        startActivity(openFragmentBIntent);
+
+
+        // Start canvas fragment
         /*
         Fragment fragment = null;
-        Class fragmentClass = ProfileFragment.class;
+        Class fragmentClass = CanvasFragment.class;
 
         try {
             fragment = (Fragment) fragmentClass.newInstance();
@@ -146,12 +176,16 @@ public class StackActivity extends AppCompatActivity
                 .replace(R.id.flContent, fragment)
                 .addToBackStack(null)
                 .commit();
-
         */
 
-        Intent openFragmentBIntent = new Intent(this, MainActivity.class);
-        openFragmentBIntent.putExtra(MainActivity.OPEN_FRAGMENT_CANVAS, true);
-        startActivity(openFragmentBIntent);
+
+        /*
+        // Start the Canvas Activity
+        Intent intent = new Intent(this, CanvasActivity.class);
+        startActivity(intent);
+        */
+
+
     }
 
     @Override

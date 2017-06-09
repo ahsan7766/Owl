@@ -1,6 +1,5 @@
 package com.example.owl.fragments;
 
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.content.Context;
 import android.net.Uri;
@@ -14,10 +13,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.example.owl.R;
-import com.example.owl.activities.MainActivity;
 import com.example.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.example.owl.models.CanvasTile;
-import com.example.owl.views.ProfileCounterView;
 import com.example.owl.views.ProfilePictureView;
 
 /**
@@ -35,12 +32,11 @@ public class CanvasFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
-    private static final String TAG = "CanvasFragment";
-    public static final int COLUMN_COUNT = 10; // number of columns of pictures in the grid
-    public static final int ROW_COUNT = 12; // number of rows of pictures in the grid
+    private static final String TAG = CanvasFragment.class.getName();
+    public static final int COLUMN_COUNT = 7; // number of columns of pictures in the grid
+    public static final int ROW_COUNT = 5; // number of rows of pictures in the grid
 
     private ProfilePictureView mProfilePictureView;
-    private ProfileCounterView mProfileCounterView;
     private Button mButtonViewProfile;
 
     protected RecyclerView mRecyclerView;
@@ -91,7 +87,7 @@ public class CanvasFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
-        View rootView = inflater.inflate(R.layout.fragment_canvas, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_my_canvas, container, false);
         rootView.setTag(TAG);
 
 
@@ -115,14 +111,6 @@ public class CanvasFragment extends Fragment {
         // Set the profile picture
         mProfilePictureView = (ProfilePictureView) rootView.findViewById(R.id.profile_picture);
         mProfilePictureView.setBackgroundPicture(R.drawable.trees);
-
-        /*
-        // Set Profile Counters
-        mProfileCounterView = (ProfileCounterView) rootView.findViewById(R.id.profile_counter);
-        mProfileCounterView.setHootCount(57);
-        mProfileCounterView.setFollowerCount(181);
-        mProfileCounterView.setFollowingCount(132);
-        */
 
 
         mButtonViewProfile = (Button) rootView.findViewById(R.id.button_view_profile);
@@ -153,6 +141,8 @@ public class CanvasFragment extends Fragment {
         });
 
 
+
+        /*
         final FloatingActionButton fab = ((MainActivity) getActivity()).getFloatingActionButton();
         mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
@@ -163,6 +153,7 @@ public class CanvasFragment extends Fragment {
                     fab.show();
             }
         });
+        */
 
 
         //return inflater.inflate(R.layout.fragment_feed, container, false);

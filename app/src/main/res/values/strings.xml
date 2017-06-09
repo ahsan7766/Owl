@@ -29,6 +29,9 @@
     <string name="action_settings">Settings</string>
 
 
+    <!-- Canvas -->
+    <string name="view_profile">View Profile</string>
+
     <!-- FeedCategoryView -->
     <string name="photos">Photos</string>
 

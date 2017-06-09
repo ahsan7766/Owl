@@ -35,9 +35,13 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG = MainActivity.class.getName();
 
     public static final String OPEN_FRAGMENT_CANVAS = "OPEN_FRAGMENT_CANVAS";
+
     public static final int PERMISSION_READ_EXTERNAL_STORAGE = 100;
 
+    public static final int RESULT_OPEN_FRAGMENT_CANVAS = 200;
 
+
+    private NavigationView mNavigationView;
     private FloatingActionButton mFab;
 
     @Override
@@ -63,14 +67,11 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        mNavigationView = (NavigationView) findViewById(R.id.nav_view);
+        mNavigationView.setNavigationItemSelectedListener(this);
 
-        // Open a fragment on startup
-        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.flContent, new FeedFragment());
-        fragmentTransaction.commit();
-        navigationView.getMenu().getItem(0).setChecked(true);
+
+
     }
 
     /**
@@ -96,6 +97,13 @@ public class MainActivity extends AppCompatActivity
                     .replace(R.id.flContent, fragment)
                     .addToBackStack(null)
                     .commit();
+        } else {
+            // Open a fragment on startup
+            FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+            fragmentTransaction.replace(R.id.flContent, new FeedFragment());
+            fragmentTransaction.commit();
+            mNavigationView.getMenu().getItem(0).setChecked(true);
+
         }
 
     }

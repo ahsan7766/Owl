@@ -84,7 +84,8 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     // total number of cells
     @Override
     public int getItemCount() {
-        return mDataset.length;
+        // If the dataset is null, return 0 for item count to avoid NullPointerException
+        return mDataset == null ? 0 : mDataset.length;
     }
 
     // stores and recycles views as they are scrolled off screen

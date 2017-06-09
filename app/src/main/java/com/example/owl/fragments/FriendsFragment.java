@@ -32,7 +32,7 @@ public class FriendsFragment extends Fragment
     private String mParam1;
     private String mParam2;
 
-    private static final String TAG = "FriendsFragment";
+    private static final String TAG = FriendsFragment.class.getName();
     private static final int SPAN_COUNT = 3; // number of columns in the grid
     private static final int DATASET_COUNT = 20;
 
