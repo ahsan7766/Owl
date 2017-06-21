@@ -87,7 +87,7 @@ public class CanvasFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         // Inflate the layout for this fragment
-        View rootView = inflater.inflate(R.layout.fragment_my_canvas, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_canvas, container, false);
         rootView.setTag(TAG);
 
 

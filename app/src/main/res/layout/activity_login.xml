@@ -21,13 +21,12 @@
         android:layout_marginBottom="8dp"
         android:visibility="gone"/>
 
-    <TextView
+    <ImageView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center"
-        android:text="OWL LOGO"
-        android:textSize="100sp"/>
+        android:src="@drawable/img_owl_eye"/>
 
     <ScrollView
         android:id="@+id/login_form"

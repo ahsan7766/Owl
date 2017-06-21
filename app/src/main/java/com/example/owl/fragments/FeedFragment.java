@@ -12,6 +12,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.util.Log;
@@ -40,8 +41,10 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.example.owl.activities.MainActivity;
 import com.example.owl.activities.StackActivity;
 import com.example.owl.activities.UploadActivity;
+import com.example.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.example.owl.adapters.FeedRecyclerAdapter;
 import com.example.owl.R;
+import com.example.owl.models.CanvasTile;
 import com.example.owl.models.FeedItem;
 import com.example.owl.models.Photo;
 
@@ -80,9 +83,20 @@ public class FeedFragment extends Fragment
     private String mParam2;
 
     private static final String TAG = FeedFragment.class.getName();
+
+
+    public static final int CANVAS_COLUMN_COUNT = 7; // number of columns of pictures in the grid
+    public static final int CANVAS_ROW_COUNT = 2; // number of rows of pictures in the grid
+
+    protected RecyclerView mCanvasRecyclerView;
+    protected CanvasOuterRecyclerAdapter mCanvasAdapter;
+    protected RecyclerView.LayoutManager mCanvasLayoutManager;
+    protected CanvasTile[][] mCanvasDataset;
+
+
+
     private static final int SPAN_COUNT = 1; // number of columns in the grid
     private static final int DATASET_COUNT = 10;
-
 
     private SwipeRefreshLayout mSwipeRefreshLayout;
     protected RecyclerView mRecyclerView;
@@ -157,6 +171,29 @@ public class FeedFragment extends Fragment
         View rootView = inflater.inflate(R.layout.fragment_feed, container, false);
         rootView.setTag(TAG);
 
+
+        // SET UP CANVAS
+        mCanvasRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_feed_canvas_outer);
+
+        // LinearLayoutManager is used here, this will layout the elements in a similar fashion
+        // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
+        // elements are laid out.
+        mCanvasLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
+
+        // set up the RecyclerView
+        mCanvasRecyclerView.setLayoutManager(mCanvasLayoutManager);
+        mCanvasAdapter = new CanvasOuterRecyclerAdapter(getActivity(), mCanvasDataset);
+        //mCanvasAdapter.setClickListener(this);
+
+        // Set CustomAdapter as the adapter for RecyclerView.
+        mCanvasRecyclerView.setAdapter(mCanvasAdapter);
+
+
+
+
+
+
+        // SET UP FEED
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_feed);
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
@@ -208,26 +245,6 @@ public class FeedFragment extends Fragment
         // Send the network request to fetch the updated data
         // `client` here is an instance of Android Async HTTP
         // getHomeTimeline is an example endpoint.
-
-        /*
-        client.getHomeTimeline(0, new JsonHttpResponseHandler() {
-            public void onSuccess(JSONArray json) {
-                // Remember to CLEAR OUT old items before appending in the new ones
-                mAdapter.clear();
-
-                // ...the data has come back, add new items to your adapter...
-
-                mAdapter.addAll(...);
-
-                // Now we call setRefreshing(false) to signal refresh has finished
-                mSwipeRefreshLayout.setRefreshing(false);
-            }
-
-            public void onFailure(Throwable e) {
-                Log.d("DEBUG", "Fetch timeline error: " + e.toString());
-            }
-        });
-        */
 
         initDataset();
     }
@@ -283,6 +300,18 @@ public class FeedFragment extends Fragment
     }
 
     private void initDataset() {
+        // Set Canvas Data
+        mCanvasDataset = new CanvasTile[CANVAS_ROW_COUNT][CANVAS_COLUMN_COUNT];
+        for (int i = 0; i < CANVAS_ROW_COUNT; i++) {
+            mCanvasDataset[i] = new CanvasTile[CANVAS_COLUMN_COUNT];
+
+            for (int x = 0; x < CANVAS_COLUMN_COUNT; x++) {
+                mCanvasDataset[i][x] = new CanvasTile("ROW " + i + " COL " + x);
+            }
+        }
+
+
+        // Set Feed Data
         new DownloadTask().execute();
     }
 
