@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Vibrator;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -72,7 +73,8 @@ import java.util.Random;
  * create an instance of this fragment.
  */
 public class FeedFragment extends Fragment
-        implements FeedRecyclerAdapter.ItemClickListener {
+        implements FeedRecyclerAdapter.ItemClickListener,
+FeedRecyclerAdapter.ItemLongClickListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -472,6 +474,7 @@ public class FeedFragment extends Fragment
         }
     }
 
+    // Handle an item in the feed being clicked
     @Override
     public void onItemClick(View view, int position) {
         Intent intent = new Intent(getContext(), StackActivity.class);
@@ -479,5 +482,15 @@ public class FeedFragment extends Fragment
         view.getContext().startActivity(intent);
     }
 
+    // Handle an item in the feed being long clicked
+    @Override
+    public void onItemLongClick(View view, int position) {
+
+        // Vibrate for 500 milliseconds to let the user know they long clicked
+        Vibrator v = (Vibrator) this.getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+        v.vibrate(500);
+
+        //TODO allow dragging to canvas
+    }
 
 }

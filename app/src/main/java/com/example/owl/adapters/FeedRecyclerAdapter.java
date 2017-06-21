@@ -22,6 +22,7 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     private ArrayList<FeedItem> mData = new ArrayList<>();
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
+    private ItemLongClickListener mLongClickListener;
 
 
     // data is passed into the constructor
@@ -67,18 +68,25 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
 
 
     // stores and recycles views as they are scrolled off screen
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
         public FeedItemView mFeedItemView;
 
         public ViewHolder(View itemView) {
             super(itemView);
             mFeedItemView = (FeedItemView) itemView.findViewById(R.id.feed_category);
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
         }
 
         @Override
         public void onClick(View view) {
             if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+        }
+
+        @Override
+        public boolean onLongClick(View view) {
+            if (mLongClickListener != null) mLongClickListener.onItemLongClick(view, getAdapterPosition());
+            return true;
         }
     }
 
@@ -87,14 +95,25 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
         return mData.get(id);
     }
 
-    // allows clicks events to be caught
+    // allows click events to be caught
     public void setClickListener(ItemClickListener itemClickListener) {
         this.mClickListener = itemClickListener;
     }
 
+    // allows long click events to be caught
+    public void setLongClickListener(ItemLongClickListener itemLongClickListener) {
+        this.mLongClickListener = itemLongClickListener;
+    }
+
+
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
         void onItemClick(View view, int position);
+    }
+
+    // parent activity will implement this method to respond to click events
+    public interface ItemLongClickListener {
+        void onItemLongClick(View view, int position);
     }
 
 }
