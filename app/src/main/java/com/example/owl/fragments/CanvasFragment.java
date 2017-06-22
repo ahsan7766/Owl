@@ -34,7 +34,7 @@ public class CanvasFragment extends Fragment {
 
     private static final String TAG = CanvasFragment.class.getName();
     public static final int COLUMN_COUNT = 7; // number of columns of pictures in the grid
-    public static final int ROW_COUNT = 5; // number of rows of pictures in the grid
+    public static final int ROW_COUNT = 8; // number of rows of pictures in the grid
 
     private ProfilePictureView mProfilePictureView;
     private Button mButtonViewProfile;

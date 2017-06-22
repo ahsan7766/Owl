@@ -4,9 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.example.owl.R;
 import com.example.owl.activities.StackActivity;
@@ -17,11 +19,14 @@ import com.example.owl.models.CanvasTile;
  */
 
 public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuterRecyclerAdapter.ViewHolder>
-        implements CanvasInnerRecyclerAdapter.ItemClickListener{
+        implements CanvasInnerRecyclerAdapter.ItemClickListener, CanvasInnerRecyclerAdapter.ItemDragListener{
+
 
 
     //private static final int ROW_COUNT = 7;
     private int rowCount = 0; //iterator
+
+    private Context mContext;
 
     private RecyclerView mInnerRecyclerView;
     protected CanvasInnerRecyclerAdapter mAdapter;
@@ -33,6 +38,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
     // data is passed into the constructor
     public CanvasOuterRecyclerAdapter(Context context, CanvasTile[][] data) {
+        this.mContext = context;
         this.mInflater = LayoutInflater.from(context);
         this.mDataset = data;
     }
@@ -53,11 +59,12 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         // set up the RecyclerView
         mInnerRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new CanvasInnerRecyclerAdapter(parent.getContext(), mDataset[rowCount]);
+        mAdapter = new CanvasInnerRecyclerAdapter(parent.getContext(), mDataset[rowCount], rowCount);
 
         rowCount++; // iterate the row count so when (if) the next ViewHolder row is created it takes the next data row
 
         mAdapter.setClickListener(this);
+        mAdapter.setDragListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mInnerRecyclerView.setAdapter(mAdapter);
@@ -124,6 +131,29 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     public void onItemClick(View view, int position) {
         Intent intent = new Intent(view.getContext(), StackActivity.class);
         view.getContext().startActivity(intent);
+    }
+
+    @Override
+    public boolean onItemDrag(View view, DragEvent dragEvent, int row, int column) {
+        switch (dragEvent.getAction()) {
+            case DragEvent.ACTION_DRAG_STARTED:
+                // drag has started, return true to tell that you're listening to the drag
+                //mRecyclerView.setNestedScrollingEnabled(false);
+                return true;
+
+            case DragEvent.ACTION_DROP:
+                // the dragged item was dropped into this view
+                //CanvasTile a = mDataset[0][position];
+                //a.setText("DRAG");
+                //mAdapter.notifyItemChanged(position);
+                //mAdapter.notifyDataSetChanged();
+                Toast.makeText(mContext, "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
+                return true;
+            case DragEvent.ACTION_DRAG_ENDED:
+                // the drag has ended
+                return false;
+        }
+        return false;
     }
 
     /*

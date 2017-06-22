@@ -1,11 +1,14 @@
 package com.example.owl.fragments;
 
+import android.content.ClipData;
+import android.content.ClipDescription;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Vibrator;
@@ -17,6 +20,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,6 +46,7 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.example.owl.activities.MainActivity;
 import com.example.owl.activities.StackActivity;
 import com.example.owl.activities.UploadActivity;
+import com.example.owl.adapters.CanvasInnerRecyclerAdapter;
 import com.example.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.example.owl.adapters.FeedRecyclerAdapter;
 import com.example.owl.R;
@@ -74,7 +79,11 @@ import java.util.Random;
  */
 public class FeedFragment extends Fragment
         implements FeedRecyclerAdapter.ItemClickListener,
-FeedRecyclerAdapter.ItemLongClickListener {
+        FeedRecyclerAdapter.ItemLongClickListener {
+        //FeedRecyclerAdapter.ItemDragListener,
+        //CanvasInnerRecyclerAdapter.ItemDragListener {
+
+
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -94,7 +103,6 @@ FeedRecyclerAdapter.ItemLongClickListener {
     protected CanvasOuterRecyclerAdapter mCanvasAdapter;
     protected RecyclerView.LayoutManager mCanvasLayoutManager;
     protected CanvasTile[][] mCanvasDataset;
-
 
 
     private static final int SPAN_COUNT = 1; // number of columns in the grid
@@ -160,7 +168,6 @@ FeedRecyclerAdapter.ItemLongClickListener {
         */
 
 
-
         // Initialize dataset, this data would usually come from a local content provider or
         initDataset();
     }
@@ -191,10 +198,6 @@ FeedRecyclerAdapter.ItemLongClickListener {
         mCanvasRecyclerView.setAdapter(mCanvasAdapter);
 
 
-
-
-
-
         // SET UP FEED
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_feed);
 
@@ -207,6 +210,8 @@ FeedRecyclerAdapter.ItemLongClickListener {
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new FeedRecyclerAdapter(getActivity(), mDataset);
         mAdapter.setClickListener(this);
+        mAdapter.setLongClickListener(this);
+        //mAdapter.setDragListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerView.setAdapter(mAdapter);
@@ -425,7 +430,6 @@ FeedRecyclerAdapter.ItemLongClickListener {
             PaginatedQueryList<Photo> result = mapper.query(Photo.class, queryExpression);
 
 
-
             // ArrayList that the feed items will be stored in for the updated dataset
             ArrayList<FeedItem> feedItems = new ArrayList<>();
 
@@ -484,13 +488,70 @@ FeedRecyclerAdapter.ItemLongClickListener {
 
     // Handle an item in the feed being long clicked
     @Override
-    public void onItemLongClick(View view, int position) {
+    public boolean onItemLongClick(View view, int position) {
 
         // Vibrate for 500 milliseconds to let the user know they long clicked
-        Vibrator v = (Vibrator) this.getActivity().getSystemService(Context.VIBRATOR_SERVICE);
-        v.vibrate(500);
+        //Vibrator v = (Vibrator) this.getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+        //v.vibrate(500);
+
+
+        // Show a shadow of the image that is being dragged when it is long clicked
+        ClipData data = ClipData.newPlainText("", "");
+        View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
+        //Can only use new startDragAndDrop function on Nougat and up
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            view.startDragAndDrop(data, shadowBuilder, view, 0);
+        } else {
+            view.startDrag(data, shadowBuilder, view, 0);
+        }
+
+        return true;
+
+
+
+        /*
+        ClipData.Item item = new ClipData.Item((CharSequence) view.getTag());
+        String[] mimeTypes = {ClipDescription.MIMETYPE_TEXT_PLAIN};
+        //ClipData dragData = new ClipData(view.getTag().toString(), mimeTypes, item);
+        view.setVisibility(View.GONE);
+        View.DragShadowBuilder myShadow = new View.DragShadowBuilder();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            view.startDragAndDrop(dragData, myShadow, null, 0);
+        } else {
+            view.startDrag(dragData, myShadow, null, 0);
+        }
+        */
+        //return true;
+
 
         //TODO allow dragging to canvas
     }
+
+
+    // Handle an item in the feed being long clicked
+    /*
+    @Override
+    public boolean onItemDrag(View view, DragEvent dragEvent, int position) {
+
+        switch (dragEvent.getAction()) {
+            case DragEvent.ACTION_DRAG_STARTED:
+                // drag has started, return true to tell that you're listening to the drag
+                //mRecyclerView.setNestedScrollingEnabled(false);
+                return true;
+
+            case DragEvent.ACTION_DROP:
+                // the dragged item was dropped into this view
+                FeedItem a = mDataset.get(position);
+                a.setHeader("dropped");
+                mAdapter.notifyItemChanged(position);
+                return true;
+            case DragEvent.ACTION_DRAG_ENDED:
+                // the drag has ended
+                return false;
+        }
+        return false;
+    }
+    */
 
 }

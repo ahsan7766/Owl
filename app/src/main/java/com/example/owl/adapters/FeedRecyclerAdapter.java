@@ -3,6 +3,7 @@ package com.example.owl.adapters;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,7 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
     private ItemLongClickListener mLongClickListener;
+    private ItemDragListener mDragListener;
 
 
     // data is passed into the constructor
@@ -68,7 +70,8 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
 
 
     // stores and recycles views as they are scrolled off screen
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+    public class ViewHolder extends RecyclerView.ViewHolder
+            implements View.OnClickListener, View.OnLongClickListener, View.OnDragListener {
         public FeedItemView mFeedItemView;
 
         public ViewHolder(View itemView) {
@@ -76,6 +79,7 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
             mFeedItemView = (FeedItemView) itemView.findViewById(R.id.feed_category);
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
+            itemView.setOnDragListener(this);
         }
 
         @Override
@@ -85,8 +89,12 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
 
         @Override
         public boolean onLongClick(View view) {
-            if (mLongClickListener != null) mLongClickListener.onItemLongClick(view, getAdapterPosition());
-            return true;
+            return mLongClickListener != null && mLongClickListener.onItemLongClick(view, getAdapterPosition());
+        }
+
+        @Override
+        public boolean onDrag(View view, DragEvent dragEvent) {
+            return mDragListener != null && mDragListener.onItemDrag(view, dragEvent, getAdapterPosition());
         }
     }
 
@@ -105,6 +113,11 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
         this.mLongClickListener = itemLongClickListener;
     }
 
+    // allows long click events to be caught
+    public void setDragListener(ItemDragListener itemDragListener) {
+        this.mDragListener = itemDragListener;
+    }
+
 
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
@@ -113,7 +126,11 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
 
     // parent activity will implement this method to respond to click events
     public interface ItemLongClickListener {
-        void onItemLongClick(View view, int position);
+        boolean onItemLongClick(View view, int position);
     }
 
+    // parent activity will implement this method to respond to drags
+    public interface ItemDragListener {
+        boolean onItemDrag(View view, DragEvent dragEvent, int position);
+    }
 }

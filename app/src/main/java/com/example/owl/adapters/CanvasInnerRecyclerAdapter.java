@@ -2,6 +2,7 @@ package com.example.owl.adapters;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,11 +20,14 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     private CanvasTile[] mData = new CanvasTile[0];
     private LayoutInflater mInflater;
     private CanvasInnerRecyclerAdapter.ItemClickListener mClickListener;
+    private ItemDragListener mDragListener;
+    private int mRow;
 
     // data is passed into the constructor
-    public CanvasInnerRecyclerAdapter(Context context, CanvasTile[] data) {
+    public CanvasInnerRecyclerAdapter(Context context, CanvasTile[] data, int row) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
+        this.mRow = row;
     }
 
     // inflates the cell layout from xml when needed
@@ -52,7 +56,8 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
 
 
     // stores and recycles views as they are scrolled off screen
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class ViewHolder extends RecyclerView.ViewHolder implements
+            View.OnClickListener, View.OnDragListener {
         public TextView mTextView;
 
         public ViewHolder(View itemView) {
@@ -61,11 +66,17 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
             mTextView = (TextView) itemView.findViewById(R.id.text);
 
             itemView.setOnClickListener(this);
+            itemView.setOnDragListener(this);
         }
 
         @Override
         public void onClick(View view) {
             if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+        }
+
+        @Override
+        public boolean onDrag(View view, DragEvent dragEvent) {
+            return mDragListener != null && mDragListener.onItemDrag(view, dragEvent, mRow, getAdapterPosition());
         }
     }
 
@@ -74,13 +85,25 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
         return mData[id];
     }
 
-    // allows clicks events to be caught
+
+    // allows click events to be caught
     public void setClickListener(CanvasInnerRecyclerAdapter.ItemClickListener itemClickListener) {
         this.mClickListener = itemClickListener;
+    }
+
+    // allows drag events to be caught
+    public void setDragListener(CanvasInnerRecyclerAdapter.ItemDragListener itemDragListener) {
+        this.mDragListener = itemDragListener;
     }
 
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
         void onItemClick(View view, int position);
     }
+
+    // parent activity will implement this method to respond to drags
+    public interface ItemDragListener {
+        boolean onItemDrag(View view, DragEvent dragEvent, int row, int column);
+    }
+
 }
