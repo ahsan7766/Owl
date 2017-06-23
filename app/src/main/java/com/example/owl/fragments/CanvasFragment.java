@@ -132,7 +132,7 @@ public class CanvasFragment extends Fragment {
                 fragmentManager.
                         beginTransaction()
                         .replace(R.id.flContent, fragment)
-                        .addToBackStack(null)
+                        .addToBackStack(fragmentClass.getName())
                         .commit();
 
                 // Set action bar title

@@ -235,6 +235,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // Temporary code just sends user to main activity on button click
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
+
+            finish(); //Finish the LoginActivity so the user can't go back to it after login
         }
     }
 

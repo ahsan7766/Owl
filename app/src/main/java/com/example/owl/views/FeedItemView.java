@@ -153,12 +153,28 @@ public class FeedItemView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        int length = Math.min(getWidth(), getHeight());
 
+
+        // Amount of space given for profile picture, name, ect...
+        final int bottomSpace = 0;
+
+        int length = Math.min(getWidth(), getHeight() - bottomSpace);
+
+        /*
         mOutlineRect.set((getWidth() - length) / 2,
                 (getHeight() - length) / 2,
                 ((getWidth() - length) / 2) + length,
                 ((getHeight() - length) / 2) + length);
+        */
+
+        mOutlineRect.set((getWidth() - length) / 2,
+                (getHeight() - bottomSpace - length) / 2,
+                ((getWidth() - length) / 2) + length,
+                ((getHeight() - bottomSpace - length) / 2) + length);
+
+
+        // Draw border around entire canvas for testing purposes
+        //canvas.drawRect(0,0,getWidth(),getHeight(),mOutlinePaint);
 
         // Draw background image
         /*
@@ -176,6 +192,8 @@ public class FeedItemView extends View {
         );
 
 
+
+        /*
         // Header text
         mHeaderTextPaint.getTextBounds(mHeaderString, 0, mHeaderString.length(), mHeaderTextBounds);
         canvas.drawText(
@@ -194,6 +212,7 @@ public class FeedItemView extends View {
                 ((getHeight() / 8) * 5), // - mHeaderTextBounds.exactCenterY(),
                 mSubheaderTextPaint
         );
+        */
 
 
     }
@@ -207,8 +226,8 @@ public class FeedItemView extends View {
 
         mOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mOutlinePaint.setColor(Color.BLACK);
-        mOutlinePaint.setStyle(Paint.Style.FILL);
-        mOutlinePaint.setAlpha(125);
+        mOutlinePaint.setStyle(Paint.Style.STROKE);
+        //mOutlinePaint.setAlpha(125);
 
         mHeaderTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mHeaderTextPaint.setColor(Color.WHITE);

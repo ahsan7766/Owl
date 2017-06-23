@@ -7,26 +7,28 @@
             android:icon="@drawable/ic_menu_gallery"
             android:title="Feed" />
 
-        <!--
         <item
             android:id="@+id/nav_profile"
-            android:icon="@drawable/ic_menu_camera"
+            android:icon="@drawable/ic_person"
             android:title="Profile" />
-            -->
+
         <item
             android:id="@+id/nav_canvas"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="Canvas" />
+            android:icon="@drawable/ic_grid_on"
+            android:title="My Canvas" />
+        <!--
         <item
             android:id="@+id/nav_friends"
             android:icon="@android:drawable/ic_secure"
             android:title="Following" />
+            -->
         <item
             android:id="@+id/nav_settings"
             android:icon="@drawable/ic_menu_manage"
             android:title="Settings" />
     </group>
 
+    <!--
     <item android:title="Communicate">
         <menu>
             <item
@@ -39,5 +41,6 @@
                 android:title="Send" />
         </menu>
     </item>
+    -->
 
 </menu>

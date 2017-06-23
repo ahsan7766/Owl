@@ -58,8 +58,8 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     public void onBindViewHolder(ViewHolder holder, int position) {
         FeedItem feedItem = mData.get(position);
         holder.mFeedItemView.setPhoto(feedItem.getPhoto());
-        holder.mFeedItemView.setHeader(feedItem.getHeader());
-        holder.mFeedItemView.setPhotoCount(feedItem.getPhotoCount());
+        //holder.mFeedItemView.setHeader(feedItem.getHeader());
+        //holder.mFeedItemView.setPhotoCount(feedItem.getPhotoCount());
     }
 
     // total number of cells

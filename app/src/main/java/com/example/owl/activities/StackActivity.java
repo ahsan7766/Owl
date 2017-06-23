@@ -146,7 +146,7 @@ public class StackActivity extends AppCompatActivity
         fragmentManager.
                 beginTransaction()
                 //.replace(R.id.flContent, fragment)
-                .addToBackStack(null)
+                .addToBackStack(fragmentClass.getName())
                 .commit();
 
         */
@@ -174,7 +174,7 @@ public class StackActivity extends AppCompatActivity
         fragmentManager.
                 beginTransaction()
                 .replace(R.id.flContent, fragment)
-                .addToBackStack(null)
+                .addToBackStack(fragmentClass.getName())
                 .commit();
         */
 

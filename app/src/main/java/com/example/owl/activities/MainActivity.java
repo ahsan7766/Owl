@@ -1,5 +1,7 @@
 package com.example.owl.activities;
 
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -8,6 +10,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.widget.SearchView;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -91,15 +94,48 @@ public class MainActivity extends AppCompatActivity
 
         // If given the extra indication to start profile fragment, do it
         if (getIntent().getBooleanExtra(OPEN_FRAGMENT_CANVAS, false)) {
+
+
+            //Check if the fragment is already in the stack.
+            //If it is, then use that instead of making a new instance
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            Fragment fragment = fragmentManager.findFragmentByTag(CanvasFragment.class.getName());
+
+            // If fragment doesn't exist yet, create one
+            if (fragment == null) {
+                fragment = new CanvasFragment();
+                fragmentTransaction
+                        .replace(R.id.flContent, fragment, CanvasFragment.class.getName())
+                        .addToBackStack(CanvasFragment.class.getName())
+                        .commit();
+            } else { // re-use the old fragment
+                /*
+                fragmentTransaction
+                        .replace(R.id.flContent, fragment, fragmentClass.getName())
+                        .addToBackStack(fragmentClass.getName())
+                        .commit();
+                        */
+                fragmentManager.popBackStackImmediate(CanvasFragment.class.getName(), 0);
+            }
+
+
+            /*
             Fragment fragment = new CanvasFragment();
             // Insert the fragment by replacing any existing fragment
             FragmentManager fragmentManager = getSupportFragmentManager();
             fragmentManager.
                     beginTransaction()
                     .replace(R.id.flContent, fragment)
-                    .addToBackStack(null)
+                    .addToBackStack(CanvasFragment.class.getName())
                     .commit();
+            */
         } else {
+            //Clear the backstack
+            while (getSupportFragmentManager().getBackStackEntryCount() > 0){
+                getSupportFragmentManager().popBackStackImmediate();
+            }
+
             // Open a fragment on startup
             FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
             fragmentTransaction.replace(R.id.flContent, new FeedFragment());
@@ -125,6 +161,15 @@ public class MainActivity extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
+
+        // Associate searchable configuration with the SearchView
+        SearchManager searchManager =
+                (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView =
+                (SearchView) menu.findItem(R.id.search).getActionView();
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(getComponentName()));
+
         return true;
     }
 
@@ -141,7 +186,7 @@ public class MainActivity extends AppCompatActivity
             fragmentManager.
                     beginTransaction()
                     .replace(R.id.flContent, new SettingsFragment())
-                    .addToBackStack(null)
+                    .addToBackStack(SettingsFragment.class.getName())
                     .commit();
             return true;
         }
@@ -158,47 +203,78 @@ public class MainActivity extends AppCompatActivity
         // Create a new fragment and specify the fragment to show based on nav item clicked
         Fragment fragment = null;
         Class fragmentClass;
+        FragmentManager fragmentManager = getSupportFragmentManager();
         switch (id) {
             case R.id.nav_feed:
                 fragmentClass = FeedFragment.class;
                 break;
-            /*
             case R.id.nav_profile:
                 fragmentClass = ProfileFragment.class;
                 break;
-                */
             case R.id.nav_canvas:
                 fragmentClass = CanvasFragment.class;
                 break;
+            /*
             case R.id.nav_friends:
                 fragmentClass = FriendsFragment.class;
                 break;
+                */
             case R.id.nav_settings:
                 fragmentClass = SettingsFragment.class;
                 break;
+            /*
             case R.id.nav_share:
                 fragmentClass = FeedFragment.class;
                 break;
             case R.id.nav_send:
                 fragmentClass = FeedFragment.class;
                 break;
+                */
             default:
                 fragmentClass = FeedFragment.class;
         }
 
         try {
-            fragment = (Fragment) fragmentClass.newInstance();
+            //Check if the fragment is already in the stack.
+            //If it is, then use that instead of making a new instance
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragment = fragmentManager.findFragmentByTag(fragmentClass.getName());
+
+            // If fragment doesn't exist yet, create one
+            if (fragment == null) {
+                fragment = (Fragment) fragmentClass.newInstance();
+                fragmentTransaction
+                        .replace(R.id.flContent, fragment, fragmentClass.getName())
+                        .addToBackStack(fragmentClass.getName())
+                        .commit();
+            }
+            else { // re-use the old fragment
+                /*
+                fragmentTransaction
+                        .replace(R.id.flContent, fragment, fragmentClass.getName())
+                        .addToBackStack(fragmentClass.getName())
+                        .commit();
+                        */
+                fragmentManager.popBackStackImmediate(fragmentClass.getName(), 0);
+            }
+
+
+
+            //fragment = (Fragment) fragmentClass.newInstance();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         // Insert the fragment by replacing any existing fragment
-        FragmentManager fragmentManager = getSupportFragmentManager();
+
+        //FragmentManager fragmentManager = getSupportFragmentManager();
+        /*
         fragmentManager.
                 beginTransaction()
                 .replace(R.id.flContent, fragment)
-                .addToBackStack(null)
+                .addToBackStack(fragmentClass.getName())
                 .commit();
+                */
 
         // Highlight the selected item has been done by NavigationView
         item.setChecked(true);

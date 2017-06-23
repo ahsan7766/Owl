@@ -6,6 +6,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -180,12 +181,36 @@ public class FriendsFragment extends Fragment
         // Profile picture was pressed
         // Go to the canvas of that profile
 
-        // Start profile fragment
-        Fragment fragment = null;
-        Class fragmentClass = CanvasFragment.class;
 
+        //Check if the fragment is already in the stack.
+        //If it is, then use that instead of making a new instance
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        Fragment fragment = fragmentManager.findFragmentByTag(CanvasFragment.class.getName());
+
+        // If fragment doesn't exist yet, create one
+        if (fragment == null) {
+            fragment = new CanvasFragment();
+            fragmentTransaction
+                    .replace(R.id.flContent, fragment, CanvasFragment.class.getName())
+                    .addToBackStack(CanvasFragment.class.getName())
+                    .commit();
+        } else { // re-use the old fragment
+                /*
+                fragmentTransaction
+                        .replace(R.id.flContent, fragment, fragmentClass.getName())
+                        .addToBackStack(fragmentClass.getName())
+                        .commit();
+                        */
+            fragmentManager.popBackStackImmediate(CanvasFragment.class.getName(), 0);
+        }
+
+
+        /*
+        // Start canvas fragment
+        Fragment fragment = null;
         try {
-            fragment = (Fragment) fragmentClass.newInstance();
+            fragment = new CanvasFragment();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -195,8 +220,9 @@ public class FriendsFragment extends Fragment
         fragmentManager.
                 beginTransaction()
                 .replace(R.id.flContent, fragment)
-                .addToBackStack(null)
+                .addToBackStack(CanvasFragment.class.getName())
                 .commit();
 
+         */
     }
 }

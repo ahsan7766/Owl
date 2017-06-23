@@ -6,8 +6,14 @@
     <color name="colorAccent">#FF4081</color>
     -->
 
-    <color name="colorPrimary">#EF6C00</color>
-    <color name="colorPrimaryDark">#B53D00</color>
-    <color name="colorAccent">#3D2622</color>
+    <!--<color name="colorPrimary">#EF6C00</color>-->
+    <!--<color name="colorPrimaryDark">#B53D00</color>-->
+    <!--  <color name="colorAccent">#3D2622</color> -->
+
+    <color name="colorPrimary">#BDBDBD</color>
+    <color name="colorPrimaryDark">#8D8D8D</color>
+    <color name="colorAccent">#9AA6F7</color>
+
+    <!--<color name="colorAccent">#9AA6F7</color>-->
 
 </resources>

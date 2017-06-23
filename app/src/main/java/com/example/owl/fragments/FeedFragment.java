@@ -14,6 +14,7 @@ import android.os.Environment;
 import android.os.Vibrator;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.util.LruCache;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -54,19 +55,10 @@ import com.example.owl.models.CanvasTile;
 import com.example.owl.models.FeedItem;
 import com.example.owl.models.Photo;
 
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 
 /**
@@ -98,6 +90,8 @@ public class FeedFragment extends Fragment
 
     public static final int CANVAS_COLUMN_COUNT = 7; // number of columns of pictures in the grid
     public static final int CANVAS_ROW_COUNT = 2; // number of rows of pictures in the grid
+
+    private LruCache<String, Bitmap> mMemoryCache;
 
     protected RecyclerView mCanvasRecyclerView;
     protected CanvasOuterRecyclerAdapter mCanvasAdapter;
@@ -156,7 +150,6 @@ public class FeedFragment extends Fragment
         // Use 1/8th of the available memory for this memory cache.
         final int cacheSize = maxMemory / 8;
 
-        /*
         mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
             @Override
             protected int sizeOf(String key, Bitmap bitmap) {
@@ -165,11 +158,44 @@ public class FeedFragment extends Fragment
                 return bitmap.getByteCount() / 1024;
             }
         };
-        */
 
 
         // Initialize dataset, this data would usually come from a local content provider or
-        initDataset();
+        if (savedInstanceState != null) {
+            //Restore the fragment's state here
+            int i;
+            i = 0;
+            Log.d("TAG",savedInstanceState.toString());
+            mDataset = savedInstanceState.getParcelableArrayList("FEED_ITEMS");
+            Log.d("TAG", mDataset.size() + "");
+        }else {
+            initDataset();
+        }
+    }
+
+    /**
+     * Called to ask the fragment to save its current dynamic state, so it
+     * can later be reconstructed in a new instance of its process is
+     * restarted.  If a new instance of the fragment later needs to be
+     * created, the data you place in the Bundle here will be available
+     * in the Bundle given to {@link #onCreate(Bundle)},
+     * {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}, and
+     * {@link #onActivityCreated(Bundle)}.
+     * <p>
+     * <p>This corresponds to {@link android.app.Activity#onSaveInstanceState(Bundle)
+     * Activity.onSaveInstanceState(Bundle)} and most of the discussion there
+     * applies here as well.  Note however: <em>this method may be called
+     * at any time before {@link #onDestroy()}</em>.  There are many situations
+     * where a fragment may be mostly torn down (such as when placed on the
+     * back stack with no UI showing), but its state will not be saved until
+     * its owning activity actually needs to save its state.
+     *
+     * @param outState Bundle in which to place your saved state.
+     */
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        //outState.putParcelableArrayList("FEED_ITEMS", mDataset);
     }
 
     @Override
@@ -254,6 +280,8 @@ public class FeedFragment extends Fragment
         // getHomeTimeline is an example endpoint.
 
         initDataset();
+        //mSwipeRefreshLayout.setRefreshing(false);
+
     }
 
 
@@ -439,21 +467,33 @@ public class FeedFragment extends Fragment
             //options.inSampleSize = 4;
             // Convert the photo list to a FeedItem list
             for (Photo photo : result) {
-                // Convert the photo string to a bitmap
-                String photoString = photo.getPhoto();
-                if (photoString == null || photoString.length() <= 0) {
-                    continue;
-                }
-                try {
-                    byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
-                    bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, options);
 
-                } catch (Exception e) {
-                    Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
-                    continue;
+                //Check if the bitmap is cached
+                bitmap = getBitmapFromMemCache(photo.getPhotoId());
+                if (bitmap == null) {
+                    //Bitmap is not cached.  Have to download
+
+
+                    // Convert the photo string to a bitmap
+                    String photoString = photo.getPhoto();
+                    if (photoString == null || photoString.length() <= 0) {
+                        continue;
+                    }
+                    try {
+                        byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
+                        bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, options);
+
+                        //Add bitmap to the cache
+                        addBitmapToMemoryCache(String.valueOf(photo.getPhotoId()), bitmap);
+
+                    } catch (Exception e) {
+                        Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+                        continue;
+                    }
                 }
 
-                FeedItem feedItem = new FeedItem(photo.getPhotoId(), bitmap, "Stack Title", 4);
+                //FeedItem feedItem = new FeedItem(photo.getPhotoId(), bitmap, "Stack Title", 4);
+                FeedItem feedItem = new FeedItem(photo.getPhotoId(), bitmap);
                 feedItems.add(feedItem);
             }
 
@@ -477,6 +517,19 @@ public class FeedFragment extends Fragment
             mSwipeRefreshLayout.setRefreshing(false);
         }
     }
+
+
+    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (getBitmapFromMemCache(key) == null) {
+            mMemoryCache.put(key, bitmap);
+        }
+    }
+
+    public Bitmap getBitmapFromMemCache(String key) {
+        return mMemoryCache.get(key);
+    }
+
+
 
     // Handle an item in the feed being clicked
     @Override

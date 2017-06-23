@@ -26,7 +26,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:gravity="center"
-        android:src="@drawable/img_owl_eye"/>
+        android:src="@drawable/logo_login_transparent"/>
 
     <ScrollView
         android:id="@+id/login_form"
