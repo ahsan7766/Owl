@@ -3,12 +3,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
     tools:context="com.example.owl.fragments.FeedFragment">
+
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recycler_feed_canvas_outer"
         android:layout_width="match_parent"
-        android:layout_height="150dp"/>
+        android:layout_height="150dp"
+        android:visibility="gone"/>
 
     <LinearLayout
         android:id="@+id/layout_feed_buttons"

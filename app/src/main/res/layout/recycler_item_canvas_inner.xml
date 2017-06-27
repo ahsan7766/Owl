@@ -3,18 +3,16 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="@dimen/canvas_tile_size"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
     android:layout_margin="5dp"
-    android:background="@color/colorPrimary">
+    android:orientation="horizontal">
 
-    <!--
+
     <ImageView
         android:id="@+id/image"
-        android:src="@drawable/dickbutt"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-    -->
+        android:layout_height="match_parent" />
 
+    <!--
     <TextView
         android:id="@+id/text"
         android:layout_width="match_parent"
@@ -23,4 +21,5 @@
         android:textColor="@color/colorPrimary"
         android:gravity="center"
         android:background="@drawable/trees"/>
+        -->
 </LinearLayout>

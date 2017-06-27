@@ -4,11 +4,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.example.owl.R;
 import com.example.owl.activities.StackActivity;
@@ -19,9 +19,11 @@ import com.example.owl.models.CanvasTile;
  */
 
 public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuterRecyclerAdapter.ViewHolder>
-        implements CanvasInnerRecyclerAdapter.ItemClickListener, CanvasInnerRecyclerAdapter.ItemDragListener{
+        implements CanvasInnerRecyclerAdapter.ItemClickListener,
+        CanvasInnerRecyclerAdapter.ItemDragListener {
 
 
+    private static final String TAG = CanvasOuterRecyclerAdapter.class.getName();
 
     //private static final int ROW_COUNT = 7;
     private int rowCount = 0; //iterator
@@ -34,7 +36,8 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
     private CanvasTile[][] mDataset = new CanvasTile[0][0];
     private LayoutInflater mInflater;
-    private CanvasOuterRecyclerAdapter.ItemClickListener mClickListener;
+    //private CanvasOuterRecyclerAdapter.ItemClickListener mClickListener;
+    private CanvasOuterRecyclerAdapter.ItemInnerDragListener mInnerDragListener;
 
     // data is passed into the constructor
     public CanvasOuterRecyclerAdapter(Context context, CanvasTile[][] data) {
@@ -52,6 +55,14 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         mInnerRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_canvas_inner);
 
+
+        mInnerRecyclerView.setHasFixedSize(true);
+        mInnerRecyclerView.setItemViewCacheSize(20);
+        mInnerRecyclerView.setDrawingCacheEnabled(true);
+        mInnerRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+
+
+
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
@@ -61,6 +72,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         mInnerRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new CanvasInnerRecyclerAdapter(parent.getContext(), mDataset[rowCount], rowCount);
 
+
         rowCount++; // iterate the row count so when (if) the next ViewHolder row is created it takes the next data row
 
         mAdapter.setClickListener(this);
@@ -68,8 +80,6 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mInnerRecyclerView.setAdapter(mAdapter);
-
-
 
         //initDataset();
 
@@ -96,18 +106,12 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     }
 
     // stores and recycles views as they are scrolled off screen
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class ViewHolder extends RecyclerView.ViewHolder {
         public RecyclerView mRecycler;
 
         public ViewHolder(View itemView) {
             super(itemView);
             mRecycler = (RecyclerView) itemView.findViewById(R.id.recycler_canvas_inner);
-            itemView.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
         }
     }
 
@@ -116,6 +120,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         return mDataset[id];
     }
 
+    /*
     // allows clicks events to be caught
     public void setClickListener(CanvasOuterRecyclerAdapter.ItemClickListener itemClickListener) {
         this.mClickListener = itemClickListener;
@@ -125,6 +130,19 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     public interface ItemClickListener {
         void onItemClick(View view, int position);
     }
+    */
+
+
+
+    // parent activity will implement this method to respond to click events
+    public void setInnerDragListener (CanvasOuterRecyclerAdapter.ItemInnerDragListener itemInnerDragListener) {
+        this.mInnerDragListener = itemInnerDragListener;
+    }
+
+    // parent activity will implement this method to respond to click events
+    public interface ItemInnerDragListener {
+        boolean onItemDrag(View view, DragEvent dragEvent, int row, int column);
+    }
 
 
     @Override
@@ -133,28 +151,47 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         view.getContext().startActivity(intent);
     }
 
+
+
     @Override
     public boolean onItemDrag(View view, DragEvent dragEvent, int row, int column) {
-        switch (dragEvent.getAction()) {
-            case DragEvent.ACTION_DRAG_STARTED:
-                // drag has started, return true to tell that you're listening to the drag
-                //mRecyclerView.setNestedScrollingEnabled(false);
-                return true;
+        if(dragEvent.getAction() == DragEvent.ACTION_DRAG_LOCATION ) {
 
-            case DragEvent.ACTION_DROP:
-                // the dragged item was dropped into this view
-                //CanvasTile a = mDataset[0][position];
-                //a.setText("DRAG");
-                //mAdapter.notifyItemChanged(position);
-                //mAdapter.notifyDataSetChanged();
-                Toast.makeText(mContext, "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
-                return true;
-            case DragEvent.ACTION_DRAG_ENDED:
-                // the drag has ended
-                return false;
+            int offset = mInnerRecyclerView.computeHorizontalScrollOffset();
+            /*
+            int extent = mInnerRecyclerView.computeHorizontalScrollExtent();
+            int range = mInnerRecyclerView.computeHorizontalScrollRange();
+
+            int percentage = (int)(100.0 * offset / (float)(range - extent));
+            Log.d(TAG, "scroll percentage: " + percentage + "%");
+            */
+
+            int x = Math.round(dragEvent.getX());
+
+            int translatedX = x - offset; // mAdapter.getScrollDistance();
+
+            //Log.d(TAG, "x: " + x + ", HorizontalScrollOffset: " + offset);
+            Log.d(TAG, "x: " + x + ", TranslatedX: " + translatedX);
+
+            int threshold = 50;
+            // make a scrolling up due the x has passed the threshold
+            if (translatedX < threshold) {
+                // make a scroll left
+                mInnerRecyclerView.smoothScrollBy(-50, 0);
+
+            } else {
+                // make a autoscrolling down due y has passed the 500 px border
+                if (translatedX + threshold > 100) {
+                    // make a scroll right
+                    mInnerRecyclerView.smoothScrollBy(50, 0);
+                }
+            }
+
         }
-        return false;
+
+        return mInnerDragListener.onItemDrag(view, dragEvent, row, column);
     }
+
 
     /*
     private void initDataset() {

@@ -25,6 +25,7 @@ import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -71,7 +72,8 @@ import java.util.Map;
  */
 public class FeedFragment extends Fragment
         implements FeedRecyclerAdapter.ItemClickListener,
-        FeedRecyclerAdapter.ItemLongClickListener {
+        FeedRecyclerAdapter.ItemLongClickListener,
+        CanvasOuterRecyclerAdapter.ItemInnerDragListener {
         //FeedRecyclerAdapter.ItemDragListener,
         //CanvasInnerRecyclerAdapter.ItemDragListener {
 
@@ -92,6 +94,7 @@ public class FeedFragment extends Fragment
     public static final int CANVAS_ROW_COUNT = 2; // number of rows of pictures in the grid
 
     private LruCache<String, Bitmap> mMemoryCache;
+
 
     protected RecyclerView mCanvasRecyclerView;
     protected CanvasOuterRecyclerAdapter mCanvasAdapter;
@@ -206,7 +209,6 @@ public class FeedFragment extends Fragment
         View rootView = inflater.inflate(R.layout.fragment_feed, container, false);
         rootView.setTag(TAG);
 
-
         // SET UP CANVAS
         mCanvasRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_feed_canvas_outer);
 
@@ -219,6 +221,7 @@ public class FeedFragment extends Fragment
         mCanvasRecyclerView.setLayoutManager(mCanvasLayoutManager);
         mCanvasAdapter = new CanvasOuterRecyclerAdapter(getActivity(), mCanvasDataset);
         //mCanvasAdapter.setClickListener(this);
+        mCanvasAdapter.setInnerDragListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mCanvasRecyclerView.setAdapter(mCanvasAdapter);
@@ -279,8 +282,8 @@ public class FeedFragment extends Fragment
         // `client` here is an instance of Android Async HTTP
         // getHomeTimeline is an example endpoint.
 
-        initDataset();
-        //mSwipeRefreshLayout.setRefreshing(false);
+        //initDataset();
+        mSwipeRefreshLayout.setRefreshing(false);
 
     }
 
@@ -540,6 +543,7 @@ public class FeedFragment extends Fragment
     }
 
     // Handle an item in the feed being long clicked
+
     @Override
     public boolean onItemLongClick(View view, int position) {
 
@@ -547,11 +551,14 @@ public class FeedFragment extends Fragment
         //Vibrator v = (Vibrator) this.getActivity().getSystemService(Context.VIBRATOR_SERVICE);
         //v.vibrate(500);
 
+        // Animate the top RecyclerView to expand it and allow dragging
+        mCanvasRecyclerView.setVisibility(View.VISIBLE);
+
 
         // Show a shadow of the image that is being dragged when it is long clicked
         ClipData data = ClipData.newPlainText("", "");
         View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
-        //Can only use new startDragAndDrop function on Nougat and up
+        // Can only use new startDragAndDrop function on Nougat and up
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             view.startDragAndDrop(data, shadowBuilder, view, 0);
         } else {
@@ -560,51 +567,36 @@ public class FeedFragment extends Fragment
 
         return true;
 
-
-
-        /*
-        ClipData.Item item = new ClipData.Item((CharSequence) view.getTag());
-        String[] mimeTypes = {ClipDescription.MIMETYPE_TEXT_PLAIN};
-        //ClipData dragData = new ClipData(view.getTag().toString(), mimeTypes, item);
-        view.setVisibility(View.GONE);
-        View.DragShadowBuilder myShadow = new View.DragShadowBuilder();
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            view.startDragAndDrop(dragData, myShadow, null, 0);
-        } else {
-            view.startDrag(dragData, myShadow, null, 0);
-        }
-        */
-        //return true;
-
-
-        //TODO allow dragging to canvas
     }
 
 
-    // Handle an item in the feed being long clicked
-    /*
+    // Handle an item from an inner RecyclerView in the canvas being dragged
     @Override
-    public boolean onItemDrag(View view, DragEvent dragEvent, int position) {
-
+    public boolean onItemDrag(View view, DragEvent dragEvent, int row, int column) {
         switch (dragEvent.getAction()) {
             case DragEvent.ACTION_DRAG_STARTED:
                 // drag has started, return true to tell that you're listening to the drag
                 //mRecyclerView.setNestedScrollingEnabled(false);
+
                 return true;
 
             case DragEvent.ACTION_DROP:
                 // the dragged item was dropped into this view
-                FeedItem a = mDataset.get(position);
-                a.setHeader("dropped");
-                mAdapter.notifyItemChanged(position);
+                //CanvasTile a = mDataset[0][position];
+                //a.setText("DRAG");
+                //mAdapter.notifyItemChanged(position);
+                //mAdapter.notifyDataSetChanged();
+                Toast.makeText(getActivity(), "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
                 return true;
+
             case DragEvent.ACTION_DRAG_ENDED:
                 // the drag has ended
+
+                // Hide the top canvas
+                mCanvasRecyclerView.setVisibility(View.GONE);
                 return false;
         }
         return false;
     }
-    */
 
 }
