@@ -23,6 +23,9 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExp
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
+import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.example.owl.R;
 import com.example.owl.fragments.CanvasFragment;
 import com.example.owl.models.Comment;
@@ -30,9 +33,14 @@ import com.example.owl.adapters.CommentsRecyclerAdapter;
 import com.example.owl.adapters.StackPhotoPagerAdapter;
 
 import com.example.owl.fragments.StackPhotoPagerFragment;
+import com.example.owl.models.FeedItem;
 import com.example.owl.models.Photo;
+import com.example.owl.models.Stack;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class StackActivity extends AppCompatActivity
         implements StackPhotoPagerFragment.OnFragmentInteractionListener,

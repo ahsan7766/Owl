@@ -32,6 +32,9 @@ import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.amazonaws.mobileconnectors.s3.transfermanager.Upload;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
@@ -44,6 +47,7 @@ import com.example.owl.R;
 import com.example.owl.adapters.UploadPhotosRecyclerAdapter;
 import com.example.owl.adapters.UploadStackRecyclerAdapter;
 import com.example.owl.models.Photo;
+import com.example.owl.models.Stack;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -55,6 +59,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class UploadActivity extends AppCompatActivity
         implements UploadPhotosRecyclerAdapter.ItemClickListener,
@@ -72,7 +77,7 @@ public class UploadActivity extends AppCompatActivity
     private RecyclerView mRecyclerViewStack;
     private LinearLayoutManager mLayoutManagerStack;
     private UploadStackRecyclerAdapter mAdapterStack;
-    private String[] mDatasetStack = new String[0];
+    private ArrayList<Stack> mDatasetStack = new ArrayList<>();
 
     private FloatingActionButton mFab;
 
@@ -562,8 +567,61 @@ public class UploadActivity extends AppCompatActivity
      */
     private void initDatasetStacks() {
         // TODO replace fake data generation with pull form web
-        mDatasetStack =  new String[] { "Stack Name 1", "Stack Name 2", "Stack Name 3", "Stack Name 4", "Stack Name 5"};
+        //mDatasetStack =  new String[] { "Stack Name 1", "Stack Name 2", "Stack Name 3", "Stack Name 4", "Stack Name 5"};
+        new GetStacksTask().execute();
+    }
 
+
+    private class GetStacksTask extends AsyncTask<Void, Void, List<Stack>> {
+
+        protected List<Stack> doInBackground(Void... voids) {
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    UploadActivity.this,
+                    "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e", // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Query for stacks
+            Stack queryStack = new Stack();
+            queryStack.setUserId("0");
+
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    .withIndexName("UserId-CreatedDate-index")
+                    .withHashKeyValues(queryStack)
+                    //.withRangeKeyCondition("Title", rangeKeyCondition)
+                    .withScanIndexForward(false)
+                    .withConsistentRead(false); //Cannot use consistent read on GSI
+
+
+            PaginatedQueryList<Stack> result = mapper.query(Stack.class, queryExpression);
+
+            return result;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(List<Stack> result) {
+            // TODO: check this.exception
+            // TODO: do something with the feed
+            // Clear dataset, add new items, then notify
+            mDatasetStack.clear();
+            mDatasetStack.addAll(result);
+
+            // Add option at top to create new stack
+            mDatasetStack.add(0, new Stack("-1", "-1", "-1", "Create New Stack"));
+
+            mAdapterStack.notifyDataSetChanged();
+        }
     }
 
 }
