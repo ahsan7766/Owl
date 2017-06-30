@@ -7,4 +7,6 @@
     <dimen name="fab_margin">16dp</dimen>
 
     <dimen name="canvas_tile_size">100dp</dimen>
+
+    <dimen name="edit_text_margin">10dp</dimen>
 </resources>

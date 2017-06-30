@@ -18,7 +18,6 @@ public class Stack {
     private String mUserId;
     private String mCreatedDate;
     private String mName;
-    //private String[] mPhotos;
 
     public Stack() {
     }

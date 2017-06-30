@@ -24,10 +24,16 @@ import android.os.Bundle;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.InputFilter;
+import android.text.InputType;
 import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -48,6 +54,7 @@ import com.example.owl.adapters.UploadPhotosRecyclerAdapter;
 import com.example.owl.adapters.UploadStackRecyclerAdapter;
 import com.example.owl.models.Photo;
 import com.example.owl.models.Stack;
+import com.example.owl.models.StackPhoto;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -117,9 +124,6 @@ public class UploadActivity extends AppCompatActivity
         mRecyclerViewPhotos.setAdapter(mAdapterPhotos);
 
 
-
-
-
         // Setup Stack Recycler
         // Initialize RecyclerView
         mRecyclerViewStack = (RecyclerView) findViewById(R.id.recycler_upload_stack);
@@ -147,7 +151,6 @@ public class UploadActivity extends AppCompatActivity
         mRecyclerViewStack.setAdapter(mAdapterStack);
 
 
-
         // When the FAB is clicked, upload the photos
         mFab = (FloatingActionButton) findViewById(R.id.fab);
         mFab.setOnClickListener(new View.OnClickListener() {
@@ -155,17 +158,85 @@ public class UploadActivity extends AppCompatActivity
             public void onClick(View view) {
 
                 // Do not allow upload if no photos are selected
-                if(mDatasetPhotos.size() <= 0) {
+                if (mDatasetPhotos.size() <= 0) {
                     Toast.makeText(UploadActivity.this, "No Photos Selected", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
+
+                /*
                 // Do not allow upload if no stack is selected
-                if(mAdapterStack.getSelectedPos() <= -1) {
+                if (mAdapterStack.getSelectedPos() <= -1) {
                     Toast.makeText(UploadActivity.this, "No Stack Selected", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                */
 
+                // "Create New Stack" is selected.  Show dialog to name the stack
+                if (mAdapterStack.getSelectedPos() == 0) {
+                    //TODO make sure name is not a duplicate of one the user already has (case insensitive)
+
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(UploadActivity.this);
+                    builder.setTitle("Create New Stack");
+
+                    // Set up the input
+                    final EditText input = new EditText(UploadActivity.this);
+
+                    // Create container for the EditText to be in.  This is needed to set margins
+                    FrameLayout container = new FrameLayout(UploadActivity.this);
+                    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+                    //Add padding to the container
+                    params.leftMargin = getResources().getDimensionPixelSize(R.dimen.edit_text_margin);
+                    params.rightMargin = getResources().getDimensionPixelSize(R.dimen.edit_text_margin);
+                    input.setLayoutParams(params);
+
+                    // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+                    input.setInputType(InputType.TYPE_CLASS_TEXT);
+                    input.setSingleLine(true);
+
+                    //Set max length
+                    final int STACK_TITLE_MAX_LENGTH = 50;
+                    InputFilter[] filterArray = new InputFilter[1];
+                    filterArray[0] = new InputFilter.LengthFilter(STACK_TITLE_MAX_LENGTH);
+                    input.setFilters(filterArray);
+
+                    input.setHint("Stack Title");
+
+                    container.addView(input); //Add view to container
+                    builder.setView(container); //Set Dialog view to the container
+
+                    // Set up the buttons
+                    builder.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            final String STACK_NAME = input.getText().toString();
+
+
+                            if (STACK_NAME.isEmpty()) {
+                                Toast.makeText(UploadActivity.this, "Stack name cannot be empty.", Toast.LENGTH_SHORT).show();
+                                dialog.dismiss();
+                            } else {
+
+                                //TODO execute task to create new stack, THEN execute task to upload photos
+                                new CreateStackTask().execute(STACK_NAME);
+
+                            }
+
+
+                        }
+                    });
+                    builder.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.cancel();
+                        }
+                    });
+                    builder.show();
+
+                    return;
+                }
 
 
                 /*
@@ -181,8 +252,7 @@ public class UploadActivity extends AppCompatActivity
                 */
 
 
-
-                new UploadTask().execute();
+                new UploadTask().execute(mDatasetStack.get(mAdapterStack.getSelectedPos()).getStackId());
 
                 /*
                 // Loop through each file to upload
@@ -225,7 +295,6 @@ public class UploadActivity extends AppCompatActivity
         });
 
 
-
         // Check for READ_EXTERNAL_STORAGE permission to read photos
         // Note: After Research (as of SDK 25) if any permission is changed to denied while in an
         // application, and that app is returned to, then the activity that was running is
@@ -236,10 +305,11 @@ public class UploadActivity extends AppCompatActivity
     }
 
 
-    private class UploadTask extends AsyncTask<Void, Void, Void> {
+    private class UploadTask extends AsyncTask<String, Void, Void> {
 
-        protected Void doInBackground(Void... urls) {
+        protected Void doInBackground(String... stackId) {
 
+            final String STACK_ID = stackId[0];
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
@@ -255,7 +325,6 @@ public class UploadActivity extends AppCompatActivity
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-
 
 
             try {
@@ -304,30 +373,37 @@ public class UploadActivity extends AppCompatActivity
 
                 // Convert bitmap to String
                 Bitmap bitmap = mDatasetPhotos.get(0);
-                ByteArrayOutputStream baos = new  ByteArrayOutputStream();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.WEBP, 10, baos);
-                byte [] b=baos.toByteArray();
+                byte[] b = baos.toByteArray();
                 String photoString = Base64.encodeToString(b, Base64.DEFAULT);
 
                 // Get date string
                 DateTime dt = new DateTime(DateTimeZone.UTC);
                 DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
-                String str = fmt.print(dt);
+                final String dateString = fmt.print(dt);
 
 
-
-                // Test writing to DB
+                // Insert photo to DB
                 Photo photo = new Photo();
-                //photo.setPhotoId("1");
-                photo.setUserId("0");
-                photo.setUploadDate(str);
+                photo.setUserId("0"); //TODO set user id
+                photo.setUploadDate(dateString);
                 photo.setPhoto(photoString);
 
                 mapper.save(photo);
 
 
+                // If photo is in a stack, then insert to the StackPhoto table
+                if (STACK_ID != null && !STACK_ID.isEmpty()) {
+                    StackPhoto stackPhoto = new StackPhoto();
+                    stackPhoto.setStackId(STACK_ID);
+                    stackPhoto.setPhotoId(photo.getPhotoId());
 
-            } catch (Exception e){
+                    mapper.save(stackPhoto);
+                }
+
+
+            } catch (Exception e) {
                 Log.e(TAG, "Error on Upload Photo: " + e);
             }
 
@@ -351,6 +427,73 @@ public class UploadActivity extends AppCompatActivity
         }
     }
 
+
+    private class CreateStackTask extends AsyncTask<String, Void, String> {
+
+        protected String doInBackground(String... stackName) {
+
+            final String STACK_NAME = stackName[0];
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getApplicationContext(),
+                    "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e", // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            //AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
+            //TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Stack object that will be used to upload new stack to the DB
+            Stack stack = new Stack();
+
+            try {
+                // Get date string
+                DateTime dt = new DateTime(DateTimeZone.UTC);
+                DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                final String dateString = fmt.print(dt);
+
+                // Create stack object
+                //photo.setPhotoId("1");
+                stack.setUserId("0"); //TODO set user id
+                stack.setCreatedDate(dateString);
+                stack.setName(STACK_NAME);
+
+                mapper.save(stack);
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error on Create Stack: " + e);
+            }
+
+            return stack.getStackId();
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+
+
+        }
+
+        protected void onPostExecute(String stackId) {
+            // If stackId is null/empty, then the stack was not uploaded to the DB
+            if(stackId == null || stackId.isEmpty()) {
+                Toast.makeText(UploadActivity.this, "Error: Stack was not created", Toast.LENGTH_SHORT).show();
+            } else {
+                // Stack was created, now upload the photos
+                Toast.makeText(UploadActivity.this, "Stack Created.  Uploading photos...", Toast.LENGTH_SHORT).show();
+                new UploadTask().execute(stackId);
+            }
+
+
+
+        }
+    }
 
     /**
      * Callback for the result from requesting permissions. This method
@@ -433,7 +576,7 @@ public class UploadActivity extends AppCompatActivity
                         // One image was selected
                         String path = getRealPathFromURI(selectedImage);
                         Bitmap bitmap = generateCroppedBitmap(path);
-                        if(bitmap != null) {
+                        if (bitmap != null) {
                             mDatasetPhotos.add(bitmap);
                         }
                     } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
@@ -445,7 +588,7 @@ public class UploadActivity extends AppCompatActivity
                             ClipData.Item item = clipData.getItemAt(i);
                             String path = getRealPathFromURI(item.getUri());
                             Bitmap bitmap = generateCroppedBitmap(path);
-                            if(bitmap != null) {
+                            if (bitmap != null) {
                                 mDatasetPhotos.add(bitmap);
                             }
                         }
@@ -538,22 +681,22 @@ public class UploadActivity extends AppCompatActivity
         Bitmap srcBmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath(), options);
         Bitmap dstBmp;
 
-        if (srcBmp.getWidth() >= srcBmp.getHeight()){
+        if (srcBmp.getWidth() >= srcBmp.getHeight()) {
 
             dstBmp = Bitmap.createBitmap(
                     srcBmp,
-                    srcBmp.getWidth()/2 - srcBmp.getHeight()/2,
+                    srcBmp.getWidth() / 2 - srcBmp.getHeight() / 2,
                     0,
                     srcBmp.getHeight(),
                     srcBmp.getHeight()
             );
 
-        }else{
+        } else {
 
             dstBmp = Bitmap.createBitmap(
                     srcBmp,
                     0,
-                    srcBmp.getHeight()/2 - srcBmp.getWidth()/2,
+                    srcBmp.getHeight() / 2 - srcBmp.getWidth() / 2,
                     srcBmp.getWidth(),
                     srcBmp.getWidth()
             );
@@ -562,8 +705,8 @@ public class UploadActivity extends AppCompatActivity
     }
 
     /**
-     *  Initialize stack dataset
-     *  Retrieve the list of the user's stacks
+     * Initialize stack dataset
+     * Retrieve the list of the user's stacks
      */
     private void initDatasetStacks() {
         // TODO replace fake data generation with pull form web
@@ -589,7 +732,7 @@ public class UploadActivity extends AppCompatActivity
 
             // Query for stacks
             Stack queryStack = new Stack();
-            queryStack.setUserId("0");
+            queryStack.setUserId("0");  //TODO set user id
 
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withIndexName("UserId-CreatedDate-index")
