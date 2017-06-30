@@ -141,7 +141,7 @@ public class CanvasFragment extends Fragment {
                         .commit();
 
                 // Set action bar title
-                getActivity().setTitle("Profile");
+                getActivity().setTitle("User");
             }
         });
 

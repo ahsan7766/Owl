@@ -402,11 +402,9 @@ public class UploadActivity extends AppCompatActivity
                     mapper.save(stackPhoto);
                 }
 
-
             } catch (Exception e) {
                 Log.e(TAG, "Error on Upload Photo: " + e);
             }
-
 
             return null;
         }

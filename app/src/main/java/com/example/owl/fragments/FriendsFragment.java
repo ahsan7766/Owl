@@ -178,7 +178,7 @@ public class FriendsFragment extends Fragment
     @Override
     public void onItemClick(View view, int position) {
 
-        // Profile picture was pressed
+        // User picture was pressed
         // Go to the canvas of that profile
 
 

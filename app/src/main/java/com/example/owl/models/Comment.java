@@ -8,7 +8,7 @@ import java.util.Date;
 
 public class Comment {
 
-    private Profile mProfile;
+    private User mUser;
     private String mText;
     private Date mDate;
 
@@ -16,12 +16,12 @@ public class Comment {
     public Comment () {}
 
 
-    public Profile getProfile() {
-        return mProfile;
+    public User getUser() {
+        return mUser;
     }
 
-    public void setProfile(Profile profile) {
-        mProfile = profile;
+    public void setUser(User user) {
+        mUser = user;
     }
 
     public String getText() {

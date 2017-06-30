@@ -11,7 +11,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBTable;
  * Created by Zach on 6/27/17.
  */
 
-@DynamoDBTable(tableName="Stack")
+@DynamoDBTable(tableName = "Stack")
 public class Stack {
 
     private String mStackId;
