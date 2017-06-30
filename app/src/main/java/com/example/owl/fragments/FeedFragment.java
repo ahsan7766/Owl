@@ -379,11 +379,11 @@ public class FeedFragment extends Fragment
                 // Convert bitmap to file
                 try {
 
-                    File file = new File(getContext().getCacheDir() + "/" + feedItem.getPhotoId() + ".jpg");
+                    File file = new File(getContext().getCacheDir() + "/" + feedItem.getStackId() + ".jpg");
 
                     TransferObserver observer = transferUtility.download(
                             "owl-aws",     // The bucket to download from
-                            feedItem.getPhotoId() + ".bmp",    // The key for the object to download
+                            feedItem.getStackId() + ".bmp",    // The key for the object to download
                             file        // The file to download the object to
                     );
 
@@ -495,7 +495,7 @@ public class FeedFragment extends Fragment
                     }
                 }
 
-                //FeedItem feedItem = new FeedItem(photo.getPhotoId(), bitmap, "Stack Title", 4);
+                //FeedItem feedItem = new FeedItem(photo.getStackId(), bitmap, "Stack Title", 4);
                 FeedItem feedItem = new FeedItem(photo.getPhotoId(), bitmap);
                 feedItems.add(feedItem);
             }
@@ -538,7 +538,7 @@ public class FeedFragment extends Fragment
     @Override
     public void onItemClick(View view, int position) {
         Intent intent = new Intent(getContext(), StackActivity.class);
-        intent.putExtra("photoId", mDataset.get(position).getPhotoId());
+        intent.putExtra("PHOTO_ID", mDataset.get(position).getPhotoId());
         view.getContext().startActivity(intent);
     }
 
@@ -583,7 +583,7 @@ public class FeedFragment extends Fragment
             case DragEvent.ACTION_DROP:
                 // the dragged item was dropped into this view
                 //CanvasTile a = mDataset[0][position];
-                //a.setText("DRAG");
+                //a.setComment("DRAG");
                 //mAdapter.notifyItemChanged(position);
                 //mAdapter.notifyDataSetChanged();
                 Toast.makeText(getActivity(), "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();

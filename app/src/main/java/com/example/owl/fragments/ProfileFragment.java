@@ -58,7 +58,6 @@ public class ProfileFragment extends Fragment {
     private String mParam2;
 
 
-
     private ProfilePictureView mProfilePictureView;
     private TextView mTextUserName;
     private TextView mTextUserBio;
@@ -206,7 +205,7 @@ public class ProfileFragment extends Fragment {
 
 
             // If the user is not retrieved, then close the fragment
-            if(user.getUserId() == null || user.getUserId().isEmpty()) {
+            if (user.getUserId() == null || user.getUserId().isEmpty()) {
                 Toast.makeText(getActivity(), "Unable to retrieve user data", Toast.LENGTH_SHORT).show();
                 // End fragment by popping itself from the stack
                 getActivity().getSupportFragmentManager().beginTransaction().remove(ProfileFragment.this).commit();

@@ -86,6 +86,14 @@ public class ProfilePictureView extends View {
         init();
     }
 
+    public Bitmap getBitmap() {
+        return mBitmap;
+    }
+
+    public void setBitmap(Bitmap bitmap) {
+        mBitmap = bitmap;
+        invalidate();
+    }
 
     public int getBackgroundPicture() {
         return mBackgroundPicture;

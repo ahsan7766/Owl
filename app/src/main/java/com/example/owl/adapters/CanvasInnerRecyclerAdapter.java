@@ -44,7 +44,7 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     @Override
     public void onBindViewHolder(CanvasInnerRecyclerAdapter.ViewHolder holder, int position) {
         CanvasTile canvasTile = mData[position];
-        //holder.mTextView.setText(canvasTile.getText());
+        //holder.mTextView.setComment(canvasTile.getComment());
 
 
         //holder.mImageView.setImageResource(R.drawable.trees);

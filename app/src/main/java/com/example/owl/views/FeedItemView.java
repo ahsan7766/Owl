@@ -26,8 +26,6 @@ public class FeedItemView extends View {
 
     private static final String TAG = FeedItemView.class.getName();
 
-    private Drawable mBackgroundDrawable;
-
     private String mHeaderString;
     private int mPhotoCount;
     private Bitmap mPhoto;

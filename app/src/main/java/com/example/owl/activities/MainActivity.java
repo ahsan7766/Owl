@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity
             */
         } else {
             //Clear the backstack
-            while (getSupportFragmentManager().getBackStackEntryCount() > 0){
+            while (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                 getSupportFragmentManager().popBackStackImmediate();
             }
 
@@ -253,8 +253,7 @@ public class MainActivity extends AppCompatActivity
                         .replace(R.id.flContent, fragment, fragmentClass.getName())
                         .addToBackStack(fragmentClass.getName())
                         .commit();
-            }
-            else { // re-use the old fragment
+            } else { // re-use the old fragment
                 /*
                 fragmentTransaction
                         .replace(R.id.flContent, fragment, fragmentClass.getName())
@@ -263,7 +262,6 @@ public class MainActivity extends AppCompatActivity
                         */
                 fragmentManager.popBackStackImmediate(fragmentClass.getName(), 0);
             }
-
 
 
             //fragment = (Fragment) fragmentClass.newInstance();
@@ -333,7 +331,7 @@ public class MainActivity extends AppCompatActivity
 
 
             // If the user is not retrieved, then close the app
-            if(user.getUserId() == null || user.getUserId().isEmpty()) {
+            if (user.getUserId() == null || user.getUserId().isEmpty()) {
                 //TODO maybe do something better than just showing a toast?
                 Toast.makeText(MainActivity.this, "Unable to retrieve user data", Toast.LENGTH_SHORT).show();
                 finish();

@@ -456,7 +456,7 @@ public class UploadActivity extends AppCompatActivity
                 final String dateString = fmt.print(dt);
 
                 // Create stack object
-                //photo.setPhotoId("1");
+                //photo.setStackId("1");
                 stack.setUserId("0"); //TODO set user id
                 stack.setCreatedDate(dateString);
                 stack.setName(STACK_NAME);

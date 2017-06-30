@@ -43,7 +43,7 @@ public class Photo {
         mUserId = userId;
     }
 
-    @DynamoDBRangeKey(attributeName = "UploadDate")
+    @DynamoDBAttribute(attributeName = "UploadDate")
     @DynamoDBIndexRangeKey(globalSecondaryIndexName = "UserId-UploadDate-index", attributeName = "UploadDate")
     public String getUploadDate() {
         return mUploadDate;
