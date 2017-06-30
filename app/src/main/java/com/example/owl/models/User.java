@@ -16,6 +16,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBTable;
 public class User {
 
     private String mUserId;
+    private String mEmail;
     private String mName;
     private String mBio;
     private String mJoinDate;
@@ -46,6 +47,15 @@ public class User {
 
     public void setUserId(String userId) {
         mUserId = userId;
+    }
+
+    @DynamoDBAttribute(attributeName = "Email")
+    public String getEmail() {
+        return mEmail;
+    }
+
+    public void setEmail(String email) {
+        mEmail = email;
     }
 
     @DynamoDBAttribute(attributeName = "Name")

@@ -4,6 +4,7 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -20,13 +21,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.example.owl.R;
 import com.example.owl.fragments.CanvasFragment;
 import com.example.owl.fragments.FeedFragment;
 import com.example.owl.fragments.FriendsFragment;
 import com.example.owl.fragments.ProfileFragment;
 import com.example.owl.fragments.SettingsFragment;
+import com.example.owl.models.User;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
@@ -73,10 +81,8 @@ public class MainActivity extends AppCompatActivity
         mNavigationView = (NavigationView) findViewById(R.id.nav_view);
         mNavigationView.setNavigationItemSelectedListener(this);
 
-
-
-
-
+        // Get user data for the nav header
+        new DownloadUserTask().execute();
     }
 
     /**
@@ -293,5 +299,57 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onFragmentInteraction(Uri uri) {
 
+    }
+
+    private class DownloadUserTask extends AsyncTask<Void, Void, User> {
+
+        protected User doInBackground(Void... urls) {
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    MainActivity.this,
+                    "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e", // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Query for User
+            final String USER_ID = "0"; //TODO set user id
+
+            return mapper.load(User.class, USER_ID);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(User user) {
+            // TODO: check this.exception
+            // TODO: do something with the feed
+            // Clear dataset, add new items, then notify
+
+
+            // If the user is not retrieved, then close the app
+            if(user.getUserId() == null || user.getUserId().isEmpty()) {
+                //TODO maybe do something better than just showing a toast?
+                Toast.makeText(MainActivity.this, "Unable to retrieve user data", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+
+            // Update the nav drawer UI to whatever the user's data is
+            // Get the header view first
+            View headerView = mNavigationView.getHeaderView(0);
+
+            TextView textUserName = headerView.findViewById(R.id.text_user_name);
+            textUserName.setText(user.getName());
+
+            TextView textUserEmail = headerView.findViewById(R.id.text_user_email);
+            textUserEmail.setText(user.getEmail());
+
+        }
     }
 }

@@ -1,16 +1,43 @@
 package com.example.owl.fragments;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.support.v4.app.Fragment;
+import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
+import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.example.owl.R;
+import com.example.owl.models.FeedItem;
+import com.example.owl.models.Photo;
+import com.example.owl.models.User;
 import com.example.owl.views.ProfileCounterView;
 import com.example.owl.views.ProfilePictureView;
+
+import org.w3c.dom.Text;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -30,7 +57,11 @@ public class ProfileFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+
+
     private ProfilePictureView mProfilePictureView;
+    private TextView mTextUserName;
+    private TextView mTextUserBio;
     private ProfileCounterView mProfileCounterView;
 
     private OnFragmentInteractionListener mListener;
@@ -65,6 +96,9 @@ public class ProfileFragment extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
 
+        //Execute task to get user data
+        new DownloadUserTask().execute();
+
     }
 
     @Override
@@ -77,6 +111,10 @@ public class ProfileFragment extends Fragment {
         mProfilePictureView.setBackgroundPicture(R.drawable.trees);
 
         mProfileCounterView = (ProfileCounterView) rootView.findViewById(R.id.profile_counter);
+
+        mTextUserName = rootView.findViewById(R.id.text_user_name);
+
+        mTextUserBio = rootView.findViewById(R.id.text_user_bio);
 
         mProfileCounterView.setHootCount(57);
         mProfileCounterView.setFollowerCount(181);
@@ -132,5 +170,53 @@ public class ProfileFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+    }
+
+
+    private class DownloadUserTask extends AsyncTask<Void, Void, User> {
+
+        protected User doInBackground(Void... urls) {
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getContext(),
+                    "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e", // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Query for User
+            final String USER_ID = "0"; //TODO set user id
+            User user = mapper.load(User.class, USER_ID);
+
+            return user;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(User user) {
+            // TODO: check this.exception
+            // TODO: do something with the feed
+            // Clear dataset, add new items, then notify
+
+
+            // If the user is not retrieved, then close the fragment
+            if(user.getUserId() == null || user.getUserId().isEmpty()) {
+                Toast.makeText(getActivity(), "Unable to retrieve user data", Toast.LENGTH_SHORT).show();
+                // End fragment by popping itself from the stack
+                getActivity().getSupportFragmentManager().beginTransaction().remove(ProfileFragment.this).commit();
+                return;
+            }
+
+            // Update the UI to whatever the user's data is
+            mTextUserName.setText(user.getName());
+            mTextUserBio.setText(user.getBio());
+
+        }
     }
 }

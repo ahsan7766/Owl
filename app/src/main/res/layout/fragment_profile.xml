@@ -18,12 +18,11 @@
         tools:layout_constraintTop_creator="1"/>
 
     <TextView
-        android:id="@+id/text_profile_name"
+        android:id="@+id/text_user_name"
         android:layout_width="0dp"
         android:layout_height="50dp"
         android:layout_marginTop="24dp"
         android:gravity="center"
-        android:text="John Doe"
         android:textAlignment="center"
         android:textSize="20sp"
         android:textStyle="bold"
@@ -33,17 +32,16 @@
         app:layout_constraintTop_toBottomOf="@+id/profile_picture"/>
 
     <TextView
-        android:id="@+id/text_profile_subtitle"
+        android:id="@+id/text_user_bio"
         android:layout_width="0dp"
         android:layout_height="24dp"
         android:layout_marginTop="8dp"
         android:gravity="center"
-        android:text="Software Developer"
         android:textAlignment="center"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/text_profile_name"
+        app:layout_constraintTop_toBottomOf="@+id/text_user_name"
         tools:layout_constraintTop_creator="1"/>
 
     <com.example.owl.views.ProfileCounterView
@@ -56,7 +54,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintLeft_toLeftOf="@+id/profile_picture"
         app:layout_constraintRight_toRightOf="@+id/profile_picture"
-        app:layout_constraintTop_toBottomOf="@+id/text_profile_subtitle"/>
+        app:layout_constraintTop_toBottomOf="@+id/text_user_bio"/>
 
     <Button
         android:id="@+id/button_edit_follow"
