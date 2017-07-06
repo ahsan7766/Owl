@@ -6,7 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
-    <com.example.owl.views.FeedItemView
+    <com.ourwayoflife.owl.views.FeedItemView
         android:id="@+id/feed_category"
         android:layout_width="match_parent"
         android:layout_height="300dp"
@@ -22,7 +22,7 @@
         android:orientation="horizontal"
         android:weightSum="5">
 
-        <com.example.owl.views.ProfilePictureView
+        <com.ourwayoflife.owl.views.ProfilePictureView
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_gravity="center"

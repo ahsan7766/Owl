@@ -8,7 +8,7 @@
     android:layout_margin="5dp"
     android:orientation="vertical">
 
-    <com.example.owl.views.ProfilePictureView
+    <com.ourwayoflife.owl.views.ProfilePictureView
         android:id="@+id/profile_picture"
         android:layout_width="50dp"
         android:layout_height="50dp"
