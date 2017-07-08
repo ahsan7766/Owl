@@ -16,10 +16,20 @@ import com.ourwayoflife.owl.models.PhotoComment;
 import com.ourwayoflife.owl.models.User;
 import com.ourwayoflife.owl.views.ProfilePictureView;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -55,8 +65,8 @@ public class PhotoCommentsRecyclerAdapter extends RecyclerView.Adapter<PhotoComm
     public void onBindViewHolder(PhotoCommentsRecyclerAdapter.ViewHolder holder, int position) {
         PhotoComment photoComment = mData.get(position);
 
-        User user =  mUserHashMap.get(photoComment.getUserId());
-        if(user != null) {
+        User user = mUserHashMap.get(photoComment.getUserId());
+        if (user != null) {
             String photoString = user.getPhoto();
             try {
                 byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
@@ -68,7 +78,15 @@ public class PhotoCommentsRecyclerAdapter extends RecyclerView.Adapter<PhotoComm
             }
 
             holder.mTextName.setText(user.getName());
-            holder.mTextDate.setText(photoComment.getCommentDate());
+
+            // Need to convert date string to a more readable format
+
+            DateTime dateTime = ISODateTimeFormat.basicDateTime().parseDateTime(photoComment.getCommentDate());
+
+            //SimpleDateFormat newFormat = new SimpleDateFormat("kk:mm");
+            DateTimeFormatter fmt = DateTimeFormat.forPattern("h:mm aa");
+            holder.mTextDate.setText(fmt.print(dateTime));
+
             holder.mTextComment.setText(photoComment.getComment());
         } else {
             holder.mTextName.setText("User Not Found");
