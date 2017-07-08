@@ -38,6 +38,7 @@ import com.amazonaws.mobileconnectors.cognito.CognitoSyncManager;
 import com.amazonaws.mobileconnectors.cognito.Dataset;
 import com.amazonaws.mobileconnectors.cognito.DefaultSyncCallback;
 import com.amazonaws.regions.Regions;
+
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -66,8 +67,11 @@ public class LoginActivity extends AppCompatActivity implements
 
     private static final int RC_SIGN_IN = 9001;
 
-
+    //us-east-1:36ae0a5f-dc90-4b8b-8cf1-2eb31bead880
     public static final String COGNITO_IDENTITY_POOL = "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e";
+
+
+    public static GoogleSignInAccount sGoogleSignInAccount;
 
 
     /**
@@ -108,6 +112,8 @@ public class LoginActivity extends AppCompatActivity implements
         //findViewById(R.id.sign_out_button).setOnClickListener(this);
         //findViewById(R.id.disconnect_button).setOnClickListener(this);
 
+
+        //AWSMobileClient.initializeMobileClientIfNecessary(getApplicationContext());
 
 
         /*
@@ -158,6 +164,7 @@ public class LoginActivity extends AppCompatActivity implements
         // profile. ID and basic profile are included in DEFAULT_SIGN_IN.
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
+                .requestServerAuthCode(getString(R.string.server_client_id))
                 .build();
 
         // Build a GoogleApiClient with access to the Google Sign-In API and the
@@ -166,7 +173,6 @@ public class LoginActivity extends AppCompatActivity implements
                 .enableAutoManage(this /* FragmentActivity */, this /* OnConnectionFailedListener */)
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .build();
-
 
         // Set the dimensions of the sign-in button.
         SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
@@ -221,8 +227,9 @@ public class LoginActivity extends AppCompatActivity implements
         Log.d(TAG, "handleSignInResult:" + result.isSuccess());
         if (result.isSuccess()) {
             // Signed in successfully, show authenticated UI.
-            GoogleSignInAccount acct = result.getSignInAccount();
-            mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
+            //GoogleSignInAccount acct = result.getSignInAccount();
+            sGoogleSignInAccount = result.getSignInAccount();
+            mStatusTextView.setText(getString(R.string.signed_in_fmt, sGoogleSignInAccount.getDisplayName()));
             updateUI(true);
 
 

@@ -1,13 +1,24 @@
 <resources>
     <string name="app_name">Owl</string>
 
-    <!--PROD CLIENT ID-->
+    <!--PROD ANDROID CLIENT ID-->
     <!--
     <string name="server_client_id">408205420427-dfsl4kti2rmfg17mg904096fkgj2gocq.apps.googleusercontent.com</string>
     -->
 
-    <!--DEBUG CLIENT ID-->
+    <!--PROD WEB CLIENT ID-->
+    <!--
+    <string name="server_client_id">408205420427-o39dqm0skueeo1j285lnse4hucm8mt2d.apps.googleusercontent.com</string>
+    -->
+
+    <!--DEBUG ANDROID CLIENT ID-->
+    <!--
     <string name="server_client_id">677487825807-t73eg352637d3snun8h41malbek9ovf7.apps.googleusercontent.com</string>
+    -->
+
+    <!--DEBUG WEB CLIENT ID-->
+    <string name="server_client_id">677487825807-7pp12g1204d07falb4ul7jnilkhta6m2.apps.googleusercontent.com</string>
+
 
 
     <!-- Sign-in status messages -->
@@ -87,4 +98,14 @@
     <string name="dialog_title_permission_requested">Permission Request</string>
     <string name="permission_rationale_storage">Device storage permissions
         are needed for uploading photos.</string>
+
+
+    <!--SettingsFragment -->
+    <string name="pref_title_category_account">Account</string>
+    <string name="pref_key_sign_out">pref_key_sign_out</string>
+    <string name="pref_title_sign_out">Sign Out</string>
+    <string name="pref_summary_sign_out">Sign out of Owl</string>
+    <string name="pref_key_delete_account">pref_key_delete_account</string>
+    <string name="pref_title_delete_account">Delete Account</string>
+    <string name="pref_summary_delete_account">Permanently delete your Owl account</string>
 </resources>

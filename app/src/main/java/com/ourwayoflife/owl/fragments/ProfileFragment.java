@@ -26,6 +26,7 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.ourwayoflife.owl.R;
+import com.ourwayoflife.owl.activities.LoginActivity;
 import com.ourwayoflife.owl.models.FeedItem;
 import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.User;
@@ -178,7 +179,7 @@ public class ProfileFragment extends Fragment {
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getContext(),
-                    "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e", // Identity Pool ID
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 

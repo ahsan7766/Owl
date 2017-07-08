@@ -1,5 +1,7 @@
 package com.ourwayoflife.owl.activities;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +14,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -24,10 +27,15 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.auth.IdentityChangedListener;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.google.android.gms.auth.GoogleAuthUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.fragments.CanvasFragment;
 import com.ourwayoflife.owl.fragments.FeedFragment;
@@ -35,6 +43,10 @@ import com.ourwayoflife.owl.fragments.FriendsFragment;
 import com.ourwayoflife.owl.fragments.ProfileFragment;
 import com.ourwayoflife.owl.fragments.SettingsFragment;
 import com.ourwayoflife.owl.models.User;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
@@ -303,11 +315,41 @@ public class MainActivity extends AppCompatActivity
 
         protected User doInBackground(Void... urls) {
             // Initialize the Amazon Cognito credentials provider
+
+
+
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    MainActivity.this,
-                    "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e", // Identity Pool ID
+                    MainActivity.this, // Context
+                    "971897998846", // AWS Account ID
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    "arn:aws:iam::971897998846:role/Cognito_OwlUnauth_Role", // Unauthenticated Role ARN\
+                    "arn:aws:iam::971897998846:role/Cognito_OwlAuth_Role", // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
+
+            credentialsProvider.registerIdentityChangedListener(new IdentityChangedListener() {
+                @Override
+                public void identityChanged(String oldIdentityId, String newIdentityId) {
+                    //Logic to handle identity change
+                }
+            });
+
+            GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(MainActivity.this);
+            AccountManager am = AccountManager.get(MainActivity.this);
+            Account[] accounts = am.getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
+            try {
+                String token = GoogleAuthUtil.getToken(MainActivity.this, accounts[0].name,
+                        "audience:server:client_id:" + getString(R.string.server_client_id));
+
+                Map<String, String> logins = new HashMap<>();
+
+                logins.put("accounts.google.com", token);
+                credentialsProvider.setLogins(logins);
+            } catch (Exception e) {
+                Log.e(TAG, "Error getting Google+ Credentials: " + e);
+            }
+
+            //credentialsProvider.refresh();
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);

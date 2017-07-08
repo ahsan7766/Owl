@@ -1,5 +1,7 @@
 package com.ourwayoflife.owl.fragments;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Context;
@@ -45,6 +47,9 @@ import com.amazonaws.services.dynamodbv2.model.QueryRequest;
 import com.amazonaws.services.dynamodbv2.model.QueryResult;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.google.android.gms.auth.GoogleAuthUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.ourwayoflife.owl.activities.LoginActivity;
 import com.ourwayoflife.owl.activities.MainActivity;
 import com.ourwayoflife.owl.activities.StackActivity;
 import com.ourwayoflife.owl.activities.UploadActivity;
@@ -362,7 +367,7 @@ public class FeedFragment extends Fragment
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getContext(),
-                    "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e", // Identity Pool ID
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -423,13 +428,30 @@ public class FeedFragment extends Fragment
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getContext(),
-                    "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e", // Identity Pool ID
+                    getActivity(), // Context
+                    "971897998846", // AWS Account ID
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    "arn:aws:iam::971897998846:role/Cognito_OwlUnauth_Role", // Unauthenticated Role ARN
+                    "arn:aws:iam::971897998846:role/Cognito_OwlAuth_Role", // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
-            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getActivity());
+            AccountManager am = AccountManager.get(getActivity());
+            Account[] accounts = am.getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
+            try {
+                String token = GoogleAuthUtil.getToken(getActivity(), accounts[0].name,
+                        "audience:server:client_id:" + getString(R.string.server_client_id));
 
+                Map<String, String> logins = new HashMap<>();
+
+                logins.put("accounts.google.com", token);
+                credentialsProvider.setLogins(logins);
+            } catch (Exception e) {
+                Log.e(TAG, "Error getting Google+ Credentials: " + e);
+            }
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
 
