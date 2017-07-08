@@ -80,10 +80,7 @@ public class PhotoCommentsRecyclerAdapter extends RecyclerView.Adapter<PhotoComm
             holder.mTextName.setText(user.getName());
 
             // Need to convert date string to a more readable format
-
             DateTime dateTime = ISODateTimeFormat.basicDateTime().parseDateTime(photoComment.getCommentDate());
-
-            //SimpleDateFormat newFormat = new SimpleDateFormat("kk:mm");
             DateTimeFormatter fmt = DateTimeFormat.forPattern("h:mm aa");
             holder.mTextDate.setText(fmt.print(dateTime));
 
