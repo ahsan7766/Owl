@@ -186,11 +186,8 @@ public class ProfileFragment extends Fragment {
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
-            // Query for User
-            final String USER_ID = "0"; //TODO set user id
-            User user = mapper.load(User.class, USER_ID);
-
-            return user;
+            // Load user
+            return mapper.load(User.class, LoginActivity.sUserId);
         }
 
         @Override

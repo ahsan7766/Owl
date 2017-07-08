@@ -64,7 +64,7 @@ public class PhotoCommentsRecyclerAdapter extends RecyclerView.Adapter<PhotoComm
                 holder.mProfilePictureView.setBitmap(bitmap);
             } catch (Exception e) {
                 Log.e(TAG, "Conversion from String to Bitmap: " + e);
-                return; // TODO set profile picture to "not found" or something
+                // TODO set profile picture to "not found" or something
             }
 
             holder.mTextName.setText(user.getName());
@@ -92,7 +92,7 @@ public class PhotoCommentsRecyclerAdapter extends RecyclerView.Adapter<PhotoComm
 
         public ViewHolder(View itemView) {
             super(itemView);
-            mProfilePictureView = (ProfilePictureView) itemView.findViewById(R.id.profile_picture);
+            mProfilePictureView = itemView.findViewById(R.id.profile_picture);
             mTextName = itemView.findViewById(R.id.text_name);
             mTextDate = itemView.findViewById(R.id.text_date);
             mTextComment = itemView.findViewById(R.id.text_comment);

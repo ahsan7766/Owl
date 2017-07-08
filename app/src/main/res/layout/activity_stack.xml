@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    android:id="@+id/layout_stack"
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_stack"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -12,7 +12,7 @@
 
     <android.support.v4.view.ViewPager
         android:id="@+id/view_pager_stack"
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="300dp"
         android:layout_gravity="center"
         android:layout_margin="10dp"/>
@@ -21,16 +21,19 @@
         android:id="@+id/tab_layout_stack"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@id/view_pager_stack"
         app:tabBackground="@drawable/selector_stack_tab"
         app:tabGravity="center"
         app:tabIndicatorHeight="0dp"/>
 
     <LinearLayout
+        android:id="@+id/layout_stack_info"
         android:layout_width="match_parent"
         android:layout_height="30dp"
+        android:layout_below="@id/tab_layout_stack"
         android:layout_margin="15dp"
-        android:weightSum="9"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:weightSum="9">
 
         <TextView
             android:layout_width="0dp"
@@ -55,11 +58,11 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@drawable/selector_stack_hoot"
-            android:gravity="center"
-            android:textOn=""
-            android:textOff=""
             android:focusable="false"
-            android:focusableInTouchMode="false"/>
+            android:focusableInTouchMode="false"
+            android:gravity="center"
+            android:textOff=""
+            android:textOn=""/>
 
         <Space
             android:layout_width="0dp"
@@ -78,7 +81,35 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recycler_comments"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent"
+        android:layout_below="@id/layout_stack_info"
+        android:layout_above="@+id/layout_comment"/>
 
 
-</LinearLayout>
+    <LinearLayout
+        android:id="@+id/layout_comment"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:background="@android:color/white"
+        android:orientation="horizontal"
+        android:weightSum="10"
+        android:paddingStart="5dp"
+        android:paddingEnd="5dp">
+
+        <EditText
+            android:id="@+id/edit_text_comment"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="9"
+            android:hint="Comment"/>
+
+        <ImageButton
+            android:id="@+id/image_buton_comment"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:src="@android:drawable/ic_menu_send"/>
+
+    </LinearLayout>
+</RelativeLayout>

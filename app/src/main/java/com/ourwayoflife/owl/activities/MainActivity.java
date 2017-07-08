@@ -275,7 +275,6 @@ public class MainActivity extends AppCompatActivity
                 fragmentManager.popBackStackImmediate(fragmentClass.getName(), 0);
             }
 
-
             //fragment = (Fragment) fragmentClass.newInstance();
         } catch (Exception e) {
             e.printStackTrace();
@@ -317,13 +316,12 @@ public class MainActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
 
 
-
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     MainActivity.this, // Context
                     "971897998846", // AWS Account ID
                     LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
-                    "arn:aws:iam::971897998846:role/Cognito_OwlUnauth_Role", // Unauthenticated Role ARN\
-                    "arn:aws:iam::971897998846:role/Cognito_OwlAuth_Role", // Authenticated Role ARN
+                    LoginActivity.COGNITO_OWL_UNAUTH_ROLE, // Unauthenticated Role ARN\
+                    LoginActivity.COGNITO_OWL_AUTH_ROLE, // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -349,15 +347,13 @@ public class MainActivity extends AppCompatActivity
                 Log.e(TAG, "Error getting Google+ Credentials: " + e);
             }
 
-            //credentialsProvider.refresh();
-
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
             // Query for User
-            final String USER_ID = "0"; //TODO set user id
+            //final String USER_ID = getIntent().getStringExtra("USER_ID");
 
-            return mapper.load(User.class, USER_ID);
+            return mapper.load(User.class, LoginActivity.sUserId);
         }
 
         @Override

@@ -1,5 +1,7 @@
 package com.ourwayoflife.owl.activities;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
@@ -7,6 +9,7 @@ import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.app.LoaderManager.LoaderCallbacks;
@@ -32,12 +35,23 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.auth.IdentityChangedListener;
+import com.amazonaws.http.HttpClient;
+import com.amazonaws.http.HttpResponse;
 import com.amazonaws.mobileconnectors.cognito.CognitoSyncManager;
 import com.amazonaws.mobileconnectors.cognito.Dataset;
 import com.amazonaws.mobileconnectors.cognito.DefaultSyncCallback;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.regions.Regions;
+
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.google.android.gms.auth.GoogleAuthUtil;
+import com.google.android.gms.common.GoogleApiAvailability;
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -50,9 +64,19 @@ import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.ourwayoflife.owl.R;
+import com.ourwayoflife.owl.models.Photo;
+import com.ourwayoflife.owl.models.User;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -70,8 +94,12 @@ public class LoginActivity extends AppCompatActivity implements
     //us-east-1:36ae0a5f-dc90-4b8b-8cf1-2eb31bead880
     public static final String COGNITO_IDENTITY_POOL = "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e";
 
+    public static final String COGNITO_OWL_UNAUTH_ROLE = "arn:aws:iam::971897998846:role/Cognito_OwlUnauth_Role";
 
-    public static GoogleSignInAccount sGoogleSignInAccount;
+    public static final String COGNITO_OWL_AUTH_ROLE = "arn:aws:iam::971897998846:role/Cognito_OwlAuth_Role";
+
+
+    public static String sUserId;
 
 
     /**
@@ -227,21 +255,347 @@ public class LoginActivity extends AppCompatActivity implements
         Log.d(TAG, "handleSignInResult:" + result.isSuccess());
         if (result.isSuccess()) {
             // Signed in successfully, show authenticated UI.
-            //GoogleSignInAccount acct = result.getSignInAccount();
-            sGoogleSignInAccount = result.getSignInAccount();
-            mStatusTextView.setText(getString(R.string.signed_in_fmt, sGoogleSignInAccount.getDisplayName()));
+            GoogleSignInAccount acct = result.getSignInAccount();
+
+            // Make sure we retrieved the account
+            if(acct == null) {
+                Log.d(TAG, "GoogleSignInAccount is null.  Sign in failed.");
+                updateUI(false);
+                return;
+            }
+
+            // Get UserId from user table by querying on User table for matching GoogleId
+            // Warning: Do not accept plain user IDs, such as those you can get with the
+            // GoogleSignInAccount.getId() method, on your backend server. A modified client
+            // application can send arbitrary user IDs to your server to impersonate users, so you
+            // must instead use verifiable ID tokens to securely get the user IDs of signed-in
+            // users on the server side.
+            // See: https://developers.google.com/identity/sign-in/android/backend-auth
+            String idToken = acct.getId(); // TODO: Should this be getIdToken??
+
+            // Make sure we got a token
+            if(idToken == null || idToken.isEmpty()) {
+                Log.d(TAG, "idToken is null.  Sign in failed.");
+                updateUI(false);
+                return;
+            }
+
+
+            new LoadOrCreateUserTask().execute(acct);
+
+            /*
+            // Send token to server and validate server-side
+            // Request only the user's ID token, which can be used to identify the
+            // user securely to your backend. This will contain the user's basic
+            // profile (name, profile picture URL, etc) so you should not need to
+            // make an additional call to personalize your application.
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.server_client_id))
+                    .build();
+
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .enableAutoManage(this, this )
+                    .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                    .build();
+
+
+            // Send the ID token to your server with an HTTPS POST request:
+            HttpClient httpClient = new DefaultHttpClient();
+            HttpPost httpPost = new HttpPost("https://yourbackend.example.com/tokensignin");
+
+            try {
+                List nameValuePairs = new ArrayList(1);
+                nameValuePairs.add(new BasicNameValuePair("idToken", idToken));
+                httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+                HttpResponse response = httpClient.execute(httpPost);
+                int statusCode = response.getStatusLine().getStatusCode();
+                final String responseBody = EntityUtils.toString(response.getEntity());
+                Log.i(TAG, "Signed in as: " + responseBody);
+            } catch (ClientProtocolException e) {
+                Log.e(TAG, "Error sending ID token to backend.", e);
+            } catch (IOException e) {
+                Log.e(TAG, "Error sending ID token to backend.", e);
+            }
+            */
+
+
+
+
+
+
+
+
+
+            /*
+
+            // Skipping token verification for now
+            // Do query on user table for GoogleId
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    LoginActivity.this, // Context
+                    "971897998846", // AWS Account ID
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    COGNITO_OWL_UNAUTH_ROLE, // Unauthenticated Role ARN
+                    COGNITO_OWL_AUTH_ROLE, // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            credentialsProvider.registerIdentityChangedListener(new IdentityChangedListener() {
+                @Override
+                public void identityChanged(String oldIdentityId, String newIdentityId) {
+                    //Logic to handle identity change
+                }
+            });
+
+            GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(LoginActivity.this);
+            AccountManager am = AccountManager.get(LoginActivity.this);
+            Account[] accounts = am.getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
+            try {
+                String token = GoogleAuthUtil.getToken(LoginActivity.this, accounts[0].name,
+                        "audience:server:client_id:" + getString(R.string.server_client_id));
+
+                Map<String, String> logins = new HashMap<>();
+
+                logins.put("accounts.google.com", token);
+                credentialsProvider.setLogins(logins);
+            } catch (Exception e) {
+                Log.e(TAG, "Error getting Google+ Credentials: " + e);
+                return;
+            }
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    .withIndexName("GoogleId-index")
+                    .withHashKeyValues(idToken)
+                    .withConsistentRead(false);
+
+
+            User user = mapper.load(User.class, queryExpression);
+
+            String userId; // UserId of this user that will be passed to MainActivity.
+            if(user == null) {
+                // There is no user with this GoogleId, so we have no make a new account
+                User newUser = new User();
+                newUser.setName(acct.getDisplayName());
+                newUser.setEmail(acct.getEmail());
+
+                // Get date string
+                DateTime dt = new DateTime(DateTimeZone.UTC);
+                DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                final String dateString = fmt.print(dt);
+                newUser.setJoinDate(dateString);
+
+                newUser.setGoogleId(idToken);
+
+                mapper.save(newUser);  //Add user to the user table
+
+                userId = newUser.getUserId(); //Now that the User is saved, we should have a UserId for them now
+            } else {
+                userId = user.getUserId();
+            }
+
+
+            // Make sure we have a UserId at this point
+            if(userId == null) {
+                Log.d(TAG, "UserId is null.  Sign in failed.");
+                updateUI(false);
+                return;
+            }
+
+            mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
             updateUI(true);
 
 
             //Start the Main Activity
             Intent intent = new Intent(this, MainActivity.class);
+            intent.putExtra("USER_ID", userId);
             startActivity(intent);
             finish(); //Finish the LoginActivity so the user can't go back to it after login
+
+
+            */
         } else {
             // Signed out, show unauthenticated UI.
             updateUI(false);
         }
     }
+
+    private class LoadOrCreateUserTask extends AsyncTask<GoogleSignInAccount, Void, User> {
+
+        protected User doInBackground(GoogleSignInAccount... params) {
+            // Initialize the Amazon Cognito credentials provider
+
+            GoogleSignInAccount acct = params[0];
+
+            String idToken = acct.getId();
+
+            /*
+            // Send token to server and validate server-side
+            // Request only the user's ID token, which can be used to identify the
+            // user securely to your backend. This will contain the user's basic
+            // profile (name, profile picture URL, etc) so you should not need to
+            // make an additional call to personalize your application.
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(getString(R.string.server_client_id))
+                    .build();
+
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+                    .enableAutoManage(this, this )
+                    .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
+                    .build();
+
+
+            // Send the ID token to your server with an HTTPS POST request:
+            HttpClient httpClient = new DefaultHttpClient();
+            HttpPost httpPost = new HttpPost("https://yourbackend.example.com/tokensignin");
+
+            try {
+                List nameValuePairs = new ArrayList(1);
+                nameValuePairs.add(new BasicNameValuePair("idToken", idToken));
+                httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+                HttpResponse response = httpClient.execute(httpPost);
+                int statusCode = response.getStatusLine().getStatusCode();
+                final String responseBody = EntityUtils.toString(response.getEntity());
+                Log.i(TAG, "Signed in as: " + responseBody);
+            } catch (ClientProtocolException e) {
+                Log.e(TAG, "Error sending ID token to backend.", e);
+            } catch (IOException e) {
+                Log.e(TAG, "Error sending ID token to backend.", e);
+            }
+            */
+
+
+
+            // Skipping token verification for now
+            // Do query on user table for GoogleId
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    LoginActivity.this, // Context
+                    "971897998846", // AWS Account ID
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    COGNITO_OWL_UNAUTH_ROLE, // Unauthenticated Role ARN
+                    COGNITO_OWL_AUTH_ROLE, // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            credentialsProvider.registerIdentityChangedListener(new IdentityChangedListener() {
+                @Override
+                public void identityChanged(String oldIdentityId, String newIdentityId) {
+                    //Logic to handle identity change
+                }
+            });
+
+            GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(LoginActivity.this);
+            AccountManager am = AccountManager.get(LoginActivity.this);
+            Account[] accounts = am.getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
+            try {
+                String token = GoogleAuthUtil.getToken(LoginActivity.this, accounts[0].name,
+                        "audience:server:client_id:" + getString(R.string.server_client_id));
+
+                Map<String, String> logins = new HashMap<>();
+
+                logins.put("accounts.google.com", token);
+                credentialsProvider.setLogins(logins);
+            } catch (Exception e) {
+                Log.e(TAG, "Error getting Google+ Credentials: " + e);
+                cancel(true);
+            }
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            User queryUser = new User();
+            queryUser.setGoogleId(idToken);
+
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    .withIndexName("GoogleId-index")
+                    .withHashKeyValues(queryUser)
+                    .withConsistentRead(false);
+
+
+            List<User> userList = mapper.query(User.class, queryExpression);
+            User user = null;
+
+            if(userList.size() > 0) {
+                user = userList.get(0);
+            }
+
+            String userId; // UserId of this user that will be passed to MainActivity.
+            if(user == null) {
+                // There is no user with this GoogleId, so we have no make a new account
+                User newUser = new User();
+                newUser.setName(acct.getDisplayName());
+                newUser.setEmail(acct.getEmail());
+                //TODO Email address CAN change, so if we dont have a spot in the profile to edit it, then we need to check if it changed every login
+
+                // Get date string
+                DateTime dt = new DateTime(DateTimeZone.UTC);
+                DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                final String dateString = fmt.print(dt);
+                newUser.setJoinDate(dateString);
+
+                newUser.setGoogleId(idToken);
+
+                mapper.save(newUser);  //Add user to the user table
+
+                userId = newUser.getUserId(); //Now that the User is saved, we should have a UserId for them now
+            } else {
+                userId = user.getUserId();
+            }
+
+
+            // Make sure we have a UserId at this point
+            if(userId == null) {
+                Log.d(TAG, "UserId is null.  Sign in failed.");
+                cancel(true);
+            }
+
+            sUserId = userId;
+
+            return mapper.load(User.class, userId);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(User user) {
+
+            // If the user is not retrieved, don't proceed
+            if (user.getUserId() == null || user.getUserId().isEmpty()) {
+                //TODO maybe do something better than just showing a toast?
+                Toast.makeText(LoginActivity.this, "Unable to retrieve user data", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            mStatusTextView.setText(getString(R.string.signed_in_fmt, user.getName()));
+            updateUI(true);
+
+            //Start the Main Activity
+            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+            //intent.putExtra("USER_ID", user.getUserId());
+            startActivity(intent);
+            finish(); //Finish the LoginActivity so the user can't go back to it after login
+
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            updateUI(false);
+        }
+
+        @Override
+        protected void onCancelled(User user) {
+            super.onCancelled(user);
+            updateUI(false);
+        }
+    }
+
 
     private void signIn() {
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);

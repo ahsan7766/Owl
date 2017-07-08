@@ -16,6 +16,8 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.ImageButton;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -33,6 +35,11 @@ import com.ourwayoflife.owl.fragments.StackPhotoPagerFragment;
 import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.User;
 import com.google.gson.internal.bind.ArrayTypeAdapter;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -58,6 +65,8 @@ public class StackActivity extends AppCompatActivity
     private ArrayList<PhotoComment> mDatasetPhotoComments = new ArrayList<>();
     private HashMap<String, User> mUserHashMap = new HashMap<>();
 
+    private EditText mEditTextComment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,18 +81,22 @@ public class StackActivity extends AppCompatActivity
         //mDatasetPhotos.add();
         // Get extras data
         // If a photo was included in the extras, then the activity is in photo mode
-        String photoId = getIntent().getStringExtra("PHOTO_ID");
-        if (photoId != null && photoId.length() > 0) {
+        final String PHOTO_ID = getIntent().getStringExtra("PHOTO_ID");
+        if (PHOTO_ID != null && PHOTO_ID.length() > 0) {
             // Photo mode
+            setTitle("Photo"); // Set Title
 
             // Download photo
-            new DownloadPhotoTask().execute(photoId);
+            new DownloadPhotoTask().execute(PHOTO_ID);
 
             // Get the comments for the photo
-            new DownloadPhotoCommentsTask().execute(photoId);
+            new DownloadPhotoCommentsTask().execute(PHOTO_ID);
 
         } else if (true) {
             // Stack mode
+            finish();
+        } else {
+            Log.wtf(TAG, "PHOTO_ID and STACK_ID both not found, but StackActivity was launched.");
             finish();
         }
 
@@ -116,6 +129,34 @@ public class StackActivity extends AppCompatActivity
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerViewComments.setAdapter(mAdapterPhotoComments);
+
+
+        // Set up comment send edittext and button
+        mEditTextComment = findViewById(R.id.edit_text_comment);
+        ImageButton imageButtonComment = findViewById(R.id.image_buton_comment);
+        imageButtonComment.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String comment = mEditTextComment.getText().toString();
+
+                // Check that comment isn't empty
+                if(!comment.isEmpty()) {
+                    PhotoComment photoComment = new PhotoComment();
+                    photoComment.setUserId(LoginActivity.sUserId);
+                    photoComment.setComment(comment);
+
+                    DateTime dt = new DateTime(DateTimeZone.UTC);
+                    DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                    final String dateString = fmt.print(dt);
+                    photoComment.setCommentDate(dateString);
+
+                    photoComment.setPhotoId(PHOTO_ID);
+
+                    // Upload the comment
+                    new UploadCommentTask().execute(photoComment);
+                }
+            }
+        });
 
     }
 
@@ -359,6 +400,54 @@ public class StackActivity extends AppCompatActivity
         protected void onPostExecute(Void result) {
 
             mAdapterPhotoComments.notifyDataSetChanged();
+        }
+
+    }
+
+
+    private class UploadCommentTask extends AsyncTask<PhotoComment, Void, PhotoComment> {
+
+        protected PhotoComment doInBackground(PhotoComment... params) {
+            // Get the photo
+            PhotoComment photoComment = params[0];
+
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this,
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Save PhotoComment
+            mapper.save(photoComment);
+
+            if (photoComment.getCommentId() == null || photoComment.getCommentId().isEmpty()) {
+                Log.e(TAG, "Error: Unable to post comment.");
+                cancel(true); // TODO notify user that comment couldn't be posted
+            }
+
+            return photoComment;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(PhotoComment photoComment) {
+            // Clear the comment EditText since the comment has sent
+            mEditTextComment.setText("");
+
+            // Now that comment is posted, add the comment the photo comments
+            //new DownloadPhotoCommentsTask().execute(photoId);
+            mDatasetPhotoComments.add(photoComment);
+            mAdapterPhotoComments.notifyItemInserted(mDatasetPhotoComments.size());
         }
 
     }
