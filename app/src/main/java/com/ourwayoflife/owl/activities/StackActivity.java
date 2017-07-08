@@ -16,8 +16,10 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ToggleButton;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -33,6 +35,8 @@ import com.ourwayoflife.owl.adapters.StackPhotoPagerAdapter;
 
 import com.ourwayoflife.owl.fragments.StackPhotoPagerFragment;
 import com.ourwayoflife.owl.models.Photo;
+import com.ourwayoflife.owl.models.PhotoLike;
+import com.ourwayoflife.owl.models.StackLike;
 import com.ourwayoflife.owl.models.User;
 import com.google.gson.internal.bind.ArrayTypeAdapter;
 
@@ -55,6 +59,8 @@ public class StackActivity extends AppCompatActivity
 
     private static final String TAG = StackActivity.class.getName();
 
+    private String photoId; // Used to store the PhotoId of the currently viewed photo
+    private String stackId; // Used to store the StackId of the currently viewed stack
 
     private PagerAdapter mPagerAdapter;
     private ArrayList<Bitmap> mDatasetPhotos = new ArrayList<>();
@@ -64,6 +70,8 @@ public class StackActivity extends AppCompatActivity
     private PhotoCommentsRecyclerAdapter mAdapterPhotoComments;
     private ArrayList<PhotoComment> mDatasetPhotoComments = new ArrayList<>();
     private HashMap<String, User> mUserHashMap = new HashMap<>();
+
+    private ToggleButton toggleButtonHoot;
 
     private EditText mEditTextComment;
 
@@ -77,26 +85,42 @@ public class StackActivity extends AppCompatActivity
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
+        toggleButtonHoot = findViewById(R.id.button_hoot);
 
-        //mDatasetPhotos.add();
         // Get extras data
         // If a photo was included in the extras, then the activity is in photo mode
-        final String PHOTO_ID = getIntent().getStringExtra("PHOTO_ID");
-        if (PHOTO_ID != null && PHOTO_ID.length() > 0) {
+        photoId = getIntent().getStringExtra("PHOTO_ID");
+        if (photoId != null && photoId.length() > 0) {
             // Photo mode
             setTitle("Photo"); // Set Title
 
+            // Set up hoot button
+            toggleButtonHoot.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                    new PhotoLikeTask().execute(isChecked);
+                }
+            });
+
             // Download photo
-            new DownloadPhotoTask().execute(PHOTO_ID);
+            new DownloadPhotoTask().execute(photoId);
 
             // Get the comments for the photo
-            new DownloadPhotoCommentsTask().execute(PHOTO_ID);
+            new DownloadPhotoCommentsTask().execute(photoId);
 
         } else if (true) {
             // Stack mode
-            finish();
+            // Set up hoot button
+            toggleButtonHoot.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                    new StackLikeTask(isChecked).execute();
+                }
+            });
+
+            //finish();
         } else {
-            Log.wtf(TAG, "PHOTO_ID and STACK_ID both not found, but StackActivity was launched.");
+            Log.wtf(TAG, "photoId and STACK_ID both not found, but StackActivity was launched.");
             finish();
         }
 
@@ -111,8 +135,15 @@ public class StackActivity extends AppCompatActivity
         tabLayout.setupWithViewPager(pager, true);
 
 
+
+
+        // TODO Change number of likes based on query
+
+
+
+
         // Initialize RecyclerView
-        mRecyclerViewComments = (RecyclerView) findViewById(R.id.recycler_comments);
+        mRecyclerViewComments = findViewById(R.id.recycler_comments);
 
         // Initialize Dataset
         // TODO Initialize Dataset
@@ -150,7 +181,7 @@ public class StackActivity extends AppCompatActivity
                     final String dateString = fmt.print(dt);
                     photoComment.setCommentDate(dateString);
 
-                    photoComment.setPhotoId(PHOTO_ID);
+                    photoComment.setPhotoId(photoId);
 
                     // Upload the comment
                     new UploadCommentTask().execute(photoComment);
@@ -299,6 +330,7 @@ public class StackActivity extends AppCompatActivity
         }
 
     }
+
 
     private class DownloadPhotoCommentsTask extends AsyncTask<String, Void, List<PhotoComment>> {
 
@@ -450,5 +482,117 @@ public class StackActivity extends AppCompatActivity
             mAdapterPhotoComments.notifyItemInserted(mDatasetPhotoComments.size());
         }
 
+    }
+
+
+    private class PhotoLikeTask extends AsyncTask<Boolean, Void, Boolean> {
+
+        protected Boolean doInBackground(Boolean... params) {
+            // Get the photo like bool
+            final Boolean isLiked = params[0];
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this,
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            PhotoLike photoLike = new PhotoLike();
+            photoLike.setPhotoId(photoId);
+            photoLike.setUserId(LoginActivity.sUserId);
+
+            // We are adding a PhotoLike to the table
+            if(isLiked) {
+                // Get date string
+                DateTime dt = new DateTime(DateTimeZone.UTC);
+                DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                final String dateString = fmt.print(dt);
+                photoLike.setLikeDate(dateString);
+
+                // Save PhotoLike
+                mapper.save(photoLike);
+            } else {
+                // Remove the PhotoLike from the table
+                mapper.delete(photoLike);
+            }
+
+            return isLiked;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Boolean isLiked) {
+            // If liked, shade the button in
+            if(isLiked) {
+                toggleButtonHoot.setBackgroundColor(getColor(R.color.colorAccent));
+            } else {
+                toggleButtonHoot.setBackgroundColor(getColor(R.color.colorPrimary));
+            }
+        }
+    }
+
+
+    private class StackLikeTask extends AsyncTask<Boolean, Void, Boolean> {
+
+        protected Boolean doInBackground(Boolean... params) {
+            // Get the stack like bool
+            final Boolean isLiked = params[0];
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this,
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            StackLike stackLike = new StackLike();
+            stackLike.setStackId(stackId);
+            stackLike.setUserId(LoginActivity.sUserId);
+
+            // We are adding a PhotoLike to the table
+            if(isLiked) {
+                // Get date string
+                DateTime dt = new DateTime(DateTimeZone.UTC);
+                DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                final String dateString = fmt.print(dt);
+                stackLike.setLikeDate(dateString);
+
+                // Save StackLike
+                mapper.save(stackLike);
+            } else {
+                // Remove the StackLike from the table
+                mapper.delete(stackLike);
+            }
+
+            return isLiked;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Boolean isLiked) {
+            // If liked, shade the button in
+            if(isLiked) {
+                toggleButtonHoot.setBackgroundColor(getColor(R.color.colorAccent));
+            } else {
+                toggleButtonHoot.setBackgroundColor(getColor(R.color.colorPrimary));
+            }
+        }
     }
 }

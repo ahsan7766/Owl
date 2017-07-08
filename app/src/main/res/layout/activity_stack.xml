@@ -57,10 +57,9 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@drawable/selector_stack_hoot"
-            android:focusable="false"
-            android:focusableInTouchMode="false"
+            android:background="@drawable/selector_stack_hoot_bg"
             android:gravity="center"
+            style="@style/toggleButton"
             android:textOff=""
             android:textOn=""/>
 
