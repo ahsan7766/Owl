@@ -63,7 +63,7 @@
         android:layout_marginBottom="8dp"
         android:background="@drawable/selector_button"
         android:gravity="center"
-        android:text="Edit"
+        android:text="..."
         android:textColor="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"

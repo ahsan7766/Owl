@@ -45,15 +45,15 @@
             android:textStyle="bold"/>
 
         <TextView
-            android:id="@+id/text_hoot_count"
+            android:id="@+id/text_like_count"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="12"/>
+            android:text="0"/>
 
         <ToggleButton
-            android:id="@+id/button_hoot"
+            android:id="@+id/button_like"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"

@@ -37,6 +37,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.auth.IdentityChangedListener;
 import com.amazonaws.http.HttpClient;
@@ -514,8 +515,15 @@ public class LoginActivity extends AppCompatActivity implements
                     .withHashKeyValues(queryUser)
                     .withConsistentRead(false);
 
+            List<User> userList = null;
+            try{
+                 userList = mapper.query(User.class, queryExpression);
+            } catch (AmazonClientException e) {
+                Log.e(TAG, "Could not load userList: " + e);
+                e.printStackTrace();
+                cancel(true);
+            }
 
-            List<User> userList = mapper.query(User.class, queryExpression);
             User user = null;
 
             if(userList.size() > 0) {
@@ -563,6 +571,7 @@ public class LoginActivity extends AppCompatActivity implements
             super.onPreExecute();
         }
 
+
         protected void onPostExecute(User user) {
 
             // If the user is not retrieved, don't proceed
@@ -586,12 +595,14 @@ public class LoginActivity extends AppCompatActivity implements
         @Override
         protected void onCancelled() {
             super.onCancelled();
+            Toast.makeText(LoginActivity.this, "Could not load data.", Toast.LENGTH_SHORT).show();
             updateUI(false);
         }
 
         @Override
         protected void onCancelled(User user) {
             super.onCancelled(user);
+            Toast.makeText(LoginActivity.this, "Could not load data.", Toast.LENGTH_SHORT).show();
             updateUI(false);
         }
     }

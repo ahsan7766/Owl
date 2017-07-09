@@ -19,12 +19,12 @@ import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.ToggleButton;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.ourwayoflife.owl.R;
@@ -38,18 +38,17 @@ import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.PhotoLike;
 import com.ourwayoflife.owl.models.StackLike;
 import com.ourwayoflife.owl.models.User;
-import com.google.gson.internal.bind.ArrayTypeAdapter;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class StackActivity extends AppCompatActivity
         implements StackPhotoPagerFragment.OnFragmentInteractionListener,
@@ -71,7 +70,9 @@ public class StackActivity extends AppCompatActivity
     private ArrayList<PhotoComment> mDatasetPhotoComments = new ArrayList<>();
     private HashMap<String, User> mUserHashMap = new HashMap<>();
 
-    private ToggleButton toggleButtonHoot;
+    private TextView mTextLikeCount;
+    private ToggleButton mToggleButtonLike;
+    private int mIntLikeCount = 0; // Keeps track of number of likes
 
     private EditText mEditTextComment;
 
@@ -85,22 +86,27 @@ public class StackActivity extends AppCompatActivity
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        toggleButtonHoot = findViewById(R.id.button_hoot);
+
+        mTextLikeCount = findViewById(R.id.text_like_count);
+
+        mToggleButtonLike = findViewById(R.id.button_like);
 
         // Get extras data
         // If a photo was included in the extras, then the activity is in photo mode
         photoId = getIntent().getStringExtra("PHOTO_ID");
+        stackId = getIntent().getStringExtra("STACK_ID");
         if (photoId != null && photoId.length() > 0) {
             // Photo mode
             setTitle("Photo"); // Set Title
 
-            // Set up hoot button
-            toggleButtonHoot.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                    new PhotoLikeTask().execute(isChecked);
-                }
-            });
+            // Check if photo was previously liked
+            // TODO instead of this, just pass a boolean to this activity that says if the photo
+            // was already liked.  If that bool extra is missing, then run this AsyncTask
+            new CheckPhotoLikeTask().execute();
+
+
+
+            new CheckPhotoLikeCountTask().execute();
 
             // Download photo
             new DownloadPhotoTask().execute(photoId);
@@ -108,24 +114,24 @@ public class StackActivity extends AppCompatActivity
             // Get the comments for the photo
             new DownloadPhotoCommentsTask().execute(photoId);
 
-        } else if (true) {
+        } else if (stackId != null && stackId.length() > 0) {
             // Stack mode
-            // Set up hoot button
-            toggleButtonHoot.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                    new StackLikeTask(isChecked).execute();
-                }
-            });
+
+            // Check if photo was previously liked
+            // TODO instead of this, just pass a boolean to this activity that says if the stack
+            // was already liked.  If that bool extra is missing, then run this AsyncTask
+            new CheckStackLikeTask().execute();
+
+            new CheckStackLikeCountTask().execute();
 
             //finish();
         } else {
-            Log.wtf(TAG, "photoId and STACK_ID both not found, but StackActivity was launched.");
+            Log.wtf(TAG, "PHOTO_ID and STACK_ID both not found, but StackActivity was launched. Finishing Activity...");
             finish();
         }
 
 
-        ViewPager pager = (ViewPager) findViewById(R.id.view_pager_stack);
+        ViewPager pager = findViewById(R.id.view_pager_stack);
         //mPagerAdapter = new StackPhotoPagerAdapter(getSupportFragmentManager(), mDatasetPhotos);
 
         mPagerAdapter = new StackPhotoPagerAdapter(this, mDatasetPhotos);
@@ -138,6 +144,7 @@ public class StackActivity extends AppCompatActivity
 
 
         // TODO Change number of likes based on query
+
 
 
 
@@ -276,6 +283,11 @@ public class StackActivity extends AppCompatActivity
 
     }
 
+    // Used to format the number of likes on a photo
+    private void updateLikeCountUI() {
+        // TODO evenually add formatting for large numbers with locale (Ex: 1k instead of 1,000)
+        mTextLikeCount.setText(NumberFormat.getInstance().format(mIntLikeCount));
+    }
 
     private class DownloadPhotoTask extends AsyncTask<String, Void, Void> {
 
@@ -485,6 +497,204 @@ public class StackActivity extends AppCompatActivity
     }
 
 
+    /**
+     * Checks if the photo has previously been liked by this user.
+     * If it has been, then set the toggle button to checked, otherwise set to unchecked
+     */
+    private class CheckPhotoLikeTask extends AsyncTask<Void, Boolean, Boolean> {
+
+        protected Boolean doInBackground(Void... params) {
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this,
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Query the PhotoLike table
+            PhotoLike photoLike = mapper.load(PhotoLike.class, photoId, LoginActivity.sUserId);
+
+            // If the PhotoLike loaded is null, then return false to indicate that the photo is not liked
+            return photoLike != null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Boolean isLiked) {
+            // Set checked
+            mToggleButtonLike.setChecked(isLiked);
+
+            // If liked, shade the button in
+            if(isLiked) {
+                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorAccent));
+            } else {
+                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorPrimary));
+            }
+
+            // Set up like button
+            // Now that we know if it was liked or not, set the onCheckChanged listener
+            mToggleButtonLike.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                    new PhotoLikeTask().execute(isChecked);
+                }
+            });
+        }
+    }
+
+
+    /**
+     * Checks if the stack has previously been liked by this user.
+     * If it has been, then set the toggle button to checked, otherwise set to unchecked
+     */
+    private class CheckStackLikeTask extends AsyncTask<Void, Boolean, Boolean> {
+
+        protected Boolean doInBackground(Void... params) {
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this,
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Query the StackLike table
+            StackLike stackLike = mapper.load(StackLike.class, stackId, LoginActivity.sUserId);
+
+            // If the StackLike loaded is null, then return false to indicate that the stack is not liked
+            return stackLike != null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Boolean isLiked) {
+            // Set checked
+            mToggleButtonLike.setChecked(isLiked);
+
+            // If liked, shade the button in
+            if(isLiked) {
+                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorAccent));
+            } else {
+                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorPrimary));
+            }
+
+            // Set up like button
+            // Now that we know if it was liked or not, set the onCheckChanged listener
+            mToggleButtonLike.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                    new StackLikeTask().execute(isChecked);
+                }
+            });
+        }
+    }
+
+
+    /**
+     * Finds the number of likes on the photo and sets the like count
+     */
+    private class CheckPhotoLikeCountTask extends AsyncTask<Void, Void, Integer> {
+
+        protected Integer doInBackground(Void... params) {
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this,
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            PhotoLike queryPhotoLike = new PhotoLike();
+            queryPhotoLike.setPhotoId(photoId);
+
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    .withHashKeyValues(queryPhotoLike)
+                    .withConsistentRead(false);
+
+            List<PhotoLike> photoLikeList = mapper.query(PhotoLike.class, queryExpression);
+
+            // Return the number of likes in the photoLikeList.  If it's null, return 0
+            return (photoLikeList == null ? 0 : photoLikeList.size());
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Integer likeCount) {
+            // Set text of like count to the number of likes
+            mIntLikeCount = likeCount;
+            updateLikeCountUI();
+        }
+    }
+
+
+    /**
+     * Finds the number of likes on the stack and sets the like count
+     */
+    private class CheckStackLikeCountTask extends AsyncTask<Void, Void, Integer> {
+
+        protected Integer doInBackground(Void... params) {
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this,
+                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            StackLike queryStackLike = new StackLike();
+            queryStackLike.setStackId(stackId);
+
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    .withHashKeyValues(queryStackLike)
+                    .withConsistentRead(false);
+
+            List<StackLike> stackLikeList = mapper.query(StackLike.class, queryExpression);
+
+            // Return the number of likes in the photoLikeList.  If it's null, return 0
+            return (stackLikeList == null ? 0 : stackLikeList.size());
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Integer likeCount) {
+            // Set text of like count to the number of likes
+            mIntLikeCount = likeCount;
+            updateLikeCountUI();
+        }
+    }
+
+
     private class PhotoLikeTask extends AsyncTask<Boolean, Void, Boolean> {
 
         protected Boolean doInBackground(Boolean... params) {
@@ -533,10 +743,13 @@ public class StackActivity extends AppCompatActivity
         protected void onPostExecute(Boolean isLiked) {
             // If liked, shade the button in
             if(isLiked) {
-                toggleButtonHoot.setBackgroundColor(getColor(R.color.colorAccent));
+                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorAccent));
+                mIntLikeCount++;
             } else {
-                toggleButtonHoot.setBackgroundColor(getColor(R.color.colorPrimary));
+                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorPrimary));
+                mIntLikeCount--;
             }
+            updateLikeCountUI();
         }
     }
 
@@ -589,10 +802,13 @@ public class StackActivity extends AppCompatActivity
         protected void onPostExecute(Boolean isLiked) {
             // If liked, shade the button in
             if(isLiked) {
-                toggleButtonHoot.setBackgroundColor(getColor(R.color.colorAccent));
+                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorAccent));
+                mIntLikeCount++;
             } else {
-                toggleButtonHoot.setBackgroundColor(getColor(R.color.colorPrimary));
+                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorPrimary));
+                mIntLikeCount--;
             }
+            updateLikeCountUI();
         }
     }
 }

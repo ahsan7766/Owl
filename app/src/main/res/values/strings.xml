@@ -84,7 +84,12 @@
 
 
     <!-- Canvas -->
-    <string name="view_profile">View Profile</string>
+    <string name="view_profile">View Profile</string>'
+
+    <!-- Profile -->
+    <string name="edit">Edit</string>
+    <string name="follow">Follow</string>
+    <string name="unfollow">Unfollow</string>
 
     <!-- FeedCategoryView -->
     <string name="photos">Photos</string>

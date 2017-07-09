@@ -2,6 +2,8 @@ package com.ourwayoflife.owl.models;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBAttribute;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBHashKey;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBIndexHashKey;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBIndexRangeKey;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBRangeKey;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBTable;
 
@@ -30,6 +32,7 @@ public class PhotoLike {
     }
 
     @DynamoDBRangeKey(attributeName = "UserId")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "UserId-LikeDate-index", attributeName = "UserId")
     public String getUserId() {
         return mUserId;
     }
@@ -39,6 +42,7 @@ public class PhotoLike {
     }
 
     @DynamoDBAttribute(attributeName = "LikeDate")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "UserId-LikeDate-index", attributeName = "LikeDate")
     public String getLikeDate() {
         return mLikeDate;
     }

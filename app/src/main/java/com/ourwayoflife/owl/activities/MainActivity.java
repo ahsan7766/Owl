@@ -110,7 +110,7 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
-        // If given the extra indication to start profile fragment, do it
+        // If given the extra indication to start canvas fragment, do it
         if (getIntent().getBooleanExtra(OPEN_FRAGMENT_CANVAS, false)) {
 
 
