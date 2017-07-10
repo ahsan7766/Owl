@@ -386,7 +386,7 @@ public class UploadActivity extends AppCompatActivity
 
                 // Insert photo to DB
                 Photo photo = new Photo();
-                photo.setUserId("0"); //TODO set user id
+                photo.setUserId(LoginActivity.sUserId); //TODO set user id
                 photo.setUploadDate(dateString);
                 photo.setPhoto(photoString);
 
@@ -457,7 +457,7 @@ public class UploadActivity extends AppCompatActivity
 
                 // Create stack object
                 //photo.setStackId("1");
-                stack.setUserId("0"); //TODO set user id
+                stack.setUserId(LoginActivity.sUserId);
                 stack.setCreatedDate(dateString);
                 stack.setName(STACK_NAME);
 
@@ -730,7 +730,7 @@ public class UploadActivity extends AppCompatActivity
 
             // Query for stacks
             Stack queryStack = new Stack();
-            queryStack.setUserId("0");  //TODO set user id
+            queryStack.setUserId(LoginActivity.sUserId);  //TODO set user id
 
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withIndexName("UserId-CreatedDate-index")

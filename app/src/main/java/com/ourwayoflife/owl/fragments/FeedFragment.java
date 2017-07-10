@@ -169,13 +169,11 @@ public class FeedFragment extends Fragment
 
 
         // Initialize dataset, this data would usually come from a local content provider or
-        if (savedInstanceState != null) {
+        if (savedInstanceState != null && mDataset != null) {
             //Restore the fragment's state here
-            int i;
-            i = 0;
             Log.d("TAG",savedInstanceState.toString());
             mDataset = savedInstanceState.getParcelableArrayList("FEED_ITEMS");
-            Log.d("TAG", mDataset.size() + "");
+            Log.d("TAG", "Restoring FeedItem Dataset. Dataset Size: " + mDataset.size());
         }else {
             initDataset();
         }
@@ -457,12 +455,12 @@ public class FeedFragment extends Fragment
 
             // Query for photos
             Photo queryPhoto = new Photo();
-            queryPhoto.setUserId("0");
+            queryPhoto.setUserId(LoginActivity.sUserId);
 
             // Create our map of values
             Map keyConditions = new HashMap();
 
-            String userId = "0";
+            String userId = LoginActivity.sUserId;
 
             // Specify the key conditions
             Condition hashKeyCondition = new Condition()
@@ -487,7 +485,7 @@ public class FeedFragment extends Fragment
             ArrayList<FeedItem> feedItems = new ArrayList<>();
 
 
-            Bitmap bitmap = null;
+            Bitmap bitmap;
             BitmapFactory.Options options = new BitmapFactory.Options();
             //options.inSampleSize = 4;
             // Convert the photo list to a FeedItem list
