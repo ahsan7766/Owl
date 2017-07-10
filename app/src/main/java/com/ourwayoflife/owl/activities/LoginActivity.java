@@ -33,6 +33,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -79,6 +80,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static android.Manifest.permission.GET_ACCOUNTS;
 import static android.Manifest.permission.READ_CONTACTS;
 
 /**
@@ -92,13 +94,6 @@ public class LoginActivity extends AppCompatActivity implements
 
     private static final int RC_SIGN_IN = 9001;
 
-    //us-east-1:36ae0a5f-dc90-4b8b-8cf1-2eb31bead880
-    public static final String COGNITO_IDENTITY_POOL = "us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e";
-
-    public static final String COGNITO_OWL_UNAUTH_ROLE = "arn:aws:iam::971897998846:role/Cognito_OwlUnauth_Role";
-
-    public static final String COGNITO_OWL_AUTH_ROLE = "arn:aws:iam::971897998846:role/Cognito_OwlAuth_Role";
-
 
     public static String sUserId;
 
@@ -107,6 +102,7 @@ public class LoginActivity extends AppCompatActivity implements
      * Id to identity READ_CONTACTS permission request.
      */
     private static final int REQUEST_READ_CONTACTS = 0;
+
 
     /**
      * A dummy authentication store containing known user names and passwords.
@@ -121,6 +117,7 @@ public class LoginActivity extends AppCompatActivity implements
     //private UserLoginTask mAuthTask = null;
 
     // UI references.
+    private LinearLayout mLinearLayout;
     //private View mProgressView;
     //private View mLoginFormView;
     private TextView mStatusTextView;
@@ -132,6 +129,8 @@ public class LoginActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        mLinearLayout = findViewById(R.id.layout_login);
 
         // Views
         mStatusTextView = (TextView) findViewById(R.id.status);
@@ -254,7 +253,15 @@ public class LoginActivity extends AppCompatActivity implements
 
     private void handleSignInResult(GoogleSignInResult result) {
         Log.d(TAG, "handleSignInResult:" + result.isSuccess());
+
+        // Make sure we have accounts permission
+        if(!mayReadContacts()) {
+            Log.d(TAG, "Accounts permission not granted.");
+            return;
+        }
+
         if (result.isSuccess()) {
+
             // Signed in successfully, show authenticated UI.
             GoogleSignInAccount acct = result.getSignInAccount();
 
@@ -283,6 +290,7 @@ public class LoginActivity extends AppCompatActivity implements
 
 
             new LoadOrCreateUserTask().execute(acct);
+
 
             /*
             // Send token to server and validate server-side
@@ -335,7 +343,7 @@ public class LoginActivity extends AppCompatActivity implements
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     LoginActivity.this, // Context
                     "971897998846", // AWS Account ID
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     COGNITO_OWL_UNAUTH_ROLE, // Unauthenticated Role ARN
                     COGNITO_OWL_AUTH_ROLE, // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
@@ -405,7 +413,7 @@ public class LoginActivity extends AppCompatActivity implements
                 return;
             }
 
-            mStatusTextView.setText(getString(R.string.signed_in_fmt, acct.getDisplayName()));
+            mStatusTextView.setName(getString(R.string.signed_in_fmt, acct.getDisplayName()));
             updateUI(true);
 
 
@@ -472,12 +480,13 @@ public class LoginActivity extends AppCompatActivity implements
 
             // Skipping token verification for now
             // Do query on user table for GoogleId
+            // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     LoginActivity.this, // Context
-                    "971897998846", // AWS Account ID
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
-                    COGNITO_OWL_UNAUTH_ROLE, // Unauthenticated Role ARN
-                    COGNITO_OWL_AUTH_ROLE, // Authenticated Role ARN
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -501,6 +510,7 @@ public class LoginActivity extends AppCompatActivity implements
                 credentialsProvider.setLogins(logins);
             } catch (Exception e) {
                 Log.e(TAG, "Error getting Google+ Credentials: " + e);
+                e.printStackTrace();
                 cancel(true);
             }
 
@@ -728,22 +738,70 @@ public class LoginActivity extends AppCompatActivity implements
     }
     */
 
+    private boolean mayReadContacts() {
+        //If device is on version before M then permissions are all granted on install
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            return true;
+        }
+
+        // If the permission is granted, then return true
+        if (checkSelfPermission(READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        }
+
+        // Check if we should show an explanation for requesting this permission
+        if (shouldShowRequestPermissionRationale(READ_CONTACTS)) {
+
+            // Show an explanation to the user *asynchronously* -- don't block
+            // this thread waiting for the user's response! After the user
+            // sees the explanation, try again to request the permission.
+            Snackbar.make(mLinearLayout, R.string.permission_rationale_contacts, Snackbar.LENGTH_INDEFINITE)
+                    .setAction(android.R.string.ok, new View.OnClickListener() {
+                        @Override
+                        @TargetApi(Build.VERSION_CODES.M)
+                        public void onClick(View v) {
+                            requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
+                        }
+                    });
+        } else {
+            // No explanation needed, we can request the permission.
+
+            requestPermissions(new String[]{READ_CONTACTS}, REQUEST_READ_CONTACTS);
+        }
+        return false;
+    }
+
 
     /**
      * Callback received when a permissions request has been completed.
      */
-    /*
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_READ_CONTACTS) {
-            if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                populateAutoComplete();
+        switch (requestCode) {
+            case REQUEST_READ_CONTACTS: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // accounts-related thing you need to do.
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+
+                    // In this case, we need accounts or else they can't sign in.
+                    // Display a message that says we need it
+                    Toast.makeText(this, "Contacts Permission Required to sign into", Toast.LENGTH_SHORT).show();
+                }
+                return;
             }
+
+            // ...other 'case' lines to check for other permissions this app might request
         }
     }
-    */
-
 
 
     /**
@@ -762,8 +820,8 @@ public class LoginActivity extends AppCompatActivity implements
         mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String email = mEmailView.getText().toString();
-        String password = mPasswordView.getText().toString();
+        String email = mEmailView.getName().toString();
+        String password = mPasswordView.getName().toString();
 
         boolean cancel = false;
         View focusView = null;

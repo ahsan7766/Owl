@@ -21,6 +21,31 @@
 
 
 
+    <!-- AWS Account ID -->
+    <string name="aws_account_id">971897998846</string>
+
+
+    <!-- Cognito IAM Unauth Role -->
+    <string name="cognito_unauth_role">arn:aws:iam::971897998846:role/Cognito_OwlUnauth_Role</string>
+
+
+    <!-- Cognito IAM Auth Role -->
+    <string name="cognito_auth_role">arn:aws:iam::971897998846:role/Cognito_OwlAuth_Role</string>
+
+
+
+
+    <!-- PROD IDENTITY POOL ID -->
+    <!--
+    <string name="cognito_identity_pool">us-east-1:5ed00e4f-a16c-41cc-9d15-e36f726a1b3c</string>
+    -->
+
+    <!-- DEBUG IDENTITY POOL ID -->
+
+    <string name="cognito_identity_pool">us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e</string>
+
+
+
     <!-- Sign-in status messages -->
     <string name="signed_in_fmt">Signed in as: %s</string>
     <string name="signed_in">Signed in</string>
@@ -64,7 +89,7 @@
     <string name="error_invalid_password">This password is too short</string>
     <string name="error_incorrect_password">This password is incorrect</string>
     <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
+    <string name="permission_rationale_contacts">"Contacts permissions are needed for providing email
         completions."
     </string>
     <string name="title_activity_main">Owl</string>

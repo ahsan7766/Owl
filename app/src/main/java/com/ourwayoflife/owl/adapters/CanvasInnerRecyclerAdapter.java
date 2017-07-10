@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.models.CanvasTile;
+import com.ourwayoflife.owl.views.CanvasTileView;
 
 /**
  * Created by Zach on 5/23/17.
@@ -44,11 +45,14 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     @Override
     public void onBindViewHolder(CanvasInnerRecyclerAdapter.ViewHolder holder, int position) {
         CanvasTile canvasTile = mData[position];
-        //holder.mTextView.setComment(canvasTile.getComment());
+
+        holder.mCanvasTile.setName(canvasTile.getName());
+        holder.mCanvasTile.setName("TEST");
+        holder.mCanvasTile.setPhoto(canvasTile.getPhoto());
 
 
-        //holder.mImageView.setImageResource(R.drawable.trees);
-
+        // Set sample images
+        /*
         outer:
         switch (mRow) {
 
@@ -274,6 +278,7 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
             default:
                 holder.mImageView.setImageResource(R.drawable.trees);
         }
+        */
 
     }
 
@@ -287,13 +292,11 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder implements
             View.OnClickListener, View.OnDragListener {
-        //public TextView mTextView;
-        public ImageView mImageView;
+        public CanvasTileView mCanvasTile;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            //mTextView = (TextView) itemView.findViewById(R.id.text);
-            mImageView = (ImageView) itemView.findViewById(R.id.image);
+            mCanvasTile = itemView.findViewById(R.id.canvas_tile);
 
             itemView.setOnClickListener(this);
             itemView.setOnDragListener(this);

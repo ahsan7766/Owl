@@ -98,7 +98,7 @@ public class FeedFragment extends Fragment
     public static final int CANVAS_COLUMN_COUNT = 7; // number of columns of pictures in the grid
     public static final int CANVAS_ROW_COUNT = 2; // number of rows of pictures in the grid
 
-    private LruCache<String, Bitmap> mMemoryCache;
+    public static LruCache<String, Bitmap> mMemoryCache; // TODO move this to MainActivity
 
 
     protected RecyclerView mCanvasRecyclerView;
@@ -347,7 +347,7 @@ public class FeedFragment extends Fragment
             mCanvasDataset[i] = new CanvasTile[CANVAS_COLUMN_COUNT];
 
             for (int x = 0; x < CANVAS_COLUMN_COUNT; x++) {
-                mCanvasDataset[i][x] = new CanvasTile("ROW " + i + " COL " + x);
+                mCanvasDataset[i][x] = new CanvasTile("ROW " + i + " COL " + x, "test", null);
             }
         }
 
@@ -365,7 +365,7 @@ public class FeedFragment extends Fragment
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getContext(),
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -427,10 +427,10 @@ public class FeedFragment extends Fragment
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getActivity(), // Context
-                    "971897998846", // AWS Account ID
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
-                    "arn:aws:iam::971897998846:role/Cognito_OwlUnauth_Role", // Unauthenticated Role ARN
-                    "arn:aws:iam::971897998846:role/Cognito_OwlAuth_Role", // Authenticated Role ARN
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -474,9 +474,8 @@ public class FeedFragment extends Fragment
                     .withIndexName("UserId-UploadDate-index")
                     .withHashKeyValues(queryPhoto)
                     //.withRangeKeyCondition("Title", rangeKeyCondition)
-                    .withConsistentRead(false);
-
-            queryExpression.setScanIndexForward(false);
+                    .withConsistentRead(false)
+                    .withScanIndexForward(false);
 
             PaginatedQueryList<Photo> result = mapper.query(Photo.class, queryExpression);
 
@@ -542,13 +541,13 @@ public class FeedFragment extends Fragment
     }
 
 
-    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+    public static void addBitmapToMemoryCache(String key, Bitmap bitmap) {
         if (getBitmapFromMemCache(key) == null) {
             mMemoryCache.put(key, bitmap);
         }
     }
 
-    public Bitmap getBitmapFromMemCache(String key) {
+    public static Bitmap getBitmapFromMemCache(String key) {
         return mMemoryCache.get(key);
     }
 

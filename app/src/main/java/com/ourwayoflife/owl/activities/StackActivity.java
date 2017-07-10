@@ -297,7 +297,7 @@ public class StackActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -352,7 +352,7 @@ public class StackActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -431,7 +431,7 @@ public class StackActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -459,7 +459,7 @@ public class StackActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -508,7 +508,7 @@ public class StackActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -563,7 +563,7 @@ public class StackActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -617,7 +617,7 @@ public class StackActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -661,7 +661,7 @@ public class StackActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -704,7 +704,7 @@ public class StackActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -763,7 +763,7 @@ public class StackActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 

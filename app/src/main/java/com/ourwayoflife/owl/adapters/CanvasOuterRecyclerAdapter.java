@@ -31,13 +31,15 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     private Context mContext;
 
     private RecyclerView mInnerRecyclerView;
-    protected CanvasInnerRecyclerAdapter mAdapter;
+    protected CanvasInnerRecyclerAdapter mAdapterInner;
+    protected CanvasTile[] mDatasetInner;
     private RecyclerView.LayoutManager mLayoutManager;
 
     private CanvasTile[][] mDataset = new CanvasTile[0][0];
     private LayoutInflater mInflater;
     //private CanvasOuterRecyclerAdapter.ItemClickListener mClickListener;
     private CanvasOuterRecyclerAdapter.ItemInnerDragListener mInnerDragListener;
+
 
     // data is passed into the constructor
     public CanvasOuterRecyclerAdapter(Context context, CanvasTile[][] data) {
@@ -70,16 +72,18 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         // set up the RecyclerView
         mInnerRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new CanvasInnerRecyclerAdapter(parent.getContext(), mDataset[rowCount], rowCount);
+
+        mDatasetInner = mDataset[rowCount];
+        mAdapterInner = new CanvasInnerRecyclerAdapter(parent.getContext(), mDatasetInner, rowCount);
 
 
         rowCount++; // iterate the row count so when (if) the next ViewHolder row is created it takes the next data row
 
-        mAdapter.setClickListener(this);
-        mAdapter.setDragListener(this);
+        mAdapterInner.setClickListener(this);
+        mAdapterInner.setDragListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
-        mInnerRecyclerView.setAdapter(mAdapter);
+        mInnerRecyclerView.setAdapter(mAdapterInner);
 
         //initDataset();
 
@@ -91,9 +95,12 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     // binds the data to the textview in each cell
     @Override
     public void onBindViewHolder(CanvasOuterRecyclerAdapter.ViewHolder holder, int position) {
-        CanvasTile[] canvasTile = mDataset[position];
+        mDatasetInner = mDataset[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
         //holder.mFeedCategoryView.setPhotoCount(feedCategory.getPhotoCount());
+
+        //mAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mDatasetInner, position);
+        //holder.mRecycler.setAdapter(mAdapterInner);
 
         //initDataset();
     }
@@ -111,7 +118,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         public ViewHolder(View itemView) {
             super(itemView);
-            mRecycler = (RecyclerView) itemView.findViewById(R.id.recycler_canvas_inner);
+            mRecycler = itemView.findViewById(R.id.recycler_canvas_inner);
         }
     }
 
@@ -190,6 +197,20 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         }
 
         return mInnerDragListener.onItemDrag(view, dragEvent, row, column);
+    }
+
+
+
+
+
+    public void notifyInnerDatasetRowsChanged(int rows){
+
+        for(int i = 0; i < rows; i++) {
+            if(mDataset[i] != null) {
+                mAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mDataset[i], i);
+                mAdapterInner.notifyDataSetChanged();
+            }
+        }
     }
 
 

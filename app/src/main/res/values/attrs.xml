@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <attr name="photo" format="string"/>
+
+
     <declare-styleable name="ProfileCounterView">
         <!--<attr name="backgroundColor" format="color"/>-->
         <attr name="hootCount" format="integer"/>
@@ -10,7 +14,12 @@
     <declare-styleable name="FeedItemView">
         <attr name="header" format="string"/>
         <attr name="photoCount" format="integer"/>
-        <attr name="photo" format="string"/>
+        <attr name="photo"/>
+    </declare-styleable>
+
+    <declare-styleable name="CanvasTileView">
+        <attr name="name" format="string"/>
+        <attr name="photo"/>
     </declare-styleable>
 
     <declare-styleable name="ProfilePictureView">

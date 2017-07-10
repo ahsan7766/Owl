@@ -14,6 +14,7 @@ import android.os.AsyncTask;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -243,7 +244,7 @@ public class UploadActivity extends AppCompatActivity
                 // Initialize the Amazon Cognito credentials provider
                 CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                         getApplicationContext(),
-                        LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                        getString(R.string.cognito_identity_pool), // Identity Pool ID
                         Regions.US_EAST_1 // Region
                 );
 
@@ -252,7 +253,8 @@ public class UploadActivity extends AppCompatActivity
                 */
 
 
-                new UploadTask().execute(mDatasetStack.get(mAdapterStack.getSelectedPos()).getStackId());
+                String stackId = mAdapterStack.getSelectedPos() < 0 ? null : mDatasetStack.get(mAdapterStack.getSelectedPos()).getStackId();
+                new UploadTask().execute(stackId);
 
                 /*
                 // Loop through each file to upload
@@ -313,8 +315,11 @@ public class UploadActivity extends AppCompatActivity
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getApplicationContext(),
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    UploadActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -435,7 +440,7 @@ public class UploadActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getApplicationContext(),
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -720,7 +725,7 @@ public class UploadActivity extends AppCompatActivity
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     UploadActivity.this,
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -730,7 +735,7 @@ public class UploadActivity extends AppCompatActivity
 
             // Query for stacks
             Stack queryStack = new Stack();
-            queryStack.setUserId(LoginActivity.sUserId);  //TODO set user id
+            queryStack.setUserId(LoginActivity.sUserId);  // Set userId to the logged in user
 
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withIndexName("UserId-CreatedDate-index")

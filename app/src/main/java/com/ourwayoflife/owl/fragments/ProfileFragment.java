@@ -96,17 +96,17 @@ public class ProfileFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Get args
         if (getArguments() != null) {
+            // Get the UserId of the profile we are viewing
             mUserId = getArguments().getString(ARG_PARAM1);
-
-            // If no userId was found, set it to the signed in user
-            if(mUserId == null || mUserId.isEmpty()) {
-                mUserId = LoginActivity.sUserId;
-            }
-
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
 
+        // If no userId was found, set it to the signed in user
+        if(mUserId == null || mUserId.isEmpty()) {
+            mUserId = LoginActivity.sUserId;
+        }
 
 
         /*
@@ -234,7 +234,7 @@ public class ProfileFragment extends Fragment {
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getContext(),
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -279,7 +279,7 @@ public class ProfileFragment extends Fragment {
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getContext(),
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -320,7 +320,7 @@ public class ProfileFragment extends Fragment {
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getContext(),
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -362,7 +362,7 @@ public class ProfileFragment extends Fragment {
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getContext(),
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 
@@ -403,7 +403,7 @@ public class ProfileFragment extends Fragment {
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getContext(),
-                    LoginActivity.COGNITO_IDENTITY_POOL, // Identity Pool ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
                     Regions.US_EAST_1 // Region
             );
 

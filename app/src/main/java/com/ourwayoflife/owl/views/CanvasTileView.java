@@ -9,70 +9,68 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 
 import com.ourwayoflife.owl.R;
+import com.ourwayoflife.owl.models.CanvasTile;
 
 /**
- * Created by Zach on 5/23/17.
+ * Created by Zach on 7/10/17.
  */
 
-public class FeedItemView extends View {
+public class CanvasTileView extends View {
 
-    private static final String TAG = FeedItemView.class.getName();
+    private static final String TAG = CanvasTile.class.getName();
 
-    private String mHeaderString;
-    private int mPhotoCount;
+    private String mName;
     private Bitmap mPhoto;
 
     private Paint mOutlinePaint;
-    private Paint mHeaderTextPaint;
-    private Paint mSubheaderTextPaint;
+    private Paint mNameTextPaint;
+    //private Paint mSubheaderTextPaint;
 
     private Rect mOutlineRect;
-    private Rect mHeaderTextBounds;
-    private Rect mSubheaderTextBounds;
+    private Rect mNameTextBounds;
+    //private Rect mSubheaderTextBounds;
 
     /**
      * Interface definition for a callback to be invoked when the current
      * item changes.
      */
     public interface OnCurrentItemChangedListener {
-        void OnCurrentItemChanged(FeedItemView source, int currentItem);
+        void OnCurrentItemChanged(CanvasTileView source, int currentItem);
     }
 
     /**
      * Class constructor taking only a context. Use this constructor to create
-     * {@link FeedItemView} objects from your own code.
+     * {@link CanvasTileView} objects from your own code.
      *
      * @param context
      */
-    public FeedItemView(Context context) {
+    public CanvasTileView(Context context) {
         super(context);
         init();
     }
 
     /**
      * Class constructor taking a context and an attribute set. This constructor
-     * is used by the layout engine to construct a {@link FeedItemView} from a set of
+     * is used by the layout engine to construct a {@link CanvasTileView} from a set of
      * XML attributes.
      *
      * @param context
      * @param attrs   An attribute set which can contain attributes from
-     *                {@link FeedItemView} as well as attributes inherited
+     *                {@link CanvasTileView} as well as attributes inherited
      *                from {@link android.view.View}.
      */
-    public FeedItemView(Context context, AttributeSet attrs) {
+    public CanvasTileView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         TypedArray a = context.getTheme().obtainStyledAttributes(
                 attrs,
-                R.styleable.FeedItemView,
+                R.styleable.CanvasTileView,
                 0, 0
         );
 
@@ -80,24 +78,9 @@ public class FeedItemView extends View {
             // Retrieve the values from the TypedArray and store into
             // fields of this class.
             //
-            // The R.styleable.FeedItemView_* constants represent the index for
-            // each custom attribute in the R.styleable.FeedItemView array.
-            /*
-            mRoll1Score = a.getInt(R.styleable.BowlingFrame_roll1Score, -1);
-            mRoll2Score = a.getInt(R.styleable.BowlingFrame_roll2Score, -1);
-            mRoll3Score = a.getInt(R.styleable.BowlingFrame_roll3Score, -1);
-            mRunningScore = a.getInt(R.styleable.BowlingFrame_runningScore, -1);
-            mScoreTextWidth = a.getDimension(R.styleable.BowlingFrame_scoreTextWidth, 0.0f);
-            mScoreTextHeight = a.getDimension(R.styleable.BowlingFrame_scoreTextHeight, 75);
-            mScoreTextColor = a.getColor(R.styleable.BowlingFrame_scoreTextColor, Color.BLACK);
-            mFrameNumber = a.getInt(R.styleable.BowlingFrame_frameNumber, 0);
-            mFrameNumberTextWidth = a.getDimension(R.styleable.BowlingFrame_frameNumberTextWidth, 0.0f);
-            mFrameNumberTextHeight = a.getDimension(R.styleable.BowlingFrame_frameNumberTextHeight, 200);
-            mFrameNumberTextColor = a.getColor(R.styleable.BowlingFrame_frameNumberTextColor,  Color.parseColor("#66D3D3D3"));
-            mBackgroundColor = a.getColor(R.styleable.BowlingFrame_backgroundColor, Color.TRANSPARENT);
-            mFrameColor = a.getColor(R.styleable.BowlingFrame_frameColor, Color.BLACK);
-            */
-            String photoString = a.getString(R.styleable.FeedItemView_photo);
+            // The R.styleable.CanvasTileView_* constants represent the index for
+            // each custom attribute in the R.styleable.CanvasTileView array.
+            String photoString = a.getString(R.styleable.CanvasTileView_photo);
             if(photoString != null) {
                 try {
                     byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
@@ -109,9 +92,7 @@ public class FeedItemView extends View {
                 // TODO set the photo to the default photo for "Not found"
             }
 
-
-            mHeaderString = a.getString(R.styleable.FeedItemView_header);
-            mPhotoCount = a.getInt(R.styleable.FeedItemView_photoCount, 0);
+            mName = a.getString(R.styleable.CanvasTileView_name);
         } finally {
             // release the TypedArray so that it can be reused.
             a.recycle();
@@ -128,23 +109,15 @@ public class FeedItemView extends View {
         mPhoto = photo;
     }
 
-    private String getHeader() {
-        return mHeaderString;
+    private String getName() {
+        return mName;
     }
 
-    public void setHeader(String headerString) {
-        mHeaderString = headerString;
+    public void setName(String headerString) {
+        mName = headerString;
         invalidate();
     }
 
-    private Integer getPhotoCount() {
-        return mPhotoCount;
-    }
-
-    public void setPhotoCount(Integer photoCount) {
-        mPhotoCount = photoCount;
-        invalidate();
-    }
 
 
     @Override
@@ -191,23 +164,23 @@ public class FeedItemView extends View {
 
 
 
-        /*
-        // Header text
-        mHeaderTextPaint.getTextBounds(mHeaderString, 0, mHeaderString.length(), mHeaderTextBounds);
+        // Name text
+        mNameTextPaint.getTextBounds(mName, 0, mName.length(), mNameTextBounds);
         canvas.drawText(
-                getHeader(),
-                (getWidth() / 2), //- mHeaderTextBounds.exactCenterX(),
-                ((getHeight() / 8) * 3), // - mHeaderTextBounds.exactCenterY(),
-                mHeaderTextPaint
+                getName(),
+                (getWidth() / 2), //- mNameTextBounds.exactCenterX(),
+                ((getHeight() / 8) * 3), // - mNameTextBounds.exactCenterY(),
+                mNameTextPaint
         );
 
+        /*
         // Sub-header text
         String postCountString = getPhotoCount().toString() + " " + getResources().getString(R.string.photos);
         mSubheaderTextPaint.getTextBounds(postCountString, 0, postCountString.length(), mSubheaderTextBounds);
         canvas.drawText(
                 postCountString,
-                (getWidth() / 2), // - mHeaderTextBounds.exactCenterX(),
-                ((getHeight() / 8) * 5), // - mHeaderTextBounds.exactCenterY(),
+                (getWidth() / 2), // - mNameTextBounds.exactCenterX(),
+                ((getHeight() / 8) * 5), // - mNameTextBounds.exactCenterY(),
                 mSubheaderTextPaint
         );
         */
@@ -219,24 +192,25 @@ public class FeedItemView extends View {
     private void init() {
 
         mOutlineRect = new Rect();
-        mHeaderTextBounds = new Rect();
-        mSubheaderTextBounds = new Rect();
+        mNameTextBounds = new Rect();
+        //mSubheaderTextBounds = new Rect();
 
         mOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mOutlinePaint.setColor(Color.BLACK);
         mOutlinePaint.setStyle(Paint.Style.STROKE);
-        //mOutlinePaint.setAlpha(125);
+        mOutlinePaint.setAlpha(125);
 
-        mHeaderTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mHeaderTextPaint.setColor(Color.WHITE);
-        mHeaderTextPaint.setTextAlign(Paint.Align.CENTER);
-        mHeaderTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        mHeaderTextPaint.setTextSize(55);
+        mNameTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mNameTextPaint.setColor(Color.WHITE);
+        mNameTextPaint.setTextAlign(Paint.Align.CENTER);
+        mNameTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        mNameTextPaint.setTextSize(55);
 
+        /*
         mSubheaderTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mSubheaderTextPaint.setColor(Color.WHITE);
         mSubheaderTextPaint.setTextAlign(Paint.Align.CENTER);
         mSubheaderTextPaint.setTextSize(30);
-
+        */
     }
 }
