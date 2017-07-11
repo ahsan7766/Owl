@@ -176,9 +176,9 @@ public class FeedFragment extends Fragment
 
 
         // Initialize dataset, this data would usually come from a local content provider or
-        if (savedInstanceState != null && mDataset != null) {
+        if (savedInstanceState != null && savedInstanceState.getParcelableArrayList("FEED_ITEMS") != null) {
             //Restore the fragment's state here
-            Log.d("TAG",savedInstanceState.toString());
+            Log.d("TAG", savedInstanceState.toString());
             mDataset = savedInstanceState.getParcelableArrayList("FEED_ITEMS");
             Log.d("TAG", "Restoring FeedItem Dataset. Dataset Size: " + mDataset.size());
         }else {

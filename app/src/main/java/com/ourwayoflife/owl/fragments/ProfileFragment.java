@@ -2,11 +2,18 @@ package com.ourwayoflife.owl.fragments;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatDialog;
+import android.support.v7.app.AppCompatDialogFragment;
+import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +37,9 @@ import com.ourwayoflife.owl.views.ProfilePictureView;
 
 import java.util.List;
 
+import static com.ourwayoflife.owl.fragments.FeedFragment.addBitmapToMemoryCache;
+import static com.ourwayoflife.owl.fragments.FeedFragment.getBitmapFromMemCache;
+
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
@@ -38,16 +48,20 @@ import java.util.List;
  * Use the {@link ProfileFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class ProfileFragment extends Fragment {
+public class ProfileFragment extends Fragment implements
+        ProfileEditDialogFragment.ProfileEditDialogListener{
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "USER_ID";
     private static final String ARG_PARAM2 = "param2";
 
+    private static final String TAG = ProfileFragment.class.getName();
+
     // TODO: Rename and change types of parameters
     private String mUserId = LoginActivity.sUserId;
     private String mParam2;
 
+    private User mUser;
 
     private ProfilePictureView mProfilePictureView;
     private TextView mTextUserName;
@@ -56,6 +70,8 @@ public class ProfileFragment extends Fragment {
     private Button mButtonEditFollow;
 
     private OnFragmentInteractionListener mListener;
+
+    ProfileEditDialogFragment mProfileEditDialog;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -119,7 +135,6 @@ public class ProfileFragment extends Fragment {
         //Execute task to get user data
         new DownloadUserTask().execute();
 
-
         // Get Like count for profile counter
         new GetUserLikeCountTask().execute();
 
@@ -134,23 +149,15 @@ public class ProfileFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        mProfilePictureView = (ProfilePictureView) rootView.findViewById(R.id.profile_picture);
-        mProfilePictureView.setBackgroundPicture(R.drawable.trees);
+        mProfilePictureView = rootView.findViewById(R.id.profile_picture);
 
-        mProfileCounterView = (ProfileCounterView) rootView.findViewById(R.id.profile_counter);
+        mProfileCounterView = rootView.findViewById(R.id.profile_counter);
 
         mTextUserName = rootView.findViewById(R.id.text_user_name);
 
         mTextUserBio = rootView.findViewById(R.id.text_user_bio);
 
-
-        //mProfileCounterView.setHootCount(57);
-        //mProfileCounterView.setFollowerCount(181);
-        //mProfileCounterView.setFollowingCount(132);
-
-
         mButtonEditFollow = rootView.findViewById(R.id.button_edit_follow);
-
 
         return rootView;
     }
@@ -172,9 +179,29 @@ public class ProfileFragment extends Fragment {
         // If this user is the logged in user, make the edit/follow button say "Edit"
         if(mUserId.equals(LoginActivity.sUserId)) {
             mButtonEditFollow.setText(getString(R.string.edit));
+            mButtonEditFollow.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    // Create an instance of the dialog fragment and show it
+                    mProfileEditDialog = new ProfileEditDialogFragment();
+                    mProfileEditDialog.setTargetFragment(ProfileFragment.this, 0);
+                    mProfileEditDialog.setName(mUser.getName());
+                    mProfileEditDialog.setEmail(mUser.getEmail());
+                    mProfileEditDialog.setBio(mUser.getBio());
+                    mProfileEditDialog.show(getFragmentManager(), "ProfileEditDialogFragment");
+                }
+            });
         }else {
             // Otherwise, check if the user is following this user we are viewing to set the button text to either follow or unfollow
             new CheckFollowingTask().execute();
+
+            mButtonEditFollow.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    // Run task that follows/unfollows the user
+                    //new FollowUserTask().execute();
+                }
+            });
         }
     }
 
@@ -228,13 +255,32 @@ public class ProfileFragment extends Fragment {
     }
 
 
+    // The dialog fragment receives a reference to this Activity through the
+    // Fragment.onAttach() callback, which it uses to call the following methods
+    // defined by the ProfileEditDialogFragment.ProfileEditDialogListener interface
+    @Override
+    public void onDialogPositiveClick(AppCompatDialogFragment dialog) {
+        // User touched the dialog's positive button
+
+    }
+
+    @Override
+    public void onDialogNegativeClick(AppCompatDialogFragment dialog) {
+        // User touched the dialog's negative button
+        // Don't have to update any user info since they canceled
+    }
+
+
     private class DownloadUserTask extends AsyncTask<Void, Void, User> {
 
         protected User doInBackground(Void... urls) {
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getContext(),
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -258,16 +304,46 @@ public class ProfileFragment extends Fragment {
 
 
             // If the user is not retrieved, then close the fragment
-            if (user.getUserId() == null || user.getUserId().isEmpty()) {
+            if (user == null || user.getUserId() == null || user.getUserId().isEmpty()) {
                 Toast.makeText(getActivity(), "Unable to retrieve user data", Toast.LENGTH_SHORT).show();
                 // End fragment by popping itself from the stack
                 getActivity().getSupportFragmentManager().beginTransaction().remove(ProfileFragment.this).commit();
                 return;
             }
 
+            // Set the class' user variable
+            mUser = user;
+
             // Update the UI to whatever the user's data is
-            mTextUserName.setText(user.getName());
-            mTextUserBio.setText(user.getBio());
+            // Get the user's profile picture bitmap
+            //Check if the bitmap is cached
+            Bitmap userBitmap;
+            BitmapFactory.Options optionsUser = new BitmapFactory.Options();
+            //options.inSampleSize = 4;
+            userBitmap = getBitmapFromMemCache("u" + mUser.getUserId()); // Added a 'u' in front in case there is an overlap between a userId and photoId
+            userPhoto: if (userBitmap == null) {
+                //Bitmap is not cached.  Have to download
+
+                // Convert the photo string to a bitmap
+                String photoString = mUser.getPhoto();
+                if (photoString == null || photoString.length() <= 0) {
+                    break userPhoto;
+                }
+                try {
+                    byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
+                    userBitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, optionsUser);
+
+                    //Add bitmap to the cache
+                    addBitmapToMemoryCache(String.valueOf("u" + mUser.getUserId()), userBitmap);
+                } catch (Exception e) {
+                    Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+                } finally {
+                    mProfilePictureView.setBitmap(userBitmap);
+                }
+            }
+
+            mTextUserName.setText(mUser.getName());
+            mTextUserBio.setText(mUser.getBio());
 
         }
     }
@@ -278,8 +354,11 @@ public class ProfileFragment extends Fragment {
         protected Following doInBackground(Void... urls) {
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getContext(),
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -316,11 +395,13 @@ public class ProfileFragment extends Fragment {
     private class GetUserLikeCountTask extends AsyncTask<Void, Void, Integer> {
 
         protected Integer doInBackground(Void... params) {
-
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getContext(),
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -355,14 +436,17 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+
     private class GetUserFollowerCountTask extends AsyncTask<Void, Void, Integer> {
 
         protected Integer doInBackground(Void... params) {
-
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getContext(),
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -399,11 +483,13 @@ public class ProfileFragment extends Fragment {
     private class GetUserFollowingCountTask extends AsyncTask<Void, Void, Integer> {
 
         protected Integer doInBackground(Void... params) {
-
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getContext(),
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <!--
+    <com.ourwayoflife.owl.views.ProfilePictureView
+        android:id="@+id/profile_picture"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"/>
+
+    <Button
+        android:id="@+id/button_change_profile_picture"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:gravity="center_horizontal"
+        android:layout_below="@id/profile_picture"
+        android:text="Edit Profile Picture"/>
+     -->
+
+    <TextView
+        android:id="@+id/text_name"
+        android:layout_width="match_parent"
+        android:layout_height="25dp"
+        android:gravity="bottom"
+        android:text="Name"/>
+
+    <EditText
+        android:id="@+id/edit_text_name"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_below="@id/text_name"
+        android:hint="Name"
+        android:inputType="textPersonName"/>
+
+
+    <TextView
+        android:id="@+id/text_email"
+        android:layout_width="match_parent"
+        android:layout_height="25dp"
+        android:layout_below="@id/edit_text_name"
+        android:gravity="bottom"
+        android:text="Email"/>
+
+    <EditText
+        android:id="@+id/edit_text_email"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_below="@id/text_email"
+        android:enabled="false"
+        android:hint="Email"
+        android:inputType="textEmailAddress"/>
+
+
+    <TextView
+        android:id="@+id/text_bio"
+        android:layout_width="match_parent"
+        android:layout_height="25dp"
+        android:layout_below="@id/edit_text_email"
+        android:gravity="bottom"
+        android:text="Bio"/>
+
+    <EditText
+        android:id="@+id/edit_text_bio"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_below="@id/text_bio"
+        android:hint="Bio"
+        android:inputType="text"/>
+
+
+</RelativeLayout>
