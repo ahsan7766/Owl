@@ -24,9 +24,9 @@ public class ProfileEditDialogFragment extends AppCompatDialogFragment {
          * implement this interface in order to receive event callbacks.
          * Each method passes the DialogFragment in case the host needs to query it. */
     public interface ProfileEditDialogListener {
-        void onDialogPositiveClick(AppCompatDialogFragment dialog);
+        void onDialogPositiveClick(ProfileEditDialogFragment dialog);
 
-        void onDialogNegativeClick(AppCompatDialogFragment dialog);
+        void onDialogNegativeClick(ProfileEditDialogFragment dialog);
     }
 
     // Use this instance of the interface to deliver action events
@@ -86,11 +86,9 @@ public class ProfileEditDialogFragment extends AppCompatDialogFragment {
         builder.setMessage(R.string.edit_profile)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        
-                        if(mEditTextName.getText().length() <= 0) {
-                            Toast.makeText(getContext(), "Name cannot be empty", Toast.LENGTH_SHORT).show();
-                            return;
-                        }
+                        mName = mEditTextName.getText().toString();
+                        mEmail = mEditTextEmail.getText().toString();
+                        mBio = mEditTextBio.getText().toString();
 
                         // Send the positive button event back to the host activity
                         mListener.onDialogPositiveClick(ProfileEditDialogFragment.this);
@@ -98,6 +96,10 @@ public class ProfileEditDialogFragment extends AppCompatDialogFragment {
                 })
                 .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
+                        mName = mEditTextName.getText().toString();
+                        mEmail = mEditTextEmail.getText().toString();
+                        mBio = mEditTextBio.getText().toString();
+
                         // Send the negative button event back to the host activity
                         mListener.onDialogNegativeClick(ProfileEditDialogFragment.this);
                     }

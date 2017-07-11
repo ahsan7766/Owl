@@ -259,13 +259,24 @@ public class ProfileFragment extends Fragment implements
     // Fragment.onAttach() callback, which it uses to call the following methods
     // defined by the ProfileEditDialogFragment.ProfileEditDialogListener interface
     @Override
-    public void onDialogPositiveClick(AppCompatDialogFragment dialog) {
+    public void onDialogPositiveClick(ProfileEditDialogFragment dialog) {
         // User touched the dialog's positive button
+
+        // Make sure we have a valid name
+        if(dialog.getName().length() <= 0) {
+            Toast.makeText(getContext(), "Name cannot be empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        mUser.setName(dialog.getName());
+        mUser.setBio(dialog.getBio());
+
+        new UpdateUserTask().execute();
 
     }
 
     @Override
-    public void onDialogNegativeClick(AppCompatDialogFragment dialog) {
+    public void onDialogNegativeClick(ProfileEditDialogFragment dialog) {
         // User touched the dialog's negative button
         // Don't have to update any user info since they canceled
     }
@@ -518,6 +529,47 @@ public class ProfileFragment extends Fragment implements
         protected void onPostExecute(Integer likeCount) {
             // Set text of like count to the number of likes
             mProfileCounterView.setFollowingCount(likeCount);
+        }
+    }
+
+
+    private class UpdateUserTask extends AsyncTask<Void, Void, Void> {
+
+        protected Void doInBackground(Void... urls) {
+            // Double check that the UserId is not null AND that it matches the signed in user
+            if(mUser.getUserId() == null || !mUser.getUserId().equals(LoginActivity.sUserId)){
+                cancel(true);
+            }
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+
+            // Save user
+            mapper.save(mUser);
+
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Void result) {
+            mTextUserName.setText(mUser.getName());
+            mTextUserBio.setText(mUser.getBio());
         }
     }
 }
