@@ -7,10 +7,16 @@ import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.models.FeedItem;
 import com.ourwayoflife.owl.views.FeedItemView;
+import com.ourwayoflife.owl.views.ProfilePictureView;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 
@@ -57,7 +63,11 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         FeedItem feedItem = mData.get(position);
-        holder.mFeedItemView.setPhoto(feedItem.getPhoto());
+        //holder.mFeedItemView.setPhoto(feedItem.getPhoto());
+        holder.mImage.setImageBitmap(feedItem.getPhoto());
+        holder.mProfilePictureView.setBitmap(feedItem.getUserPicture());
+        holder.mTextName.setText(feedItem.getUserName());
+
         //holder.mFeedItemView.setHeader(feedItem.getHeader());
         //holder.mFeedItemView.setPhotoCount(feedItem.getPhotoCount());
     }
@@ -72,11 +82,20 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder
             implements View.OnClickListener, View.OnLongClickListener, View.OnDragListener {
-        public FeedItemView mFeedItemView;
+        //public FeedItemView mFeedItemView;
+        public ImageView mImage;
+        public ProfilePictureView mProfilePictureView;
+        public TextView mTextName;
+        public ImageButton mImageButtonLike;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            mFeedItemView = (FeedItemView) itemView.findViewById(R.id.feed_category);
+            //mFeedItemView = (FeedItemView) itemView.findViewById(R.id.feed_category);
+            mImage = itemView.findViewById(R.id.image);
+            mProfilePictureView = itemView.findViewById(R.id.profile_picture);
+            mTextName = itemView.findViewById(R.id.text_name);
+            mImageButtonLike = itemView.findViewById(R.id.image_button_like);
+
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
             itemView.setOnDragListener(this);

@@ -12,15 +12,23 @@ public class FeedItem implements Parcelable{
 
     private String mPhotoId;
     private Bitmap mPhoto;
+    private String mUserId;
+    private Bitmap mUserPicture;
+    private String mUserName;
+
     //private String mHeader;
     //private int mPhotoCount;
 
     public FeedItem() {
     }
 
-    public FeedItem(String photoId, Bitmap photo) { //, String header, int photoCount) {
+    public FeedItem(String photoId, Bitmap photo, String userId, Bitmap userPicture, String userName) { //, String header, int photoCount) {
         mPhotoId = photoId;
         mPhoto = photo;
+        mUserId = userId;
+        mUserPicture = userPicture;
+        mUserName = userName;
+
         //mHeader = header;
         //mPhotoCount = photoCount;
     }
@@ -29,6 +37,10 @@ public class FeedItem implements Parcelable{
     protected FeedItem(Parcel in) {
         mPhotoId = in.readString();
         mPhoto = (Bitmap) in.readValue(Bitmap.class.getClassLoader());
+        mUserId = in.readString();
+        mUserPicture = (Bitmap) in.readValue(Bitmap.class.getClassLoader());
+        mUserName = in.readString();
+
         //mHeader = in.readString();
         //mPhotoCount = in.readInt();
     }
@@ -47,6 +59,30 @@ public class FeedItem implements Parcelable{
 
     public void setPhoto(Bitmap photo) {
         mPhoto = photo;
+    }
+
+    public String getUserId() {
+        return mUserId;
+    }
+
+    public void setUserId(String userId) {
+        mUserId = userId;
+    }
+
+    public Bitmap getUserPicture() {
+        return mUserPicture;
+    }
+
+    public void setUserPicture(Bitmap userPicture) {
+        mUserPicture = userPicture;
+    }
+
+    public String getUserName() {
+        return mUserName;
+    }
+
+    public void setUserName(String userName) {
+        mUserName = userName;
     }
 
     /*
@@ -77,6 +113,10 @@ public class FeedItem implements Parcelable{
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(mPhotoId);
         dest.writeValue(mPhoto);
+        dest.writeString(mUserId);
+        dest.writeValue(mUserPicture);
+        dest.writeString(mUserName);
+
         //dest.writeString(mHeader);
         //dest.writeInt(mPhotoCount);
     }

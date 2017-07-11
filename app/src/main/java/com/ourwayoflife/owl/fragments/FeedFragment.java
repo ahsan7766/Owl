@@ -62,6 +62,8 @@ import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.models.CanvasTile;
 import com.ourwayoflife.owl.models.FeedItem;
 import com.ourwayoflife.owl.models.Photo;
+import com.ourwayoflife.owl.models.PhotoComment;
+import com.ourwayoflife.owl.models.User;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -117,6 +119,9 @@ public class FeedFragment extends Fragment
     protected FeedRecyclerAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
     protected ArrayList<FeedItem> mDataset = new ArrayList<>();
+
+
+    private HashMap<String, User> mUserHashMap = new HashMap<>(); // Used so we don't have to repeat querying for user data
 
 
     private OnFragmentInteractionListener mListener;
@@ -497,15 +502,16 @@ public class FeedFragment extends Fragment
             ArrayList<FeedItem> feedItems = new ArrayList<>();
 
 
-            Bitmap bitmap;
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            //options.inSampleSize = 4;
+
             // Convert the photo list to a FeedItem list
             for (Photo photo : result) {
+                Bitmap photoBitmap;
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                //options.inSampleSize = 4;
 
                 //Check if the bitmap is cached
-                bitmap = getBitmapFromMemCache(photo.getPhotoId());
-                if (bitmap == null) {
+                photoBitmap = getBitmapFromMemCache(photo.getPhotoId());
+                if (photoBitmap == null) {
                     //Bitmap is not cached.  Have to download
 
 
@@ -516,21 +522,70 @@ public class FeedFragment extends Fragment
                     }
                     try {
                         byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
-                        bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, options);
+                        photoBitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, options);
 
                         //Add bitmap to the cache
-                        addBitmapToMemoryCache(String.valueOf(photo.getPhotoId()), bitmap);
+                        addBitmapToMemoryCache(String.valueOf(photo.getPhotoId()), photoBitmap);
 
                     } catch (Exception e) {
                         Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
-                        continue;
+                        continue; // Don't add this to the feed
                     }
                 }
 
+
+                final String USER_ID = photo.getUserId();
+                User user;
+
+                // Put all the unique userIds in an array to download all the user's data
+                if(!mUserHashMap.containsKey(USER_ID) || mUserHashMap.get(USER_ID) == null) {
+                    // Make sure we aren't overriding an existing entry just in case their data is already loaded.  We don't want to overwrite it with null
+                    //mUserHashMap.put(USER_ID, null);
+
+                    user = mapper.load(User.class, USER_ID);
+                } else {
+                    // We already have this user loaded
+                    user = mUserHashMap.get(USER_ID);
+                }
+
+
+                if(user == null) {
+                    Log.e(TAG, "Could not load user information");
+                    continue;
+                }
+
+
+                // Get the user's profile picture bitmap
+                //Check if the bitmap is cached
+                Bitmap userBitmap;
+                BitmapFactory.Options optionsUser = new BitmapFactory.Options();
+                //options.inSampleSize = 4;
+                userBitmap = getBitmapFromMemCache("u" + user.getUserId()); // Added a 'u' in front in case there is an overlap between a userId and photoId
+                userPhoto: if (userBitmap == null) {
+                    //Bitmap is not cached.  Have to download
+
+                    // Convert the photo string to a bitmap
+                    String photoString = user.getPhoto();
+                    if (photoString == null || photoString.length() <= 0) {
+                        break userPhoto;
+                    }
+                    try {
+                        byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
+                        userBitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, optionsUser);
+
+                        //Add bitmap to the cache
+                        addBitmapToMemoryCache(String.valueOf("u" + user.getUserId()), userBitmap);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+                        continue; // Don't add this to the feed
+                    }
+                }
+
+
                 //FeedItem feedItem = new FeedItem(photo.getStackId(), bitmap, "Stack Title", 4);
-                FeedItem feedItem = new FeedItem(photo.getPhotoId(), bitmap);
+                FeedItem feedItem = new FeedItem(photo.getPhotoId(), photoBitmap, USER_ID, userBitmap, user.getName());
                 feedItems.add(feedItem);
-            }
+            } // for photo : result
 
             return feedItems;
         }
