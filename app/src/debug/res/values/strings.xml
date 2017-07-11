@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">Owl</string>
+
+    <!--PROD ANDROID CLIENT ID-->
+    <!--
+    <string name="server_client_id">408205420427-dfsl4kti2rmfg17mg904096fkgj2gocq.apps.googleusercontent.com</string>
+    -->
+
+    <!--PROD WEB CLIENT ID-->
+    <!--
+    <string name="server_client_id">408205420427-o39dqm0skueeo1j285lnse4hucm8mt2d.apps.googleusercontent.com</string>
+    -->
+
+    <!--DEBUG ANDROID CLIENT ID-->
+    <!--
+    <string name="server_client_id">677487825807-t73eg352637d3snun8h41malbek9ovf7.apps.googleusercontent.com</string>
+    -->
+
+    <!--DEBUG WEB CLIENT ID-->
+    <string name="server_client_id">677487825807-7pp12g1204d07falb4ul7jnilkhta6m2.apps.googleusercontent.com</string>
+
+
+
+
+    <!-- PROD IDENTITY POOL ID -->
+    <!--
+    <string name="cognito_identity_pool">us-east-1:5ed00e4f-a16c-41cc-9d15-e36f726a1b3c</string>
+    -->
+
+    <!-- DEBUG IDENTITY POOL ID -->
+    <string name="cognito_identity_pool">us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e</string>
+
+
+</resources>

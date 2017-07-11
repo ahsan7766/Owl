@@ -33,7 +33,9 @@ import android.widget.Toast;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
@@ -454,6 +456,7 @@ public class FeedFragment extends Fragment
 
 
             // Query for photos
+            /*
             Photo queryPhoto = new Photo();
             queryPhoto.setUserId(LoginActivity.sUserId);
 
@@ -478,6 +481,16 @@ public class FeedFragment extends Fragment
                     .withScanIndexForward(false);
 
             PaginatedQueryList<Photo> result = mapper.query(Photo.class, queryExpression);
+            */
+
+
+            // Scan for photos
+
+            DynamoDBScanExpression scanExpression = new DynamoDBScanExpression()
+                    .withLimit(10);
+
+            PaginatedScanList<Photo> result = mapper.scan(Photo.class, scanExpression);
+
 
 
             // ArrayList that the feed items will be stored in for the updated dataset
@@ -562,7 +575,6 @@ public class FeedFragment extends Fragment
     }
 
     // Handle an item in the feed being long clicked
-
     @Override
     public boolean onItemLongClick(View view, int position) {
 
