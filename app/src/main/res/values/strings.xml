@@ -7,9 +7,7 @@
     -->
 
     <!--PROD WEB CLIENT ID-->
-    <!--
     <string name="server_client_id">408205420427-o39dqm0skueeo1j285lnse4hucm8mt2d.apps.googleusercontent.com</string>
-    -->
 
     <!--DEBUG ANDROID CLIENT ID-->
     <!--
@@ -17,8 +15,9 @@
     -->
 
     <!--DEBUG WEB CLIENT ID-->
+    <!--
     <string name="server_client_id">677487825807-7pp12g1204d07falb4ul7jnilkhta6m2.apps.googleusercontent.com</string>
-
+    -->
 
 
     <!-- AWS Account ID -->

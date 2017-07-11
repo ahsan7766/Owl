@@ -1,11 +1,13 @@
 package com.ourwayoflife.owl.activities;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.design.widget.TabLayout;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -535,9 +537,9 @@ public class StackActivity extends AppCompatActivity
 
             // If liked, shade the button in
             if(isLiked) {
-                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorAccent));
+                mToggleButtonLike.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorPrimary));
             } else {
-                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorPrimary));
+                mToggleButtonLike.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorPrimary));
             }
 
             // Set up like button
@@ -590,9 +592,9 @@ public class StackActivity extends AppCompatActivity
 
             // If liked, shade the button in
             if(isLiked) {
-                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorAccent));
+                mToggleButtonLike.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
             } else {
-                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorPrimary));
+                mToggleButtonLike.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorPrimary));
             }
 
             // Set up like button
@@ -743,10 +745,10 @@ public class StackActivity extends AppCompatActivity
         protected void onPostExecute(Boolean isLiked) {
             // If liked, shade the button in
             if(isLiked) {
-                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorAccent));
+                mToggleButtonLike.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
                 mIntLikeCount++;
             } else {
-                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorPrimary));
+                mToggleButtonLike.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
                 mIntLikeCount--;
             }
             updateLikeCountUI();
@@ -802,10 +804,10 @@ public class StackActivity extends AppCompatActivity
         protected void onPostExecute(Boolean isLiked) {
             // If liked, shade the button in
             if(isLiked) {
-                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorAccent));
+                mToggleButtonLike.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
                 mIntLikeCount++;
             } else {
-                mToggleButtonLike.setBackgroundColor(getColor(R.color.colorPrimary));
+                mToggleButtonLike.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.colorPrimary));
                 mIntLikeCount--;
             }
             updateLikeCountUI();
