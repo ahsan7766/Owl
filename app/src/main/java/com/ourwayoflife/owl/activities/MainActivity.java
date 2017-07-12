@@ -1,18 +1,25 @@
 package com.ourwayoflife.owl.activities;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.PermissionChecker;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.View;
@@ -95,6 +102,12 @@ public class MainActivity extends AppCompatActivity
 
         // Get user data for the nav header
         new DownloadUserTask().execute();
+
+        // Open a fragment on startup
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.flContent, new FeedFragment());
+        fragmentTransaction.commit();
+        mNavigationView.getMenu().getItem(0).setChecked(true);
     }
 
     /**
@@ -149,6 +162,7 @@ public class MainActivity extends AppCompatActivity
                     .commit();
             */
         } else {
+            /*
             //Clear the backstack
             while (getSupportFragmentManager().getBackStackEntryCount() > 0) {
                 getSupportFragmentManager().popBackStackImmediate();
@@ -159,6 +173,7 @@ public class MainActivity extends AppCompatActivity
             fragmentTransaction.replace(R.id.flContent, new FeedFragment());
             fragmentTransaction.commit();
             mNavigationView.getMenu().getItem(0).setChecked(true);
+            */
 
         }
 
@@ -253,6 +268,13 @@ public class MainActivity extends AppCompatActivity
         }
 
         try {
+
+            // Clear the back stack
+            while (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+                // TODO check to make sure we aren't popping the feed fragment.  It would be nice if we didn't have to re-load the feed all the time
+                getSupportFragmentManager().popBackStackImmediate();
+            }
+
             //Check if the fragment is already in the stack.
             //If it is, then use that instead of making a new instance
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
@@ -310,6 +332,55 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+
+    /*
+    public static void checkPermissionReadExternalStorage(final Activity activity) {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PermissionChecker.PERMISSION_GRANTED) {
+            // The permission is not granted.  Request from the user.
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
+                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                AlertDialog dialog = new AlertDialog.Builder(activity)
+                        .setTitle(activity.getString(R.string.dialog_title_permission_requested))
+                        .setMessage(activity.getString(R.string.permission_rationale_storage))
+                        .setPositiveButton(activity.getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Positive button has same
+                                dialog.dismiss();
+                            }
+                        })
+                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                                // When the dialog is dismissed, request the permission
+                                ActivityCompat.requestPermissions(activity,
+                                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
+                            }
+                        })
+                        .create();
+                dialog.show(); // Show the dialog
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(activity,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
+            }
+
+        }
+    }
+    */
+
+
     private class DownloadUserTask extends AsyncTask<Void, Void, User> {
 
         protected User doInBackground(Void... urls) {
@@ -353,6 +424,11 @@ public class MainActivity extends AppCompatActivity
             // Query for User
             //final String USER_ID = getIntent().getStringExtra("USER_ID");
 
+            // Make sure we have a userId
+            if(LoginActivity.sUserId == null || LoginActivity.sUserId.isEmpty()) {
+                return null;
+            }
+
             return mapper.load(User.class, LoginActivity.sUserId);
         }
 
@@ -369,7 +445,7 @@ public class MainActivity extends AppCompatActivity
 
 
             // If the user is not retrieved, then close the app
-            if (user.getUserId() == null || user.getUserId().isEmpty()) {
+            if (user == null || user.getUserId() == null || user.getUserId().isEmpty()) {
                 //TODO maybe do something better than just showing a toast?
                 Toast.makeText(MainActivity.this, "Unable to retrieve user data", Toast.LENGTH_SHORT).show();
                 finish();

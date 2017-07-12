@@ -3,6 +3,7 @@ package com.ourwayoflife.owl.activities;
 import android.Manifest;
 import android.app.Instrumentation;
 import android.content.ClipData;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -153,7 +154,7 @@ public class UploadActivity extends AppCompatActivity
 
 
         // When the FAB is clicked, upload the photos
-        mFab = (FloatingActionButton) findViewById(R.id.fab);
+        mFab = findViewById(R.id.fab);
         mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -213,7 +214,6 @@ public class UploadActivity extends AppCompatActivity
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             final String STACK_NAME = input.getText().toString();
-
 
                             if (STACK_NAME.isEmpty()) {
                                 Toast.makeText(UploadActivity.this, "Stack name cannot be empty.", Toast.LENGTH_SHORT).show();
@@ -305,6 +305,233 @@ public class UploadActivity extends AppCompatActivity
         checkPermissionReadExternalStorage();
 
     }
+
+
+    /**
+     * Callback for the result from requesting permissions. This method
+     * is invoked for every call on {@link #requestPermissions(String[], int)}.
+     * <p>
+     * <strong>Note:</strong> It is possible that the permissions request interaction
+     * with the user is interrupted. In this case you will receive empty permissions
+     * and results arrays which should be treated as a cancellation.
+     * </p>
+     *
+     * @param requestCode  The request code passed in {@link #requestPermissions(String[], int)}.
+     * @param permissions  The requested permissions. Never null.
+     * @param grantResults The grant results for the corresponding permissions
+     *                     which is either {@link PackageManager#PERMISSION_GRANTED}
+     *                     or {@link PackageManager#PERMISSION_DENIED}. Never null.
+     * @see #requestPermissions(String[], int)
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case MainActivity.PERMISSION_READ_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    //Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+
+                    //Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
+                    // Finish the activity
+                    finish();
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        switch (id) {
+            // This is a hack-ish way to make it so that when the back arrow is pressed
+            // in the action bar, instead of re-starting the main activity and sending the user
+            // back to the default tab, they are sent back to whatever tab they were on last.
+            case android.R.id.home:
+                super.onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
+    @Override
+    public void onItemClick(View view, int position) {
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
+        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
+        switch (requestCode) {
+            case REQUEST_SELECT_PHOTOS:
+                if (resultCode == RESULT_OK) {
+                    Uri selectedImage = imageReturnedIntent.getData();
+                    //String[] filePathColumn = { MediaStore.Images.Media.DATA };
+
+                    if (selectedImage != null) {
+                        // One image was selected
+                        String path = getRealPathFromURI(this, selectedImage);
+                        Bitmap bitmap = generateCroppedBitmap(path);
+                        if (bitmap != null) {
+                            mDatasetPhotos.add(bitmap);
+                        }
+                    } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
+                        // Multiple images selected
+
+                        ClipData clipData = imageReturnedIntent.getClipData();
+
+                        for (int i = 0; i < clipData.getItemCount(); i++) {
+                            ClipData.Item item = clipData.getItemAt(i);
+                            String path = getRealPathFromURI(this, item.getUri());
+                            Bitmap bitmap = generateCroppedBitmap(path);
+                            if (bitmap != null) {
+                                mDatasetPhotos.add(bitmap);
+                            }
+                        }
+                    }
+
+                    mAdapterPhotos.notifyDataSetChanged();
+                }
+                break;
+        }
+    }
+
+    private void checkPermissionReadExternalStorage() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PermissionChecker.PERMISSION_GRANTED) {
+            // The permission is not granted.  Request from the user.
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                AlertDialog dialog = new AlertDialog.Builder(this)
+                        .setTitle(getString(R.string.dialog_title_permission_requested))
+                        .setMessage(getString(R.string.permission_rationale_storage))
+                        .setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Positive button has same
+                                dialog.dismiss();
+                            }
+                        })
+                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                                // When the dialog is dismissed, request the permission
+                                ActivityCompat.requestPermissions(UploadActivity.this,
+                                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
+                            }
+                        })
+                        .create();
+                dialog.show(); // Show the dialog
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
+            }
+
+        }
+    }
+
+    public static String getRealPathFromURI(Context context, Uri uri) {
+        String filePath = "";
+        String wholeID = DocumentsContract.getDocumentId(uri);
+
+        // Split at colon, use second item in the array
+        String id = wholeID.split(":")[1];
+
+        String[] column = {MediaStore.Images.Media.DATA};
+
+        // where id is equal to
+        String sel = MediaStore.Images.Media._ID + "=?";
+
+        Cursor cursor = context.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                column, sel, new String[]{id}, null);
+
+        if(cursor == null) {
+            // There was a problem creating the cursor.  Potentially invalid context
+            Log.e(TAG, "In getRealPathFromURI: Error creating cursor.");
+            return null;
+        }
+
+        int columnIndex = cursor.getColumnIndex(column[0]);
+
+        if (cursor.moveToFirst()) {
+            filePath = cursor.getString(columnIndex);
+        }
+        cursor.close();
+        return filePath;
+    }
+
+    public static Bitmap generateCroppedBitmap(String path) {
+        File imgFile = new File(path);
+
+        if (!imgFile.exists()) {
+            return null;
+        }
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 2;
+        Bitmap srcBmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath(), options);
+        Bitmap dstBmp;
+
+        if (srcBmp.getWidth() >= srcBmp.getHeight()) {
+
+            dstBmp = Bitmap.createBitmap(
+                    srcBmp,
+                    srcBmp.getWidth() / 2 - srcBmp.getHeight() / 2,
+                    0,
+                    srcBmp.getHeight(),
+                    srcBmp.getHeight()
+            );
+
+        } else {
+
+            dstBmp = Bitmap.createBitmap(
+                    srcBmp,
+                    0,
+                    srcBmp.getHeight() / 2 - srcBmp.getWidth() / 2,
+                    srcBmp.getWidth(),
+                    srcBmp.getWidth()
+            );
+        }
+        return dstBmp;
+    }
+
+    /**
+     * Initialize stack dataset
+     * Retrieve the list of the user's stacks
+     */
+    private void initDatasetStacks() {
+        // TODO replace fake data generation with pull form web
+        //mDatasetStack =  new String[] { "Stack Name 1", "Stack Name 2", "Stack Name 3", "Stack Name 4", "Stack Name 5"};
+        new GetStacksTask().execute();
+    }
+
 
 
     private class UploadTask extends AsyncTask<String, Void, Void> {
@@ -496,225 +723,6 @@ public class UploadActivity extends AppCompatActivity
 
 
         }
-    }
-
-    /**
-     * Callback for the result from requesting permissions. This method
-     * is invoked for every call on {@link #requestPermissions(String[], int)}.
-     * <p>
-     * <strong>Note:</strong> It is possible that the permissions request interaction
-     * with the user is interrupted. In this case you will receive empty permissions
-     * and results arrays which should be treated as a cancellation.
-     * </p>
-     *
-     * @param requestCode  The request code passed in {@link #requestPermissions(String[], int)}.
-     * @param permissions  The requested permissions. Never null.
-     * @param grantResults The grant results for the corresponding permissions
-     *                     which is either {@link PackageManager#PERMISSION_GRANTED}
-     *                     or {@link PackageManager#PERMISSION_DENIED}. Never null.
-     * @see #requestPermissions(String[], int)
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
-        switch (requestCode) {
-            case MainActivity.PERMISSION_READ_EXTERNAL_STORAGE: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    //Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
-
-                } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-
-                    //Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
-                    // Finish the activity
-                    finish();
-                }
-                return;
-            }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
-        }
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        switch (id) {
-            // This is a hack-ish way to make it so that when the back arrow is pressed
-            // in the action bar, instead of re-starting the main activity and sending the user
-            // back to the default tab, they are sent back to whatever tab they were on last.
-            case android.R.id.home:
-                super.onBackPressed();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-    }
-
-
-    @Override
-    public void onItemClick(View view, int position) {
-
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
-        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
-        switch (requestCode) {
-            case REQUEST_SELECT_PHOTOS:
-                if (resultCode == RESULT_OK) {
-                    Uri selectedImage = imageReturnedIntent.getData();
-                    //String[] filePathColumn = { MediaStore.Images.Media.DATA };
-
-                    if (selectedImage != null) {
-                        // One image was selected
-                        String path = getRealPathFromURI(selectedImage);
-                        Bitmap bitmap = generateCroppedBitmap(path);
-                        if (bitmap != null) {
-                            mDatasetPhotos.add(bitmap);
-                        }
-                    } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
-                        // Multiple images selected
-
-                        ClipData clipData = imageReturnedIntent.getClipData();
-
-                        for (int i = 0; i < clipData.getItemCount(); i++) {
-                            ClipData.Item item = clipData.getItemAt(i);
-                            String path = getRealPathFromURI(item.getUri());
-                            Bitmap bitmap = generateCroppedBitmap(path);
-                            if (bitmap != null) {
-                                mDatasetPhotos.add(bitmap);
-                            }
-                        }
-                    }
-
-                    mAdapterPhotos.notifyDataSetChanged();
-                }
-                break;
-        }
-    }
-
-    private void checkPermissionReadExternalStorage() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PermissionChecker.PERMISSION_GRANTED) {
-            // The permission is not granted.  Request from the user.
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.READ_EXTERNAL_STORAGE)) {
-
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-                AlertDialog dialog = new AlertDialog.Builder(this)
-                        .setTitle(getString(R.string.dialog_title_permission_requested))
-                        .setMessage(getString(R.string.permission_rationale_storage))
-                        .setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // Positive button has same
-                                dialog.dismiss();
-                            }
-                        })
-                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
-                            @Override
-                            public void onDismiss(DialogInterface dialog) {
-                                // When the dialog is dismissed, request the permission
-                                ActivityCompat.requestPermissions(UploadActivity.this,
-                                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
-                            }
-                        })
-                        .create();
-                dialog.show(); // Show the dialog
-
-            } else {
-
-                // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
-            }
-
-        }
-    }
-
-    public String getRealPathFromURI(Uri uri) {
-        String filePath = "";
-        String wholeID = DocumentsContract.getDocumentId(uri);
-
-        // Split at colon, use second item in the array
-        String id = wholeID.split(":")[1];
-
-        String[] column = {MediaStore.Images.Media.DATA};
-
-        // where id is equal to
-        String sel = MediaStore.Images.Media._ID + "=?";
-
-        Cursor cursor = this.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                column, sel, new String[]{id}, null);
-
-        int columnIndex = cursor.getColumnIndex(column[0]);
-
-        if (cursor.moveToFirst()) {
-            filePath = cursor.getString(columnIndex);
-        }
-        cursor.close();
-        return filePath;
-    }
-
-    private Bitmap generateCroppedBitmap(String path) {
-        File imgFile = new File(path);
-
-        if (!imgFile.exists()) {
-            return null;
-        }
-
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inSampleSize = 2;
-        Bitmap srcBmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath(), options);
-        Bitmap dstBmp;
-
-        if (srcBmp.getWidth() >= srcBmp.getHeight()) {
-
-            dstBmp = Bitmap.createBitmap(
-                    srcBmp,
-                    srcBmp.getWidth() / 2 - srcBmp.getHeight() / 2,
-                    0,
-                    srcBmp.getHeight(),
-                    srcBmp.getHeight()
-            );
-
-        } else {
-
-            dstBmp = Bitmap.createBitmap(
-                    srcBmp,
-                    0,
-                    srcBmp.getHeight() / 2 - srcBmp.getWidth() / 2,
-                    srcBmp.getWidth(),
-                    srcBmp.getWidth()
-            );
-        }
-        return dstBmp;
-    }
-
-    /**
-     * Initialize stack dataset
-     * Retrieve the list of the user's stacks
-     */
-    private void initDatasetStacks() {
-        // TODO replace fake data generation with pull form web
-        //mDatasetStack =  new String[] { "Stack Name 1", "Stack Name 2", "Stack Name 3", "Stack Name 4", "Stack Name 5"};
-        new GetStacksTask().execute();
     }
 
 

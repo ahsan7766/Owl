@@ -1,15 +1,25 @@
 package com.ourwayoflife.owl.fragments;
 
+import android.Manifest;
+import android.app.Activity;
+import android.content.ClipData;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.content.PermissionChecker;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatDialog;
 import android.support.v7.app.AppCompatDialogFragment;
 import android.util.Base64;
@@ -28,17 +38,19 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.LoginActivity;
+import com.ourwayoflife.owl.activities.MainActivity;
 import com.ourwayoflife.owl.activities.StackActivity;
+import com.ourwayoflife.owl.activities.UploadActivity;
 import com.ourwayoflife.owl.models.Following;
+import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.PhotoLike;
+import com.ourwayoflife.owl.models.StackPhoto;
 import com.ourwayoflife.owl.models.User;
 import com.ourwayoflife.owl.views.ProfileCounterView;
 import com.ourwayoflife.owl.views.ProfilePictureView;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
-
-import static com.ourwayoflife.owl.fragments.FeedFragment.addBitmapToMemoryCache;
-import static com.ourwayoflife.owl.fragments.FeedFragment.getBitmapFromMemCache;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -49,13 +61,15 @@ import static com.ourwayoflife.owl.fragments.FeedFragment.getBitmapFromMemCache;
  * create an instance of this fragment.
  */
 public class ProfileFragment extends Fragment implements
-        ProfileEditDialogFragment.ProfileEditDialogListener{
+        ProfileEditDialogFragment.ProfileEditDialogListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "USER_ID";
     private static final String ARG_PARAM2 = "param2";
 
     private static final String TAG = ProfileFragment.class.getName();
+
+    public static final int REQUEST_SELECT_PHOTOS = 100;
 
     // TODO: Rename and change types of parameters
     private String mUserId = LoginActivity.sUserId;
@@ -107,7 +121,6 @@ public class ProfileFragment extends Fragment implements
     }
 
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -120,7 +133,7 @@ public class ProfileFragment extends Fragment implements
         }
 
         // If no userId was found, set it to the signed in user
-        if(mUserId == null || mUserId.isEmpty()) {
+        if (mUserId == null || mUserId.isEmpty()) {
             mUserId = LoginActivity.sUserId;
         }
 
@@ -176,8 +189,23 @@ public class ProfileFragment extends Fragment implements
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // If this user is the logged in user, make the edit/follow button say "Edit"
-        if(mUserId.equals(LoginActivity.sUserId)) {
+        // If this user is the logged in user..
+        if (mUserId.equals(LoginActivity.sUserId)) {
+            // Allow the user to edit profile picture by clicking on the profile picture
+            mProfilePictureView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    // Check for READ_EXTERNAL_STORAGE permission to read photos
+                    // Note: After Research (as of SDK 25) if any permission is changed to denied while in an
+                    // application, and that app is returned to, then the activity that was running is
+                    // automatically restarted.  This means permission checks can be safely placed in the
+                    // onCreate of activities, and do NOT need to checked every time the activity is resumed
+                    checkPermissionReadExternalStorageForEditProfilePicture();
+                }
+            });
+
+
+            // Make the edit/follow button say "Edit"
             mButtonEditFollow.setText(getString(R.string.edit));
             mButtonEditFollow.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -191,7 +219,7 @@ public class ProfileFragment extends Fragment implements
                     mProfileEditDialog.show(getFragmentManager(), "ProfileEditDialogFragment");
                 }
             });
-        }else {
+        } else {
             // Otherwise, check if the user is following this user we are viewing to set the button text to either follow or unfollow
             new CheckFollowingTask().execute();
 
@@ -263,7 +291,7 @@ public class ProfileFragment extends Fragment implements
         // User touched the dialog's positive button
 
         // Make sure we have a valid name
-        if(dialog.getName().length() <= 0) {
+        if (dialog.getName().length() <= 0) {
             Toast.makeText(getContext(), "Name cannot be empty", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -279,6 +307,138 @@ public class ProfileFragment extends Fragment implements
     public void onDialogNegativeClick(ProfileEditDialogFragment dialog) {
         // User touched the dialog's negative button
         // Don't have to update any user info since they canceled
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
+        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
+        switch (requestCode) {
+            case REQUEST_SELECT_PHOTOS:
+                if (resultCode == Activity.RESULT_OK) {
+                    Uri selectedImage = imageReturnedIntent.getData();
+                    //String[] filePathColumn = { MediaStore.Images.Media.DATA };
+
+                    if (selectedImage != null) {
+                        // One image was selected
+                        String path = UploadActivity.getRealPathFromURI(getContext(), selectedImage);
+                        Bitmap bitmap = UploadActivity.generateCroppedBitmap(path);
+                        if (bitmap != null) {
+                            // Run task to upload profile picture
+                            new UpdateProfilePictureTask().execute(bitmap);
+                        }
+                    } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
+                        // Multiple images selected
+                        Toast.makeText(getContext(), "Error: Multiple images were selected", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                break;
+        }
+    }
+
+    private void checkPermissionReadExternalStorageForEditProfilePicture() {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                != PermissionChecker.PERMISSION_GRANTED) {
+            // The permission is not granted.  Request from the user.
+
+            // Should we show an explanation?
+            if (shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                AlertDialog dialog = new AlertDialog.Builder(getActivity())
+                        .setTitle(getString(R.string.dialog_title_permission_requested))
+                        .setMessage(getString(R.string.permission_rationale_storage))
+                        .setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Positive button has same
+                                dialog.dismiss();
+                            }
+                        })
+                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                                // When the dialog is dismissed, request the permission
+                                requestPermissions(
+                                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
+                            }
+                        })
+                        .create();
+                dialog.show(); // Show the dialog
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+                requestPermissions(
+                        new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
+            }
+        } else {
+            // permission is granted
+            // Allow user to select photo(s)
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false);
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(
+                    Intent.createChooser(intent, "Select Picture"),
+                    ProfileFragment.REQUEST_SELECT_PHOTOS);
+        }
+    }
+
+    /**
+     * Callback for the result from requesting permissions. This method
+     * is invoked for every call on {@link #requestPermissions(String[], int)}.
+     * <p>
+     * <strong>Note:</strong> It is possible that the permissions request interaction
+     * with the user is interrupted. In this case you will receive empty permissions
+     * and results arrays which should be treated as a cancellation.
+     * </p>
+     *
+     * @param requestCode  The request code passed in {@link #requestPermissions(String[], int)}.
+     * @param permissions  The requested permissions. Never null.
+     * @param grantResults The grant results for the corresponding permissions
+     *                     which is either {@link PackageManager#PERMISSION_GRANTED}
+     *                     or {@link PackageManager#PERMISSION_DENIED}. Never null.
+     * @see #requestPermissions(String[], int)
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        switch (requestCode) {
+            case MainActivity.PERMISSION_READ_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // storage-related task you need to do.
+
+                    // Allow user to select photo(s)
+                    Intent intent = new Intent();
+                    intent.setType("image/*");
+                    intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false);
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(
+                            Intent.createChooser(intent, "Select Picture"),
+                            ProfileFragment.REQUEST_SELECT_PHOTOS);
+
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    // Don't open the image picker intent
+                    Toast.makeText(getContext(), "Unable to upload new profile picture without storage permissions.", Toast.LENGTH_SHORT).show();
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
 
@@ -331,8 +491,9 @@ public class ProfileFragment extends Fragment implements
             Bitmap userBitmap;
             BitmapFactory.Options optionsUser = new BitmapFactory.Options();
             //options.inSampleSize = 4;
-            userBitmap = getBitmapFromMemCache("u" + mUser.getUserId()); // Added a 'u' in front in case there is an overlap between a userId and photoId
-            userPhoto: if (userBitmap == null) {
+            userBitmap = FeedFragment.getBitmapFromMemCache("u" + mUser.getUserId()); // Added a 'u' in front in case there is an overlap between a userId and photoId
+            userPhoto:
+            if (userBitmap == null) {
                 //Bitmap is not cached.  Have to download
 
                 // Convert the photo string to a bitmap
@@ -345,13 +506,13 @@ public class ProfileFragment extends Fragment implements
                     userBitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, optionsUser);
 
                     //Add bitmap to the cache
-                    addBitmapToMemoryCache(String.valueOf("u" + mUser.getUserId()), userBitmap);
+                    FeedFragment.addBitmapToMemoryCache(String.valueOf("u" + mUser.getUserId()), userBitmap);
                 } catch (Exception e) {
                     Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
-                } finally {
-                    mProfilePictureView.setBitmap(userBitmap);
                 }
             }
+
+            mProfilePictureView.setBitmap(userBitmap);
 
             mTextUserName.setText(mUser.getName());
             mTextUserBio.setText(mUser.getBio());
@@ -537,7 +698,7 @@ public class ProfileFragment extends Fragment implements
 
         protected Void doInBackground(Void... urls) {
             // Double check that the UserId is not null AND that it matches the signed in user
-            if(mUser.getUserId() == null || !mUser.getUserId().equals(LoginActivity.sUserId)){
+            if (mUser.getUserId() == null || !mUser.getUserId().equals(LoginActivity.sUserId)) {
                 cancel(true);
             }
 
@@ -572,4 +733,68 @@ public class ProfileFragment extends Fragment implements
             mTextUserBio.setText(mUser.getBio());
         }
     }
+
+
+    private class UpdateProfilePictureTask extends AsyncTask<Bitmap, Void, Bitmap> {
+
+        protected Bitmap doInBackground(Bitmap... params) {
+
+            Bitmap bitmap = params[0];
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            try {
+                // Convert bitmap to String
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.WEBP, 10, baos);
+                byte[] b = baos.toByteArray();
+                String photoString = Base64.encodeToString(b, Base64.DEFAULT);
+
+                // Insert User to DB
+                // Make sure we have a UserId
+                if (mUser.getUserId() == null) {
+                    return null;
+                }
+                mUser.setPhoto(photoString);
+
+                mapper.save(mUser);
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error on Update Profile Picture: " + e);
+                return null;
+            }
+
+            return bitmap;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Bitmap result) {
+            if (result != null) {
+                // Profile picture was updated
+                mProfilePictureView.setBitmap(result);
+                Toast.makeText(getContext(), "Profile Picture Updated", Toast.LENGTH_SHORT).show();
+            } else {
+                // Profile picture was not updated
+                Toast.makeText(getContext(), "Error while updating Profile Picture", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
 }

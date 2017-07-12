@@ -69,7 +69,7 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
                     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                     intent.setAction(Intent.ACTION_GET_CONTENT);
                     ((Activity) mContext).startActivityForResult(
-                            Intent.createChooser(intent, "Select Picture"),
+                            Intent.createChooser(intent, "Select Picture(s)"),
                             UploadActivity.REQUEST_SELECT_PHOTOS);
                 }
             });

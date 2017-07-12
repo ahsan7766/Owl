@@ -39,7 +39,7 @@ public class FriendsRecyclerAdapter extends RecyclerView.Adapter<FriendsRecycler
         String string = mData[position];
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
         //holder.mFeedCategoryView.setPhotoCount(feedCategory.getPhotoCount());
-        holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
+        holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees); // TODO use the user's profile pic
 
     }
 

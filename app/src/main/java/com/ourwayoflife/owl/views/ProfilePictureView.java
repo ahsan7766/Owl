@@ -12,6 +12,7 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 import com.ourwayoflife.owl.R;
@@ -22,6 +23,7 @@ import com.ourwayoflife.owl.R;
 
 public class ProfilePictureView extends View {
 
+    private static final String TAG = ProfilePictureView.class.getName();
 
     private int mBackgroundPicture;
 
@@ -128,20 +130,27 @@ public class ProfilePictureView extends View {
 
         // Draw profile picture
         // If getBackgroundPicture is -1, then it wasn't set, so don't draw picture
-        if(getBackgroundPicture() != -1) {
+        if(mBitmap != null) {
             //int halfRect =  ((16 * circleRadius) / 9) - 22; // The size of the bitmap profile picture
             int halfRect = circleRadius * 2;
 
             //mBitmap = BitmapFactory.decodeResource(getContext().getResources(), getBackgroundPicture());
 
-            // Crop bitmap to be size of circle
-            mBitmap = getResizedBitmap(mBitmap, halfRect, halfRect);
+            try {
+                // Crop bitmap to be size of circle
+                mBitmap = getResizedBitmap(mBitmap, halfRect, halfRect);
 
-            canvas.drawBitmap(getCroppedBitmap(mBitmap),
-                    (getWidth() / 2) - (mBitmap.getWidth() / 2),
-                    getHeight() / 2 - (mBitmap.getHeight() / 2),
-                    mInnerCirclePaint
-            );
+                canvas.drawBitmap(getCroppedBitmap(mBitmap),
+                        (getWidth() / 2) - (mBitmap.getWidth() / 2),
+                        getHeight() / 2 - (mBitmap.getHeight() / 2),
+                        mInnerCirclePaint
+                );
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading profile picture from bitmap");
+                // TODO set empty profile picture
+            }
+        } else {
+            // TODO set empty profile picture
         }
 
 

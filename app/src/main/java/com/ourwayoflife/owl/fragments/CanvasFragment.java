@@ -148,7 +148,7 @@ public class CanvasFragment extends Fragment {
 
         // Set the profile picture
         mProfilePictureView = (ProfilePictureView) rootView.findViewById(R.id.profile_picture);
-        mProfilePictureView.setBackgroundPicture(R.drawable.trees);
+        mProfilePictureView.setBackgroundPicture(R.drawable.trees); // TODO set this pic to the user's profile pic after downloading it
 
 
         mButtonViewProfile = (Button) rootView.findViewById(R.id.button_view_profile);

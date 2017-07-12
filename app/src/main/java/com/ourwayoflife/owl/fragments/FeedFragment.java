@@ -83,8 +83,8 @@ public class FeedFragment extends Fragment
         implements FeedRecyclerAdapter.ItemClickListener,
         FeedRecyclerAdapter.ItemLongClickListener,
         CanvasOuterRecyclerAdapter.ItemInnerDragListener {
-        //FeedRecyclerAdapter.ItemDragListener,
-        //CanvasInnerRecyclerAdapter.ItemDragListener {
+    //FeedRecyclerAdapter.ItemDragListener,
+    //CanvasInnerRecyclerAdapter.ItemDragListener {
 
 
     // TODO: Rename parameter arguments, choose names that match
@@ -181,7 +181,7 @@ public class FeedFragment extends Fragment
             Log.d("TAG", savedInstanceState.toString());
             mDataset = savedInstanceState.getParcelableArrayList("FEED_ITEMS");
             Log.d("TAG", "Restoring FeedItem Dataset. Dataset Size: " + mDataset.size());
-        }else {
+        } else {
             initDataset();
         }
     }
@@ -358,7 +358,6 @@ public class FeedFragment extends Fragment
             }
         }
 
-
         // Set Feed Data
         new DownloadTask().execute();
     }
@@ -497,10 +496,8 @@ public class FeedFragment extends Fragment
             PaginatedScanList<Photo> result = mapper.scan(Photo.class, scanExpression);
 
 
-
             // ArrayList that the feed items will be stored in for the updated dataset
             ArrayList<FeedItem> feedItems = new ArrayList<>();
-
 
 
             // Convert the photo list to a FeedItem list
@@ -538,7 +535,7 @@ public class FeedFragment extends Fragment
                 User user;
 
                 // Put all the unique userIds in an array to download all the user's data
-                if(!mUserHashMap.containsKey(USER_ID) || mUserHashMap.get(USER_ID) == null) {
+                if (!mUserHashMap.containsKey(USER_ID) || mUserHashMap.get(USER_ID) == null) {
                     // Make sure we aren't overriding an existing entry just in case their data is already loaded.  We don't want to overwrite it with null
                     //mUserHashMap.put(USER_ID, null);
 
@@ -549,7 +546,7 @@ public class FeedFragment extends Fragment
                 }
 
 
-                if(user == null) {
+                if (user == null) {
                     Log.e(TAG, "Could not load user information");
                     continue;
                 }
@@ -561,7 +558,8 @@ public class FeedFragment extends Fragment
                 BitmapFactory.Options optionsUser = new BitmapFactory.Options();
                 //options.inSampleSize = 4;
                 userBitmap = getBitmapFromMemCache("u" + user.getUserId()); // Added a 'u' in front in case there is an overlap between a userId and photoId
-                userPhoto: if (userBitmap == null) {
+                userPhoto:
+                if (userBitmap == null) {
                     //Bitmap is not cached.  Have to download
 
                     // Convert the photo string to a bitmap
@@ -618,7 +616,6 @@ public class FeedFragment extends Fragment
     public static Bitmap getBitmapFromMemCache(String key) {
         return mMemoryCache.get(key);
     }
-
 
 
     // Handle an item in the feed being clicked
