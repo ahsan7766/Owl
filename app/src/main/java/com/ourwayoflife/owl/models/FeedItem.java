@@ -15,6 +15,7 @@ public class FeedItem implements Parcelable{
     private String mUserId;
     private Bitmap mUserPicture;
     private String mUserName;
+    private Boolean mIsLiked;
 
     //private String mHeader;
     //private int mPhotoCount;
@@ -22,13 +23,13 @@ public class FeedItem implements Parcelable{
     public FeedItem() {
     }
 
-    public FeedItem(String photoId, Bitmap photo, String userId, Bitmap userPicture, String userName) { //, String header, int photoCount) {
+    public FeedItem(String photoId, Bitmap photo, String userId, Bitmap userPicture, String userName, Boolean isLiked) { //, String header, int photoCount) {
         mPhotoId = photoId;
         mPhoto = photo;
         mUserId = userId;
         mUserPicture = userPicture;
         mUserName = userName;
-
+        mIsLiked = isLiked;
         //mHeader = header;
         //mPhotoCount = photoCount;
     }
@@ -40,6 +41,7 @@ public class FeedItem implements Parcelable{
         mUserId = in.readString();
         mUserPicture = (Bitmap) in.readValue(Bitmap.class.getClassLoader());
         mUserName = in.readString();
+        mIsLiked = in.readInt() != 0;
 
         //mHeader = in.readString();
         //mPhotoCount = in.readInt();
@@ -85,6 +87,14 @@ public class FeedItem implements Parcelable{
         mUserName = userName;
     }
 
+    public Boolean getLiked() {
+        return mIsLiked;
+    }
+
+    public void setLiked(Boolean liked) {
+        mIsLiked = liked;
+    }
+
     /*
     public String getHeader() {
         return mHeader;
@@ -116,7 +126,7 @@ public class FeedItem implements Parcelable{
         dest.writeString(mUserId);
         dest.writeValue(mUserPicture);
         dest.writeString(mUserName);
-
+        dest.writeInt(mIsLiked ? 1 : 0);
         //dest.writeString(mHeader);
         //dest.writeInt(mPhotoCount);
     }

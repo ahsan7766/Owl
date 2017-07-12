@@ -554,8 +554,11 @@ public class StackActivity extends AppCompatActivity
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    StackActivity.this,
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -600,8 +603,11 @@ public class StackActivity extends AppCompatActivity
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    StackActivity.this,
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -687,8 +693,11 @@ public class StackActivity extends AppCompatActivity
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    StackActivity.this,
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -744,8 +753,11 @@ public class StackActivity extends AppCompatActivity
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    StackActivity.this,
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 

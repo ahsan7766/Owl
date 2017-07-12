@@ -24,6 +24,7 @@ import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -35,6 +36,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.ourwayoflife.owl.R;
+import com.ourwayoflife.owl.activities.LoginActivity;
 import com.ourwayoflife.owl.activities.MainActivity;
 import com.ourwayoflife.owl.activities.StackActivity;
 import com.ourwayoflife.owl.adapters.CanvasOuterRecyclerAdapter;
@@ -42,7 +44,13 @@ import com.ourwayoflife.owl.adapters.FeedRecyclerAdapter;
 import com.ourwayoflife.owl.models.CanvasTile;
 import com.ourwayoflife.owl.models.FeedItem;
 import com.ourwayoflife.owl.models.Photo;
+import com.ourwayoflife.owl.models.PhotoLike;
 import com.ourwayoflife.owl.models.User;
+
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,6 +69,7 @@ import java.util.Map;
 public class FeedFragment extends Fragment
         implements FeedRecyclerAdapter.ItemClickListener,
         FeedRecyclerAdapter.ItemLongClickListener,
+        FeedRecyclerAdapter.ItemCheckedChangeListener,
         CanvasOuterRecyclerAdapter.ItemInnerDragListener {
     //FeedRecyclerAdapter.ItemDragListener,
     //CanvasInnerRecyclerAdapter.ItemDragListener {
@@ -230,6 +239,7 @@ public class FeedFragment extends Fragment
         mAdapter.setClickListener(this);
         mAdapter.setLongClickListener(this);
         //mAdapter.setDragListener(this);
+        mAdapter.setOnCheckedChangeListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerView.setAdapter(mAdapter);
@@ -342,6 +352,89 @@ public class FeedFragment extends Fragment
     }
 
 
+    public static void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (getBitmapFromMemCache(key) == null) {
+            mMemoryCache.put(key, bitmap);
+        }
+    }
+
+    public static Bitmap getBitmapFromMemCache(String key) {
+        return mMemoryCache.get(key);
+    }
+
+
+    // Handle an item in the feed being clicked
+    @Override
+    public void onItemClick(View view, int position) {
+        Intent intent = new Intent(getContext(), StackActivity.class);
+        intent.putExtra("PHOTO_ID", mDataset.get(position).getPhotoId());
+        view.getContext().startActivity(intent);
+    }
+
+    // Handle an item in the feed being long clicked
+    @Override
+    public boolean onItemLongClick(View view, int position) {
+
+        // Vibrate for 500 milliseconds to let the user know they long clicked
+        //Vibrator v = (Vibrator) this.getActivity().getSystemService(Context.VIBRATOR_SERVICE);
+        //v.vibrate(500);
+
+        // Animate the top RecyclerView to expand it and allow dragging
+        mCanvasRecyclerView.setVisibility(View.VISIBLE);
+
+
+        // Show a shadow of the image that is being dragged when it is long clicked
+        ClipData data = ClipData.newPlainText("", "");
+        View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
+        // Can only use new startDragAndDrop function on Nougat and up
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            view.startDragAndDrop(data, shadowBuilder, view, 0);
+        } else {
+            view.startDrag(data, shadowBuilder, view, 0);
+        }
+
+        return true;
+
+    }
+
+
+    // Handle an item from an inner RecyclerView in the canvas being dragged
+    @Override
+    public boolean onItemDrag(View view, DragEvent dragEvent, int row, int column) {
+        switch (dragEvent.getAction()) {
+            case DragEvent.ACTION_DRAG_STARTED:
+                // drag has started, return true to tell that you're listening to the drag
+                //mRecyclerView.setNestedScrollingEnabled(false);
+
+                return true;
+
+            case DragEvent.ACTION_DROP:
+                // the dragged item was dropped into this view
+                //CanvasTile a = mDataset[0][position];
+                //a.setComment("DRAG");
+                //mAdapter.notifyItemChanged(position);
+                //mAdapter.notifyDataSetChanged();
+                Toast.makeText(getActivity(), "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
+                return true;
+
+            case DragEvent.ACTION_DRAG_ENDED:
+                // the drag has ended
+
+                // Hide the top canvas
+                mCanvasRecyclerView.setVisibility(View.GONE);
+                return false;
+        }
+        return false;
+    }
+
+    @Override
+    public void onItemCheckedChange(CompoundButton compoundButton, boolean isChecked, int position) {
+        new PhotoLikeTask().execute(position);
+    }
+
+
+
+
     private class DownloadTask extends AsyncTask<Void, Void, List<FeedItem>> {
 
         protected List<FeedItem> doInBackground(Void... urls) {
@@ -411,7 +504,7 @@ public class FeedFragment extends Fragment
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getActivity(), // Context
+                    getContext(), // Context
                     getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
                     getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
@@ -435,7 +528,6 @@ public class FeedFragment extends Fragment
             } catch (Exception e) {
                 Log.e(TAG, "Error getting Google+ Credentials: " + e);
                 e.printStackTrace();
-                getActivity().finish();
             }
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
@@ -565,8 +657,12 @@ public class FeedFragment extends Fragment
                 }
 
 
+                // Figure out of the user has previously liked the photo
+                PhotoLike photoLike =  mapper.load(PhotoLike.class, photo.getPhotoId(), LoginActivity.sUserId);
+                boolean isLiked = (photoLike != null && photoLike.getLikeDate() != null && !photoLike.getLikeDate().isEmpty()); // If photoLike isn't null, then user currently 'likes' this photo
+
                 //FeedItem feedItem = new FeedItem(photo.getStackId(), bitmap, "Stack Title", 4);
-                FeedItem feedItem = new FeedItem(photo.getPhotoId(), photoBitmap, USER_ID, userBitmap, user.getName());
+                FeedItem feedItem = new FeedItem(photo.getPhotoId(), photoBitmap, USER_ID, userBitmap, user.getName(), isLiked);
                 feedItems.add(feedItem);
             } // for photo : result
 
@@ -592,79 +688,63 @@ public class FeedFragment extends Fragment
     }
 
 
-    public static void addBitmapToMemoryCache(String key, Bitmap bitmap) {
-        if (getBitmapFromMemCache(key) == null) {
-            mMemoryCache.put(key, bitmap);
+
+    private class PhotoLikeTask extends AsyncTask<Integer, Void, Integer> {
+
+        protected Integer doInBackground(Integer... params) {
+            // Get the photo like bool
+            final int position = params[0];
+            final Boolean isLiked = !mDataset.get(position).getLiked(); // Like should be the opposite of whatever it is now
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            PhotoLike photoLike = new PhotoLike();
+            photoLike.setPhotoId(mDataset.get(position).getPhotoId());
+            photoLike.setUserId(LoginActivity.sUserId);
+
+            // We are adding a PhotoLike to the table
+            if(isLiked) {
+                // Get date string
+                DateTime dt = new DateTime(DateTimeZone.UTC);
+                DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                final String dateString = fmt.print(dt);
+                photoLike.setLikeDate(dateString);
+
+                // Save PhotoLike
+                mapper.save(photoLike);
+            } else {
+                // Remove the PhotoLike from the table
+                mapper.delete(photoLike);
+            }
+
+            // Update the position in the dataset
+            mDataset.get(position).setLiked(isLiked);
+
+            return position;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+
+        protected void onPostExecute(Integer position) {
+            // Notify the adapter
+            mAdapter.notifyItemChanged(position);
         }
     }
-
-    public static Bitmap getBitmapFromMemCache(String key) {
-        return mMemoryCache.get(key);
-    }
-
-
-    // Handle an item in the feed being clicked
-    @Override
-    public void onItemClick(View view, int position) {
-        Intent intent = new Intent(getContext(), StackActivity.class);
-        intent.putExtra("PHOTO_ID", mDataset.get(position).getPhotoId());
-        view.getContext().startActivity(intent);
-    }
-
-    // Handle an item in the feed being long clicked
-    @Override
-    public boolean onItemLongClick(View view, int position) {
-
-        // Vibrate for 500 milliseconds to let the user know they long clicked
-        //Vibrator v = (Vibrator) this.getActivity().getSystemService(Context.VIBRATOR_SERVICE);
-        //v.vibrate(500);
-
-        // Animate the top RecyclerView to expand it and allow dragging
-        mCanvasRecyclerView.setVisibility(View.VISIBLE);
-
-
-        // Show a shadow of the image that is being dragged when it is long clicked
-        ClipData data = ClipData.newPlainText("", "");
-        View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
-        // Can only use new startDragAndDrop function on Nougat and up
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            view.startDragAndDrop(data, shadowBuilder, view, 0);
-        } else {
-            view.startDrag(data, shadowBuilder, view, 0);
-        }
-
-        return true;
-
-    }
-
-
-    // Handle an item from an inner RecyclerView in the canvas being dragged
-    @Override
-    public boolean onItemDrag(View view, DragEvent dragEvent, int row, int column) {
-        switch (dragEvent.getAction()) {
-            case DragEvent.ACTION_DRAG_STARTED:
-                // drag has started, return true to tell that you're listening to the drag
-                //mRecyclerView.setNestedScrollingEnabled(false);
-
-                return true;
-
-            case DragEvent.ACTION_DROP:
-                // the dragged item was dropped into this view
-                //CanvasTile a = mDataset[0][position];
-                //a.setComment("DRAG");
-                //mAdapter.notifyItemChanged(position);
-                //mAdapter.notifyDataSetChanged();
-                Toast.makeText(getActivity(), "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
-                return true;
-
-            case DragEvent.ACTION_DRAG_ENDED:
-                // the drag has ended
-
-                // Hide the top canvas
-                mCanvasRecyclerView.setVisibility(View.GONE);
-                return false;
-        }
-        return false;
-    }
-
 }

@@ -651,11 +651,13 @@ public class UploadActivity extends AppCompatActivity
         protected String doInBackground(String... stackName) {
 
             final String STACK_NAME = stackName[0];
-
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getApplicationContext(),
+                    UploadActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -717,11 +719,13 @@ public class UploadActivity extends AppCompatActivity
     private class GetStacksTask extends AsyncTask<Void, Void, List<Stack>> {
 
         protected List<Stack> doInBackground(Void... voids) {
-
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    UploadActivity.this,
+                    UploadActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 

@@ -6,6 +6,7 @@ import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
@@ -27,7 +28,7 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     private ItemClickListener mClickListener;
     private ItemLongClickListener mLongClickListener;
     private ItemDragListener mDragListener;
-
+    private ItemCheckedChangeListener mOnCheckedChangeListener;
 
     // data is passed into the constructor
     public FeedRecyclerAdapter(Context context, ArrayList<FeedItem> data) {
@@ -63,6 +64,7 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
         holder.mImage.setImageBitmap(feedItem.getPhoto());
         holder.mProfilePictureView.setBitmap(feedItem.getUserPicture());
         holder.mTextName.setText(feedItem.getUserName());
+        holder.mToggleButtonLike.setChecked(feedItem.getLiked());
 
         //holder.mFeedItemView.setHeader(feedItem.getHeader());
         //holder.mFeedItemView.setPhotoCount(feedItem.getPhotoCount());
@@ -91,6 +93,14 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
             mProfilePictureView = itemView.findViewById(R.id.profile_picture);
             mTextName = itemView.findViewById(R.id.text_name);
             mToggleButtonLike = itemView.findViewById(R.id.toggle_button_like);
+
+
+            mToggleButtonLike.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                    mOnCheckedChangeListener.onItemCheckedChange(compoundButton, isChecked, getAdapterPosition());
+                }
+            });
 
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);
@@ -133,6 +143,10 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
         this.mDragListener = itemDragListener;
     }
 
+    // allows catching of checking/unchecking the toggle button
+    public void setOnCheckedChangeListener(ItemCheckedChangeListener itemCheckedChangeListener) {
+        this.mOnCheckedChangeListener = itemCheckedChangeListener;
+    }
 
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
@@ -147,5 +161,10 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     // parent activity will implement this method to respond to drags
     public interface ItemDragListener {
         boolean onItemDrag(View view, DragEvent dragEvent, int position);
+    }
+
+    // parent activity will implement this method to respond to drags
+    public interface ItemCheckedChangeListener {
+        void onItemCheckedChange(CompoundButton compoundButton, boolean isChecked, int position);
     }
 }
