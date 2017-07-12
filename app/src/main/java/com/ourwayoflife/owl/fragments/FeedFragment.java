@@ -419,10 +419,12 @@ public class FeedFragment extends Fragment
                     Regions.US_EAST_1 // Region
             );
 
-            GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getActivity());
-            AccountManager am = AccountManager.get(getActivity());
-            Account[] accounts = am.getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
+
             try {
+                GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(getActivity());
+                AccountManager am = AccountManager.get(getActivity());
+                Account[] accounts = am.getAccountsByType(GoogleAuthUtil.GOOGLE_ACCOUNT_TYPE);
+
                 String token = GoogleAuthUtil.getToken(getActivity(), accounts[0].name,
                         "audience:server:client_id:" + getString(R.string.server_client_id));
 
@@ -432,6 +434,8 @@ public class FeedFragment extends Fragment
                 credentialsProvider.setLogins(logins);
             } catch (Exception e) {
                 Log.e(TAG, "Error getting Google+ Credentials: " + e);
+                e.printStackTrace();
+                getActivity().finish();
             }
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
@@ -505,6 +509,7 @@ public class FeedFragment extends Fragment
 
                     } catch (Exception e) {
                         Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+                        e.printStackTrace();
                         continue; // Don't add this to the feed
                     }
                 }
@@ -554,6 +559,7 @@ public class FeedFragment extends Fragment
                         addBitmapToMemoryCache(String.valueOf("u" + user.getUserId()), userBitmap);
                     } catch (Exception e) {
                         Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+                        e.printStackTrace();
                         continue; // Don't add this to the feed
                     }
                 }

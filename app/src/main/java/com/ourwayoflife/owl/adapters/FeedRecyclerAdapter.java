@@ -6,9 +6,9 @@ import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.models.FeedItem;
@@ -82,7 +82,7 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
         public ImageView mImage;
         public ProfilePictureView mProfilePictureView;
         public TextView mTextName;
-        public ImageButton mImageButtonLike;
+        public ToggleButton mToggleButtonLike;
 
         public ViewHolder(View itemView) {
             super(itemView);
@@ -90,7 +90,7 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
             mImage = itemView.findViewById(R.id.image);
             mProfilePictureView = itemView.findViewById(R.id.profile_picture);
             mTextName = itemView.findViewById(R.id.text_name);
-            mImageButtonLike = itemView.findViewById(R.id.image_button_like);
+            mToggleButtonLike = itemView.findViewById(R.id.toggle_button_like);
 
             itemView.setOnClickListener(this);
             itemView.setOnLongClickListener(this);

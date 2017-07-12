@@ -5,6 +5,6 @@
           android:drawable="@android:color/transparent" />
 
     <item android:id="@+id/toggle"
-          android:drawable="@drawable/selector_stack_hoot" />
+          android:drawable="@drawable/selector_like" />
 
 </layer-list>

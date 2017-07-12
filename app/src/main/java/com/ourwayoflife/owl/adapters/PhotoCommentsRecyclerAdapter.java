@@ -60,13 +60,16 @@ public class PhotoCommentsRecyclerAdapter extends RecyclerView.Adapter<PhotoComm
         User user = mUserHashMap.get(photoComment.getUserId());
         if (user != null) {
             String photoString = user.getPhoto();
-            try {
-                byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
-                Bitmap bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
-                holder.mProfilePictureView.setBitmap(bitmap);
-            } catch (Exception e) {
-                Log.e(TAG, "Conversion from String to Bitmap: " + e);
-                // TODO set profile picture to "not found" or something
+            // Only try getting the bitmap is we have a string for the profile picture
+            if (photoString != null && !photoString.isEmpty()) {
+                try {
+                    byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+                    holder.mProfilePictureView.setBitmap(bitmap);
+                } catch (Exception e) {
+                    Log.e(TAG, "Conversion from String to Bitmap: " + e);
+                    // TODO set profile picture to "not found" or something
+                }
             }
 
             holder.mTextName.setText(user.getName());

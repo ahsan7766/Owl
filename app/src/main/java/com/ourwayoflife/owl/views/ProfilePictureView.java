@@ -147,6 +147,8 @@ public class ProfilePictureView extends View {
                 );
             } catch (Exception e) {
                 Log.e(TAG, "Error loading profile picture from bitmap");
+                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
                 // TODO set empty profile picture
             }
         } else {
@@ -223,7 +225,7 @@ public class ProfilePictureView extends View {
         // "RECREATE" THE NEW BITMAP
         Bitmap resizedBitmap = Bitmap.createBitmap(
                 bm, 0, 0, width, height, matrix, false);
-        bm.recycle();
+        //bm.recycle(); // This was causing problems
         return resizedBitmap;
     }
 

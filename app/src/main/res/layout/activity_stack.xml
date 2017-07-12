@@ -38,7 +38,7 @@
         <TextView
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="5"
+            android:layout_weight="4"
             android:gravity="center_vertical"
             android:text="Comments"
             android:textSize="20sp"
@@ -54,12 +54,12 @@
 
         <ToggleButton
             android:id="@+id/button_like"
+            style="@style/toggleButtonLike"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@drawable/selector_stack_hoot_bg"
+            android:layout_weight="2"
+            android:background="@drawable/selector_like_bg"
             android:gravity="center"
-            style="@style/toggleButton"
             android:textOff=""
             android:textOn=""/>
 
@@ -81,8 +81,8 @@
         android:id="@+id/recycler_comments"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/layout_stack_info"
-        android:layout_above="@+id/layout_comment"/>
+        android:layout_above="@+id/layout_comment"
+        android:layout_below="@id/layout_stack_info"/>
 
 
     <LinearLayout
@@ -92,9 +92,9 @@
         android:layout_alignParentBottom="true"
         android:background="@android:color/white"
         android:orientation="horizontal"
-        android:weightSum="10"
+        android:paddingEnd="5dp"
         android:paddingStart="5dp"
-        android:paddingEnd="5dp">
+        android:weightSum="10">
 
         <EditText
             android:id="@+id/edit_text_comment"
