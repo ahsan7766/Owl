@@ -12,8 +12,6 @@ import android.widget.TextView;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.models.Stack;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
 
 /**

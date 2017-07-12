@@ -1,17 +1,16 @@
 package com.ourwayoflife.owl.activities;
 
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
@@ -30,13 +29,12 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExp
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.ourwayoflife.owl.R;
-import com.ourwayoflife.owl.fragments.CanvasFragment;
-import com.ourwayoflife.owl.models.PhotoComment;
 import com.ourwayoflife.owl.adapters.PhotoCommentsRecyclerAdapter;
 import com.ourwayoflife.owl.adapters.StackPhotoPagerAdapter;
-
+import com.ourwayoflife.owl.fragments.CanvasFragment;
 import com.ourwayoflife.owl.fragments.StackPhotoPagerFragment;
 import com.ourwayoflife.owl.models.Photo;
+import com.ourwayoflife.owl.models.PhotoComment;
 import com.ourwayoflife.owl.models.PhotoLike;
 import com.ourwayoflife.owl.models.StackLike;
 import com.ourwayoflife.owl.models.User;

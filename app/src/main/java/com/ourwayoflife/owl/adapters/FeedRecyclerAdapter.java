@@ -1,7 +1,6 @@
 package com.ourwayoflife.owl.adapters;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
 import android.view.DragEvent;
 import android.view.LayoutInflater;
@@ -13,10 +12,7 @@ import android.widget.TextView;
 
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.models.FeedItem;
-import com.ourwayoflife.owl.views.FeedItemView;
 import com.ourwayoflife.owl.views.ProfilePictureView;
-
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 
