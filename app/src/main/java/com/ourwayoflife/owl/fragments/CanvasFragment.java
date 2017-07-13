@@ -1,6 +1,7 @@
 package com.ourwayoflife.owl.fragments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -17,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -26,27 +28,33 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.LoginActivity;
+import com.ourwayoflife.owl.activities.StackActivity;
 import com.ourwayoflife.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.ourwayoflife.owl.models.CanvasTile;
 import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.Stack;
 import com.ourwayoflife.owl.models.StackPhoto;
+import com.ourwayoflife.owl.models.User;
 import com.ourwayoflife.owl.views.ProfilePictureView;
 
 /**
  * Created by Zach on 5/23/17.
  */
 
-public class CanvasFragment extends Fragment {
+public class CanvasFragment extends Fragment
+    implements CanvasOuterRecyclerAdapter.OuterItemClickListener{
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
 
+
     // TODO: Rename and change types of parameters
     private String mUserId = LoginActivity.sUserId; // Default the userId to the logged in user
     private String mParam2;
+
+    private User mUser; // User object that can be used in multiple places
 
     private static final String TAG = CanvasFragment.class.getName();
     public static final int COLUMN_COUNT = 7; // number of columns of pictures in the grid
@@ -127,7 +135,7 @@ public class CanvasFragment extends Fragment {
 
         // set up the RecyclerView
         mAdapter = new CanvasOuterRecyclerAdapter(getActivity(), mDataset);
-        //mAdapter.setClickListener(this);
+        mAdapter.setInnerClickListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerView.setAdapter(mAdapter);
@@ -140,7 +148,6 @@ public class CanvasFragment extends Fragment {
 
         // Set the profile picture
         mProfilePictureView = (ProfilePictureView) rootView.findViewById(R.id.profile_picture);
-        mProfilePictureView.setBackgroundPicture(R.drawable.trees); // TODO set this pic to the user's profile pic after downloading it
 
 
         mButtonViewProfile = (Button) rootView.findViewById(R.id.button_view_profile);
@@ -186,6 +193,10 @@ public class CanvasFragment extends Fragment {
         */
 
         //return inflater.inflate(R.layout.fragment_feed, container, false);
+
+
+        new DownloadUserTask().execute();
+
         return rootView;
 
     }
@@ -273,6 +284,29 @@ public class CanvasFragment extends Fragment {
     */
 
 
+    // Handles clicks from in the canvas
+    @Override
+    public void onOuterItemClick(View view, int row, int column) {
+        Toast.makeText(getContext(), "CANVAS ITEM CLICKED: Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
+
+        CanvasTile canvasTile = mDataset[row][column];
+        if(canvasTile == null) {
+            // Don't start stack activity if we don't have a canvasTile in the position that was clicked
+            return;
+        }
+
+        final String STACK_ID = mDataset[row][column].getStackId();
+        if(STACK_ID == null || STACK_ID.isEmpty()) {
+            // Don't start stack activity if we don't have a stackId to pass it
+            return;
+        }
+
+        // Send the user to the StackActivity for the stack the just clicked on
+        Intent intent = new Intent(view.getContext(), StackActivity.class);
+        intent.putExtra("STACK_ID", STACK_ID);
+        view.getContext().startActivity(intent);
+    }
+
 
     private class GetStacksTask extends AsyncTask<Void, Void, Integer> {
 
@@ -309,7 +343,7 @@ public class CanvasFragment extends Fragment {
 
 
             // Now that we have the list of stacks, get the first picture of each stack to set the canvas tiles
-            mDataset = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
+            //mDataset = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
 
             if(stackList == null) {
                 // Stack list was not found.  Don't try inflating the canvas tiles
@@ -357,7 +391,6 @@ public class CanvasFragment extends Fragment {
             }
         }
     }
-
 
 
     private class DownloadStackCoverPhotoTask extends AsyncTask<Integer, Void, Void> {
@@ -502,9 +535,86 @@ public class CanvasFragment extends Fragment {
 
             // Clear dataset, add new items, then notify
             mAdapter.notifyDataSetChanged();
-            mAdapter.notifyInnerDatasetRowsChanged();
+            //mAdapter.notifyInnerDatasetRowsChanged();
         }
     }
 
+
+    private class DownloadUserTask extends AsyncTask<Void, Void, User> {
+
+        protected User doInBackground(Void... urls) {
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Load user
+            return mapper.load(User.class, mUserId);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(User user) {
+            // TODO: check this.exception
+            // TODO: do something with the feed
+            // Clear dataset, add new items, then notify
+
+
+            // If the user is not retrieved, then close the fragment
+            if (user == null || user.getUserId() == null || user.getUserId().isEmpty()) {
+                Toast.makeText(getActivity(), "Unable to retrieve user data", Toast.LENGTH_SHORT).show();
+                // End fragment by popping itself from the stack
+                getActivity().getSupportFragmentManager().beginTransaction().remove(CanvasFragment.this).commit();
+                return;
+            }
+
+            // Set the class' user variable
+            mUser = user;
+
+            // Update the UI to whatever the user's data is
+            // Get the user's profile picture bitmap
+            //Check if the bitmap is cached
+            Bitmap userBitmap;
+            BitmapFactory.Options optionsUser = new BitmapFactory.Options();
+            //options.inSampleSize = 4;
+            userBitmap = FeedFragment.getBitmapFromMemCache("u" + mUser.getUserId()); // Added a 'u' in front in case there is an overlap between a userId and photoId
+            userPhoto:
+            if (userBitmap == null) {
+                //Bitmap is not cached.  Have to download
+
+                // Convert the photo string to a bitmap
+                String photoString = mUser.getPhoto();
+                if (photoString == null || photoString.length() <= 0) {
+                    break userPhoto;
+                }
+                try {
+                    byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
+                    userBitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, optionsUser);
+
+                    //Add bitmap to the cache
+                    FeedFragment.addBitmapToMemoryCache(String.valueOf("u" + mUser.getUserId()), userBitmap);
+                } catch (Exception e) {
+                    Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+                }
+            }
+
+            mProfilePictureView.setBitmap(userBitmap);
+
+            //mTextUserName.setText(mUser.getName());
+
+        }
+    }
 
 }

@@ -19,7 +19,7 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
 
     private CanvasTile[] mData = new CanvasTile[0];
     private LayoutInflater mInflater;
-    private CanvasInnerRecyclerAdapter.ItemClickListener mClickListener;
+    private CanvasInnerRecyclerAdapter.InnerItemClickListener mInnerItemClickListener;
     private CanvasInnerRecyclerAdapter.ItemDragListener mDragListener;
     private int mRow;
 
@@ -308,7 +308,7 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
 
         @Override
         public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+            if (mInnerItemClickListener != null) mInnerItemClickListener.onInnerItemClick(view, getAdapterPosition());
         }
 
         @Override
@@ -325,8 +325,8 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
 
 
     // allows click events to be caught
-    public void setClickListener(CanvasInnerRecyclerAdapter.ItemClickListener itemClickListener) {
-        this.mClickListener = itemClickListener;
+    public void setInnerClickListener(CanvasInnerRecyclerAdapter.InnerItemClickListener innerItemClickListener) {
+        this.mInnerItemClickListener = innerItemClickListener;
     }
 
     // allows drag events to be caught
@@ -335,8 +335,8 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     }
 
     // parent activity will implement this method to respond to click events
-    public interface ItemClickListener {
-        void onItemClick(View view, int position);
+    public interface InnerItemClickListener {
+        void onInnerItemClick(View view, int column);
     }
 
     // parent activity will implement this method to respond to drags

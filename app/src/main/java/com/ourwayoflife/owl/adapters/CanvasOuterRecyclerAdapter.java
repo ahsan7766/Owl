@@ -21,7 +21,7 @@ import com.ourwayoflife.owl.models.CanvasTile;
  */
 
 public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuterRecyclerAdapter.ViewHolder>
-        implements CanvasInnerRecyclerAdapter.ItemClickListener,
+        implements CanvasInnerRecyclerAdapter.InnerItemClickListener,
         CanvasInnerRecyclerAdapter.ItemDragListener {
 
 
@@ -35,11 +35,11 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     private RecyclerView mInnerRecyclerView;
     protected CanvasInnerRecyclerAdapter mAdapterInner;
     protected CanvasTile[] mDatasetInner;
-    private CanvasInnerLinearLayoutManager mLayoutManager;
+    private LinearLayoutManager mLayoutManager;
 
     private CanvasTile[][] mDataset = new CanvasTile[0][0];
     private LayoutInflater mInflater;
-    //private CanvasOuterRecyclerAdapter.ItemClickListener mClickListener;
+    private CanvasOuterRecyclerAdapter.OuterItemClickListener mOuterItemClickListener;
     private CanvasOuterRecyclerAdapter.ItemInnerDragListener mInnerDragListener;
 
 
@@ -70,8 +70,8 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
-        //mLayoutManager = new LinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
-        mLayoutManager = new CanvasInnerLinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
+        mLayoutManager = new LinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
+        //mLayoutManager = new CanvasInnerLinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
 
         // set up the RecyclerView
         mInnerRecyclerView.setLayoutManager(mLayoutManager);
@@ -82,8 +82,9 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         rowCount++; // iterate the row count so when (if) the next ViewHolder row is created it takes the next data row
 
-        mAdapterInner.setClickListener(this);
+        mAdapterInner.setInnerClickListener(this);
         mAdapterInner.setDragListener(this);
+
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mInnerRecyclerView.setAdapter(mAdapterInner);
@@ -100,6 +101,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     public void onBindViewHolder(CanvasOuterRecyclerAdapter.ViewHolder holder, int position) {
         mDatasetInner = mDataset[position];
         mAdapterInner.notifyDataSetChanged();
+
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
         //holder.mFeedCategoryView.setPhotoCount(feedCategory.getPhotoCount());
 
@@ -117,12 +119,19 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     }
 
     // stores and recycles views as they are scrolled off screen
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder
+        implements  CanvasInnerRecyclerAdapter.InnerItemClickListener{
         public RecyclerView mRecycler;
 
         public ViewHolder(View itemView) {
             super(itemView);
             mRecycler = itemView.findViewById(R.id.recycler_canvas_inner);
+
+        }
+
+        @Override
+        public void onInnerItemClick(View view, int column) {
+            if (mOuterItemClickListener != null) mOuterItemClickListener.onOuterItemClick(view, getAdapterPosition(), column);
         }
     }
 
@@ -144,21 +153,37 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     */
 
 
+    // parent activity will implement this method to respond to drag events
+    public void setInnerClickListener (CanvasOuterRecyclerAdapter.OuterItemClickListener outerItemClickListener) {
+        this.mOuterItemClickListener = outerItemClickListener;
+    }
 
-    // parent activity will implement this method to respond to click events
+    // parent activity will implement this method to respond to drag events
     public void setInnerDragListener (CanvasOuterRecyclerAdapter.ItemInnerDragListener itemInnerDragListener) {
         this.mInnerDragListener = itemInnerDragListener;
     }
 
     // parent activity will implement this method to respond to click events
+    public interface OuterItemClickListener {
+        void onOuterItemClick(View view, int row, int column);
+    }
+
+
+    // parent activity will implement this method to respond to drag events
     public interface ItemInnerDragListener {
         boolean onItemDrag(View view, DragEvent dragEvent, int row, int column);
     }
 
 
-    @Override
-    public void onItemClick(View view, int position) {
 
+
+
+
+
+    @Override
+    public void onInnerItemClick(View view, int column) {
+
+        /*
         final String STACK_ID = mDatasetInner[position].getStackId();
         if(STACK_ID == null || STACK_ID.isEmpty()) {
             // Don't start stack activity if we don't have a stackId to pass it
@@ -168,7 +193,12 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         Intent intent = new Intent(view.getContext(), StackActivity.class);
         intent.putExtra("STACK_ID", STACK_ID);
         view.getContext().startActivity(intent);
+        */
+        if (mOuterItemClickListener != null) mOuterItemClickListener.onOuterItemClick(view, 0, column);
+
     }
+
+
 
 
 
@@ -221,7 +251,6 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
             if(mDataset[i] != null) {
                 //mAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mDataset[i], i);
                 //mAdapterInner.notifyDataSetChanged();
-
 
             }
         }

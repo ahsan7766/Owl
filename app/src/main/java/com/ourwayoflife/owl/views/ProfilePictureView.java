@@ -97,15 +97,7 @@ public class ProfilePictureView extends View {
         invalidate();
     }
 
-    public int getBackgroundPicture() {
-        return mBackgroundPicture;
-    }
 
-    public void setBackgroundPicture(int backgroundPicture) {
-        mBackgroundPicture = backgroundPicture;
-        mBitmap = BitmapFactory.decodeResource(getContext().getResources(), getBackgroundPicture());
-        invalidate();
-    }
 
 
     @Override
@@ -129,7 +121,6 @@ public class ProfilePictureView extends View {
 
 
         // Draw profile picture
-        // If getBackgroundPicture is -1, then it wasn't set, so don't draw picture
         if(mBitmap != null) {
             //int halfRect =  ((16 * circleRadius) / 9) - 22; // The size of the bitmap profile picture
             int halfRect = circleRadius * 2;
@@ -191,9 +182,6 @@ public class ProfilePictureView extends View {
 
 
     private void init() {
-
-
-        mBitmap = BitmapFactory.decodeResource(getContext().getResources(), getBackgroundPicture());
 
 
         mOuterCirclePaint = new Paint(Paint.ANTI_ALIAS_FLAG);

@@ -37,6 +37,7 @@ import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.PhotoComment;
 import com.ourwayoflife.owl.models.PhotoLike;
 import com.ourwayoflife.owl.models.StackLike;
+import com.ourwayoflife.owl.models.StackPhoto;
 import com.ourwayoflife.owl.models.User;
 
 import org.joda.time.DateTime;
@@ -109,20 +110,22 @@ public class StackActivity extends AppCompatActivity
             new CheckPhotoLikeCountTask().execute();
 
             // Download photo
-            new DownloadPhotoTask().execute(photoId);
+            new DownloadPhotoTask().execute();
 
             // Get the comments for the photo
-            new DownloadPhotoCommentsTask().execute(photoId);
+            new DownloadPhotoCommentsTask().execute();
 
         } else if (stackId != null && stackId.length() > 0) {
             // Stack mode
 
             // Check if photo was previously liked
-            // TODO instead of this, just pass a boolean to this activity that says if the stack
+            // TODO instead of this, (if easier) just pass a boolean to this activity that says if the stack
             // was already liked.  If that bool extra is missing, then run this AsyncTask
             new CheckStackLikeTask().execute();
 
             new CheckStackLikeCountTask().execute();
+
+            new DownloadStackPhotosTask().execute();
 
             //finish();
         } else {
@@ -289,15 +292,18 @@ public class StackActivity extends AppCompatActivity
         mTextLikeCount.setText(NumberFormat.getInstance().format(mIntLikeCount));
     }
 
-    private class DownloadPhotoTask extends AsyncTask<String, Void, Void> {
+    private class DownloadPhotoTask extends AsyncTask<Void, Void, Void> {
 
-        protected Void doInBackground(String... params) {
+        protected Void doInBackground(Void... params) {
             // Get the photo
-            final String PHOTO_ID = params[0];
+
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    StackActivity.this,
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -306,7 +312,7 @@ public class StackActivity extends AppCompatActivity
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
             // Query for photos
-            Photo result = mapper.load(Photo.class, PHOTO_ID);
+            Photo result = mapper.load(Photo.class, photoId);
 
             if (result == null || result.getPhotoId().isEmpty()) {
                 Log.e(TAG, "Error: Unable to retrieve photo.");
@@ -344,15 +350,103 @@ public class StackActivity extends AppCompatActivity
     }
 
 
-    private class DownloadPhotoCommentsTask extends AsyncTask<String, Void, List<PhotoComment>> {
+    private class DownloadStackPhotosTask extends AsyncTask<Void, Void, Boolean> {
 
-        protected List<PhotoComment> doInBackground(String... params) {
-            // Get the photo
-            final String photoId = params[0];
+        protected Boolean doInBackground(Void... params) {
+
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    StackActivity.this,
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Get the StackPhotos
+            StackPhoto queryStackPhoto = new StackPhoto();
+            queryStackPhoto.setStackId(stackId);
+
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    .withHashKeyValues(queryStackPhoto)
+                    .withConsistentRead(false);
+
+            List<StackPhoto> stackPhotoList = mapper.query(StackPhoto.class, queryExpression);
+
+            if(stackPhotoList == null) {
+                return false;
+            }
+
+            mDatasetPhotos.clear(); // Clear dataset in case it isn't already for some reason
+
+            // Query for photos
+            for(StackPhoto stackPhoto : stackPhotoList) {
+
+                // Make sure we have a photoId
+                if(stackPhoto.getPhotoId() == null || stackPhoto.getPhotoId().isEmpty()) {
+                    continue;
+                }
+
+                Photo photo = mapper.load(Photo.class, stackPhoto.getPhotoId());
+
+                if (photo == null || photo.getPhotoId().isEmpty()) {
+                    Log.e(TAG, "Error: Unable to retrieve photo.");
+                    continue; // TODO notify user
+                }
+
+                // Convert photo string to bitmap
+                String photoString = photo.getPhoto();
+                try {
+                    byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
+                    mDatasetPhotos.add(bitmap);
+                } catch (Exception e) {
+                    Log.e(TAG, "Conversion from String to Bitmap: " + e);
+                    continue; // TODO notify user
+                }
+
+            }
+
+            return true;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Boolean result) {
+            // TODO: check this.exception
+            // TODO: do something with the feed
+
+            if(!result){
+                // No photo likes found or error occured
+                return;
+            }
+
+            mPagerAdapter.notifyDataSetChanged();
+        }
+
+    }
+
+
+    private class DownloadPhotoCommentsTask extends AsyncTask<Void, Void, List<PhotoComment>> {
+
+        protected List<PhotoComment> doInBackground(Void... params) {
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -430,8 +524,11 @@ public class StackActivity extends AppCompatActivity
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    StackActivity.this,
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -455,11 +552,13 @@ public class StackActivity extends AppCompatActivity
             // Get the photo
             PhotoComment photoComment = params[0];
 
-
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    StackActivity.this,
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -507,8 +606,11 @@ public class StackActivity extends AppCompatActivity
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    StackActivity.this,
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 

@@ -37,9 +37,8 @@ public class FriendsRecyclerAdapter extends RecyclerView.Adapter<FriendsRecycler
     @Override
     public void onBindViewHolder(FriendsRecyclerAdapter.ViewHolder holder, int position) {
         String string = mData[position];
-        //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
-        //holder.mFeedCategoryView.setPhotoCount(feedCategory.getPhotoCount());
-        holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees); // TODO use the user's profile pic
+
+        //holder.mProfilePictureView.setBitmap(mData...); //TODO Get user's profile picture
 
     }
 

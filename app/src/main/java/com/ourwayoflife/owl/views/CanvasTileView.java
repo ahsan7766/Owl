@@ -147,12 +147,7 @@ public class CanvasTileView extends View {
         // Draw border around entire canvas for testing purposes
         //canvas.drawRect(0,0,getWidth(),getHeight(),mOutlinePaint);
 
-        // Draw background image
-        /*
-        Drawable drawable = ContextCompat.getDrawable(getContext(), R.drawable.dickbutt);
-        drawable.setBounds(mOutlineRect);
-        drawable.draw(canvas);
-        */
+
 
         if(getPhoto() != null) {
             canvas.drawBitmap(getPhoto(), null, mOutlineRect, mOutlinePaint);
