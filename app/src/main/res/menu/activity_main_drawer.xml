@@ -13,6 +13,11 @@
             android:title="Profile" />
 
         <item
+            android:id="@+id/nav_messages"
+            android:icon="@drawable/ic_message"
+            android:title="Messages" />
+
+        <item
             android:id="@+id/nav_canvas"
             android:icon="@drawable/ic_grid_on"
             android:title="My Canvas" />

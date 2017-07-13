@@ -234,6 +234,10 @@ public class MainActivity extends AppCompatActivity
             case R.id.nav_profile:
                 fragmentClass = ProfileFragment.class;
                 break;
+            case R.id.nav_messages:
+                return true;
+                //fragmentClass = MessagesFragment.class;
+                //break;
             case R.id.nav_canvas:
                 fragmentClass = CanvasFragment.class;
                 break;
