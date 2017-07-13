@@ -44,9 +44,14 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     public void onBindViewHolder(CanvasInnerRecyclerAdapter.ViewHolder holder, int position) {
         CanvasTile canvasTile = mData[position];
 
-        holder.mCanvasTile.setName(canvasTile.getName());
-        holder.mCanvasTile.setName("TEST");
-        holder.mCanvasTile.setPhoto(canvasTile.getPhoto());
+        if(canvasTile == null ) {
+            // Set it to whatever we want an empty tile to look like
+
+        } else {
+            holder.mCanvasTile.setName(canvasTile.getName());
+            holder.mCanvasTile.setPhoto(canvasTile.getPhoto());
+        }
+
 
 
         // Set sample images
@@ -283,7 +288,8 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     // total number of cells
     @Override
     public int getItemCount() {
-        return mData.length;
+        // If the dataset is null, return 0 for item count to avoid NullPointerException
+        return mData == null ? 0 : mData.length;
     }
 
 

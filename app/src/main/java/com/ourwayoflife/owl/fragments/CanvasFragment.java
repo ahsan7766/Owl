@@ -59,7 +59,7 @@ public class CanvasFragment extends Fragment {
     protected RecyclerView mRecyclerView;
     protected CanvasOuterRecyclerAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
-    protected CanvasTile[][] mDataset;
+    protected CanvasTile[][] mDataset = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
 
 
     private OnFragmentInteractionListener mListener;
@@ -119,24 +119,24 @@ public class CanvasFragment extends Fragment {
 
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_canvas_outer);
 
-        mRecyclerView.setHasFixedSize(true);
+        //mRecyclerView.setHasFixedSize(true); //TODO see if this works
         mRecyclerView.setItemViewCacheSize(20);
         mRecyclerView.setDrawingCacheEnabled(true);
         mRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
 
-        // LinearLayoutManager is used here, this will layout the elements in a similar fashion
-        // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
-        // elements are laid out.
-        mLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
 
         // set up the RecyclerView
-        mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new CanvasOuterRecyclerAdapter(getActivity(), mDataset);
         //mAdapter.setClickListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerView.setAdapter(mAdapter);
 
+        // LinearLayoutManager is used here, this will layout the elements in a similar fashion
+        // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
+        // elements are laid out.
+        mLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
+        mRecyclerView.setLayoutManager(mLayoutManager);
 
         // Set the profile picture
         mProfilePictureView = (ProfilePictureView) rootView.findViewById(R.id.profile_picture);
@@ -502,7 +502,7 @@ public class CanvasFragment extends Fragment {
 
             // Clear dataset, add new items, then notify
             mAdapter.notifyDataSetChanged();
-            //mAdapter.notifyInnerDatasetRowsChanged(ROW_COUNT);
+            mAdapter.notifyInnerDatasetRowsChanged();
         }
     }
 

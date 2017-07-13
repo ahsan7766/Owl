@@ -423,7 +423,13 @@ public class MainActivity extends AppCompatActivity
                 return null;
             }
 
-            return mapper.load(User.class, LoginActivity.sUserId);
+            try {
+                return mapper.load(User.class, LoginActivity.sUserId);
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading user data: " + e);
+                e.printStackTrace();
+                return null; //Return null so we know this failed
+            }
         }
 
         @Override

@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.StackActivity;
+import com.ourwayoflife.owl.fragments.CanvasFragment;
+import com.ourwayoflife.owl.managers.CanvasInnerLinearLayoutManager;
 import com.ourwayoflife.owl.models.CanvasTile;
 
 /**
@@ -33,7 +35,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     private RecyclerView mInnerRecyclerView;
     protected CanvasInnerRecyclerAdapter mAdapterInner;
     protected CanvasTile[] mDatasetInner;
-    private RecyclerView.LayoutManager mLayoutManager;
+    private CanvasInnerLinearLayoutManager mLayoutManager;
 
     private CanvasTile[][] mDataset = new CanvasTile[0][0];
     private LayoutInflater mInflater;
@@ -58,7 +60,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         mInnerRecyclerView = (RecyclerView) view.findViewById(R.id.recycler_canvas_inner);
 
 
-        mInnerRecyclerView.setHasFixedSize(true);
+        //mInnerRecyclerView.setHasFixedSize(true);  //TODO see if this works
         mInnerRecyclerView.setItemViewCacheSize(20);
         mInnerRecyclerView.setDrawingCacheEnabled(true);
         mInnerRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
@@ -68,12 +70,13 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
-        mLayoutManager = new LinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
+        //mLayoutManager = new LinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
+        mLayoutManager = new CanvasInnerLinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
 
         // set up the RecyclerView
         mInnerRecyclerView.setLayoutManager(mLayoutManager);
 
-        mDatasetInner = mDataset[rowCount];
+        mDatasetInner = new CanvasTile[CanvasFragment.COLUMN_COUNT];
         mAdapterInner = new CanvasInnerRecyclerAdapter(parent.getContext(), mDatasetInner, rowCount);
 
 
@@ -96,6 +99,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     @Override
     public void onBindViewHolder(CanvasOuterRecyclerAdapter.ViewHolder holder, int position) {
         mDatasetInner = mDataset[position];
+        mAdapterInner.notifyDataSetChanged();
         //holder.mFeedCategoryView.setHeader(feedCategory.getHeader());
         //holder.mFeedCategoryView.setPhotoCount(feedCategory.getPhotoCount());
 
@@ -109,7 +113,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     @Override
     public int getItemCount() {
         // If the dataset is null, return 0 for item count to avoid NullPointerException
-        return mDataset == null ? 0 : mDataset.length;
+        return mDataset == null ? 0 : mDataset.length ;
     }
 
     // stores and recycles views as they are scrolled off screen
@@ -154,7 +158,15 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
     @Override
     public void onItemClick(View view, int position) {
+
+        final String STACK_ID = mDatasetInner[position].getStackId();
+        if(STACK_ID == null || STACK_ID.isEmpty()) {
+            // Don't start stack activity if we don't have a stackId to pass it
+            return;
+        }
+
         Intent intent = new Intent(view.getContext(), StackActivity.class);
+        intent.putExtra("STACK_ID", STACK_ID);
         view.getContext().startActivity(intent);
     }
 
@@ -203,12 +215,14 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
 
 
-    public void notifyInnerDatasetRowsChanged(int rows){
+    public void notifyInnerDatasetRowsChanged() {
 
-        for(int i = 0; i < rows; i++) {
+        for(int i = 0; i < CanvasFragment.ROW_COUNT; i++) {
             if(mDataset[i] != null) {
-                mAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mDataset[i], i);
-                mAdapterInner.notifyDataSetChanged();
+                //mAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mDataset[i], i);
+                //mAdapterInner.notifyDataSetChanged();
+
+
             }
         }
     }

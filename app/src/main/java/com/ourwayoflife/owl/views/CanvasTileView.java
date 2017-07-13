@@ -110,7 +110,7 @@ public class CanvasTileView extends View {
     }
 
     private String getName() {
-        return mName;
+        return mName == null ?  "" : mName;
     }
 
     public void setName(String headerString) {
@@ -154,7 +154,10 @@ public class CanvasTileView extends View {
         drawable.draw(canvas);
         */
 
-        canvas.drawBitmap(getPhoto(), null, mOutlineRect, mOutlinePaint);
+        if(getPhoto() != null) {
+            canvas.drawBitmap(getPhoto(), null, mOutlineRect, mOutlinePaint);
+        }
+
 
         // Temp outline of border
         canvas.drawRect(
@@ -165,13 +168,15 @@ public class CanvasTileView extends View {
 
 
         // Name text
-        mNameTextPaint.getTextBounds(mName, 0, mName.length(), mNameTextBounds);
+        mNameTextPaint.getTextBounds(getName(), 0, getName().length(), mNameTextBounds);
         canvas.drawText(
                 getName(),
                 (getWidth() / 2), //- mNameTextBounds.exactCenterX(),
                 ((getHeight() / 8) * 3), // - mNameTextBounds.exactCenterY(),
                 mNameTextPaint
         );
+
+
 
         /*
         // Sub-header text
