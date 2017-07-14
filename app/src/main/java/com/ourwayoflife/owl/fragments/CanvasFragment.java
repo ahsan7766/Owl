@@ -133,6 +133,7 @@ public class CanvasFragment extends Fragment
         mRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
 
 
+
         // set up the RecyclerView
         mAdapter = new CanvasOuterRecyclerAdapter(getActivity(), mDataset);
         mAdapter.setInnerClickListener(this);
@@ -145,6 +146,7 @@ public class CanvasFragment extends Fragment
         // elements are laid out.
         mLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(mLayoutManager);
+
 
         // Set the profile picture
         mProfilePictureView = (ProfilePictureView) rootView.findViewById(R.id.profile_picture);
@@ -303,6 +305,7 @@ public class CanvasFragment extends Fragment
 
         // Send the user to the StackActivity for the stack the just clicked on
         Intent intent = new Intent(view.getContext(), StackActivity.class);
+        intent.putExtra("USER_ID", mUserId);
         intent.putExtra("STACK_ID", STACK_ID);
         view.getContext().startActivity(intent);
     }
@@ -398,8 +401,6 @@ public class CanvasFragment extends Fragment
         protected Void doInBackground(Integer... params) {
 
             int numOfStacks = params[0];
-
-
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(

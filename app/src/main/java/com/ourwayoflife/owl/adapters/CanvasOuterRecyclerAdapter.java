@@ -28,7 +28,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     private static final String TAG = CanvasOuterRecyclerAdapter.class.getName();
 
     //private static final int ROW_COUNT = 7;
-    private int rowCount = 0; //iterator
+    private int rowCount = -1; //iterator // TODO  you would THINK this should start at 0, but for some reason -1 works.  Don't have time to look into it.
 
     private Context mContext;
 
@@ -79,9 +79,6 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         mDatasetInner = new CanvasTile[CanvasFragment.COLUMN_COUNT];
         mAdapterInner = new CanvasInnerRecyclerAdapter(parent.getContext(), mDatasetInner, rowCount);
 
-
-        rowCount++; // iterate the row count so when (if) the next ViewHolder row is created it takes the next data row
-
         mAdapterInner.setInnerClickListener(this);
         mAdapterInner.setDragListener(this);
 
@@ -90,6 +87,8 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         mInnerRecyclerView.setAdapter(mAdapterInner);
 
         //initDataset();
+
+        rowCount++; // iterate the row count so when (if) the next ViewHolder row is created it takes the next data row
 
         return viewHolder;
     }
@@ -120,7 +119,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder
-        implements  CanvasInnerRecyclerAdapter.InnerItemClickListener{
+        { // implements CanvasInnerRecyclerAdapter.InnerItemClickListener{
         public RecyclerView mRecycler;
 
         public ViewHolder(View itemView) {
@@ -129,10 +128,12 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         }
 
+        /*
         @Override
-        public void onInnerItemClick(View view, int column) {
-            if (mOuterItemClickListener != null) mOuterItemClickListener.onOuterItemClick(view, getAdapterPosition(), column);
+        public void onInnerItemClick(View view, int row, int column) {
+            if (mOuterItemClickListener != null) mOuterItemClickListener.onOuterItemClick(view, row, column);
         }
+        */
     }
 
     // convenience method for getting data at click position
@@ -181,7 +182,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
 
     @Override
-    public void onInnerItemClick(View view, int column) {
+    public void onInnerItemClick(View view, int row, int column) {
 
         /*
         final String STACK_ID = mDatasetInner[position].getStackId();
@@ -191,10 +192,11 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         }
 
         Intent intent = new Intent(view.getContext(), StackActivity.class);
+        intent.putExtra("STACK_ID", userId); // How to get this??
         intent.putExtra("STACK_ID", STACK_ID);
         view.getContext().startActivity(intent);
         */
-        if (mOuterItemClickListener != null) mOuterItemClickListener.onOuterItemClick(view, 0, column);
+        if (mOuterItemClickListener != null) mOuterItemClickListener.onOuterItemClick(view, row, column);
 
     }
 
@@ -251,7 +253,6 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
             if(mDataset[i] != null) {
                 //mAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mDataset[i], i);
                 //mAdapterInner.notifyDataSetChanged();
-
             }
         }
     }

@@ -367,6 +367,7 @@ public class FeedFragment extends Fragment
     @Override
     public void onItemClick(View view, int position) {
         Intent intent = new Intent(getContext(), StackActivity.class);
+        intent.putExtra("USER_ID", mDataset.get(position).getUserId());
         intent.putExtra("PHOTO_ID", mDataset.get(position).getPhotoId());
         view.getContext().startActivity(intent);
     }

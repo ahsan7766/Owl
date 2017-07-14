@@ -1,5 +1,7 @@
 package com.ourwayoflife.owl.activities;
 
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,14 +15,17 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -61,6 +66,7 @@ public class StackActivity extends AppCompatActivity
 
     private String photoId; // Used to store the PhotoId of the currently viewed photo
     private String stackId; // Used to store the StackId of the currently viewed stack
+    private String userId; // Used to store the UserId of the owner of the viewed photo/stack
 
     private PagerAdapter mPagerAdapter;
     private ArrayList<Bitmap> mDatasetPhotos = new ArrayList<>();
@@ -93,9 +99,17 @@ public class StackActivity extends AppCompatActivity
         mToggleButtonLike = findViewById(R.id.button_like);
 
         // Get extras data
-        // If a photo was included in the extras, then the activity is in photo mode
         photoId = getIntent().getStringExtra("PHOTO_ID");
         stackId = getIntent().getStringExtra("STACK_ID");
+        userId = getIntent().getStringExtra("USER_ID");
+
+        // Make sure we have a UserId
+        if (userId == null || userId.isEmpty()) {
+            Log.wtf(TAG, "USER_ID not found, but StackActivity was launched. Finishing Activity...");
+            finish();
+        }
+
+        // If a photo was included in the extras, then the activity is in photo mode
         if (photoId != null && photoId.length() > 0) {
             // Photo mode
             setTitle("Photo"); // Set Title
@@ -104,8 +118,6 @@ public class StackActivity extends AppCompatActivity
             // TODO instead of this, just pass a boolean to this activity that says if the photo
             // was already liked.  If that bool extra is missing, then run this AsyncTask
             new CheckPhotoLikeTask().execute();
-
-
 
             new CheckPhotoLikeCountTask().execute();
 
@@ -144,12 +156,7 @@ public class StackActivity extends AppCompatActivity
         tabLayout.setupWithViewPager(pager, true);
 
 
-
-
         // TODO Change number of likes based on query
-
-
-
 
 
         // Initialize RecyclerView
@@ -181,7 +188,7 @@ public class StackActivity extends AppCompatActivity
                 String comment = mEditTextComment.getText().toString();
 
                 // Check that comment isn't empty
-                if(!comment.isEmpty()) {
+                if (!comment.isEmpty()) {
                     PhotoComment photoComment = new PhotoComment();
                     photoComment.setUserId(LoginActivity.sUserId);
                     photoComment.setComment(comment);
@@ -203,6 +210,28 @@ public class StackActivity extends AppCompatActivity
 
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+
+        // If we are viewing a photo and the UserId of the stack is the logged in user, show the delete photo option
+        if (photoId != null && !photoId.isEmpty() && userId.equals(LoginActivity.sUserId)) {
+            menu.findItem(R.id.action_delete).setVisible(true);
+        }
+
+        // Associate searchable configuration with the SearchView
+        SearchManager searchManager =
+                (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView =
+                (SearchView) menu.findItem(R.id.search).getActionView();
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(getComponentName()));
+
+        return true;
+    }
+
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         switch (id) {
@@ -212,6 +241,11 @@ public class StackActivity extends AppCompatActivity
             case android.R.id.home:
                 super.onBackPressed();
                 return true;
+
+            case R.id.action_delete:
+                Toast.makeText(this, "DELETE PHOTO FEATURE NOT YET IMPLEMENTED", Toast.LENGTH_SHORT).show(); // TODO Delete photo feature
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -378,17 +412,17 @@ public class StackActivity extends AppCompatActivity
 
             List<StackPhoto> stackPhotoList = mapper.query(StackPhoto.class, queryExpression);
 
-            if(stackPhotoList == null) {
+            if (stackPhotoList == null) {
                 return false;
             }
 
             mDatasetPhotos.clear(); // Clear dataset in case it isn't already for some reason
 
             // Query for photos
-            for(StackPhoto stackPhoto : stackPhotoList) {
+            for (StackPhoto stackPhoto : stackPhotoList) {
 
                 // Make sure we have a photoId
-                if(stackPhoto.getPhotoId() == null || stackPhoto.getPhotoId().isEmpty()) {
+                if (stackPhoto.getPhotoId() == null || stackPhoto.getPhotoId().isEmpty()) {
                     continue;
                 }
 
@@ -425,7 +459,7 @@ public class StackActivity extends AppCompatActivity
             // TODO: check this.exception
             // TODO: do something with the feed
 
-            if(!result){
+            if (!result) {
                 // No photo likes found or error occured
                 return;
             }
@@ -475,7 +509,7 @@ public class StackActivity extends AppCompatActivity
 
         protected void onPostExecute(List<PhotoComment> result) {
 
-            if(result.size() <= 0) {
+            if (result.size() <= 0) {
                 // TODO: if there's no comments, show an empty view or something
             } else {
                 // Add comments to dataset and notify adapter
@@ -483,7 +517,7 @@ public class StackActivity extends AppCompatActivity
 
                 // Put all the unique userIds in an array to download all the user's data
                 //ArrayList<String> userIdList = new ArrayList<>();
-                for(PhotoComment photoComment : result) {
+                for (PhotoComment photoComment : result) {
                     mUserHashMap.put(photoComment.getUserId(), null);
                 }
 
@@ -503,14 +537,14 @@ public class StackActivity extends AppCompatActivity
             // Iterate through users and load their info
             Iterator it = mUserHashMap.keySet().iterator();
             while (it.hasNext()) {
-                String key = (String)it.next();
+                String key = (String) it.next();
                 //String key = entry.getKey().toString();
                 it.remove(); // avoids a ConcurrentModificationException (we already have the key anyway)
 
 
                 User user = mapper.load(User.class, key);
 
-                if(user != null && !user.getUserId().isEmpty()) {
+                if (user != null && !user.getUserId().isEmpty()) {
                     mUserHashMap.put(key, user);
                 }
             }
@@ -749,11 +783,13 @@ public class StackActivity extends AppCompatActivity
     private class CheckStackLikeCountTask extends AsyncTask<Void, Void, Integer> {
 
         protected Integer doInBackground(Void... params) {
-
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    StackActivity.this,
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
 
@@ -812,7 +848,7 @@ public class StackActivity extends AppCompatActivity
             photoLike.setUserId(LoginActivity.sUserId);
 
             // We are adding a PhotoLike to the table
-            if(isLiked) {
+            if (isLiked) {
                 // Get date string
                 DateTime dt = new DateTime(DateTimeZone.UTC);
                 DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
@@ -837,7 +873,7 @@ public class StackActivity extends AppCompatActivity
 
         protected void onPostExecute(Boolean isLiked) {
             // If liked
-            if(isLiked) {
+            if (isLiked) {
                 mIntLikeCount++;
             } else {
                 mIntLikeCount--;
@@ -872,7 +908,7 @@ public class StackActivity extends AppCompatActivity
             stackLike.setUserId(LoginActivity.sUserId);
 
             // We are adding a PhotoLike to the table
-            if(isLiked) {
+            if (isLiked) {
                 // Get date string
                 DateTime dt = new DateTime(DateTimeZone.UTC);
                 DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
@@ -897,7 +933,7 @@ public class StackActivity extends AppCompatActivity
 
         protected void onPostExecute(Boolean isLiked) {
             // If liked
-            if(isLiked) {
+            if (isLiked) {
                 mIntLikeCount++;
             } else {
                 mIntLikeCount--;

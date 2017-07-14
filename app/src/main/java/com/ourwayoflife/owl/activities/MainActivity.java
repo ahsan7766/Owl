@@ -227,12 +227,14 @@ public class MainActivity extends AppCompatActivity
         Fragment fragment = null;
         Class fragmentClass;
         FragmentManager fragmentManager = getSupportFragmentManager();
+        Bundle args = new Bundle(); // args we will pass to the fragment (if needed)
         switch (id) {
             case R.id.nav_feed:
                 fragmentClass = FeedFragment.class;
                 break;
             case R.id.nav_profile:
                 fragmentClass = ProfileFragment.class;
+                args.putString("USER_ID", LoginActivity.sUserId);
                 break;
             case R.id.nav_messages:
                 return true;
@@ -240,6 +242,7 @@ public class MainActivity extends AppCompatActivity
                 //break;
             case R.id.nav_canvas:
                 fragmentClass = CanvasFragment.class;
+                args.putString("USER_ID", LoginActivity.sUserId);
                 break;
             /*
             case R.id.nav_friends:
@@ -277,6 +280,7 @@ public class MainActivity extends AppCompatActivity
             // If fragment doesn't exist yet, create one
             if (fragment == null) {
                 fragment = (Fragment) fragmentClass.newInstance();
+                fragment.setArguments(args); // Set the bundle args (even if we didn't put any in some cases)
                 fragmentTransaction
                         .replace(R.id.flContent, fragment, fragmentClass.getName())
                         .addToBackStack(fragmentClass.getName())

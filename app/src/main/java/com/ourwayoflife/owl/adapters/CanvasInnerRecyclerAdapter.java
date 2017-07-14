@@ -42,10 +42,12 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
     // binds the data to the textview in each cell
     @Override
     public void onBindViewHolder(CanvasInnerRecyclerAdapter.ViewHolder holder, int position) {
-        CanvasTile canvasTile = mData[position];
+        CanvasTile canvasTile =  mData[position];
 
         if(canvasTile == null ) {
             // Set it to whatever we want an empty tile to look like
+
+            holder.mCanvasTile.setName("TEST");
 
         } else {
             holder.mCanvasTile.setName(canvasTile.getName());
@@ -308,7 +310,7 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
 
         @Override
         public void onClick(View view) {
-            if (mInnerItemClickListener != null) mInnerItemClickListener.onInnerItemClick(view, getAdapterPosition());
+            if (mInnerItemClickListener != null) mInnerItemClickListener.onInnerItemClick(view, mRow, getAdapterPosition());
         }
 
         @Override
@@ -336,7 +338,7 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
 
     // parent activity will implement this method to respond to click events
     public interface InnerItemClickListener {
-        void onInnerItemClick(View view, int column);
+        void onInnerItemClick(View view, int row, int column);
     }
 
     // parent activity will implement this method to respond to drags
