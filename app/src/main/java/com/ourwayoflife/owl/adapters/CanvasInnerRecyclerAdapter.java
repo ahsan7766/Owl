@@ -36,6 +36,7 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
         View view = mInflater.inflate(R.layout.recycler_item_canvas_inner, parent, false);
         CanvasInnerRecyclerAdapter.ViewHolder viewHolder = new CanvasInnerRecyclerAdapter.ViewHolder(view);
 
+
         return viewHolder;
     }
 
@@ -47,7 +48,8 @@ public class CanvasInnerRecyclerAdapter extends RecyclerView.Adapter<CanvasInner
         if(canvasTile == null ) {
             // Set it to whatever we want an empty tile to look like
 
-            holder.mCanvasTile.setName("TEST");
+            // TODO Set what an empty CanvasTile should look like (if necessary)
+            //holder.mCanvasTile.setName("TEST");
 
         } else {
             holder.mCanvasTile.setName(canvasTile.getName());

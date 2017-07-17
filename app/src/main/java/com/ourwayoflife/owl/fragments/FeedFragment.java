@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.util.LruCache;
@@ -29,7 +30,9 @@ import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
@@ -39,12 +42,15 @@ import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.LoginActivity;
 import com.ourwayoflife.owl.activities.MainActivity;
 import com.ourwayoflife.owl.activities.StackActivity;
+import com.ourwayoflife.owl.activities.UploadActivity;
 import com.ourwayoflife.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.ourwayoflife.owl.adapters.FeedRecyclerAdapter;
 import com.ourwayoflife.owl.models.CanvasTile;
 import com.ourwayoflife.owl.models.FeedItem;
 import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.PhotoLike;
+import com.ourwayoflife.owl.models.Stack;
+import com.ourwayoflife.owl.models.StackPhoto;
 import com.ourwayoflife.owl.models.User;
 
 import org.joda.time.DateTime;
@@ -52,6 +58,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -87,7 +94,7 @@ public class FeedFragment extends Fragment
     private static final String TAG = FeedFragment.class.getName();
 
 
-    public static final int CANVAS_COLUMN_COUNT = 7; // number of columns of pictures in the grid
+    public static final int CANVAS_COLUMN_COUNT = 5; // number of columns of pictures in the grid
     public static final int CANVAS_ROW_COUNT = 2; // number of rows of pictures in the grid
 
     public static LruCache<String, Bitmap> mMemoryCache; // TODO move this to MainActivity
@@ -96,7 +103,7 @@ public class FeedFragment extends Fragment
     protected RecyclerView mCanvasRecyclerView;
     protected CanvasOuterRecyclerAdapter mCanvasAdapter;
     protected RecyclerView.LayoutManager mCanvasLayoutManager;
-    protected CanvasTile[][] mCanvasDataset;
+    protected CanvasTile[][] mCanvasDataset = new CanvasTile[CANVAS_ROW_COUNT][CANVAS_COLUMN_COUNT];
 
 
     private static final int SPAN_COUNT = 1; // number of columns in the grid
@@ -209,6 +216,10 @@ public class FeedFragment extends Fragment
 
         // SET UP CANVAS
         mCanvasRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_feed_canvas_outer);
+        //mRecyclerView.setHasFixedSize(true); //TODO see if this works
+        mCanvasRecyclerView.setItemViewCacheSize(20);
+        mCanvasRecyclerView.setDrawingCacheEnabled(true);
+        mCanvasRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
@@ -276,6 +287,24 @@ public class FeedFragment extends Fragment
 
     }
 
+    /**
+     * Called immediately after {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}
+     * has returned, but before any saved state has been restored in to the view.
+     * This gives subclasses a chance to initialize themselves once
+     * they know their view hierarchy has been completely created.  The fragment's
+     * view hierarchy is not however attached to its parent at this point.
+     *
+     * @param view               The View returned by {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}.
+     * @param savedInstanceState If non-null, this fragment is being re-constructed
+     */
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        // Get the stacks for the user we are viewing
+        new GetStacksTask().execute();
+    }
+
     public void fetchTimelineAsync(int page) {
         // Send the network request to fetch the updated data
         // `client` here is an instance of Android Async HTTP
@@ -338,6 +367,7 @@ public class FeedFragment extends Fragment
 
     private void initDataset() {
         // Set Canvas Data
+        /*
         mCanvasDataset = new CanvasTile[CANVAS_ROW_COUNT][CANVAS_COLUMN_COUNT];
         for (int i = 0; i < CANVAS_ROW_COUNT; i++) {
             mCanvasDataset[i] = new CanvasTile[CANVAS_COLUMN_COUNT];
@@ -346,6 +376,7 @@ public class FeedFragment extends Fragment
                 mCanvasDataset[i][x] = new CanvasTile("ROW " + i + " COL " + x, "test", null);
             }
         }
+        */
 
         // Set Feed Data
         new DownloadTask().execute();
@@ -359,7 +390,12 @@ public class FeedFragment extends Fragment
     }
 
     public static Bitmap getBitmapFromMemCache(String key) {
-        return mMemoryCache.get(key);
+        Bitmap bitmap = mMemoryCache.get(key);
+        if(bitmap != null) {
+            Log.d(TAG, "Retreived bitmap from cache. Key: " + key);
+        }
+        return bitmap;
+        //return mMemoryCache.get(key);
     }
 
 
@@ -416,6 +452,9 @@ public class FeedFragment extends Fragment
                 //mAdapter.notifyItemChanged(position);
                 //mAdapter.notifyDataSetChanged();
                 Toast.makeText(getActivity(), "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
+
+                // Add the photo to the stack
+                //new AddStackPhotoTask().execute(mCanvasDataset[row][column].getStackId(), m);
                 return true;
 
             case DragEvent.ACTION_DRAG_ENDED:
@@ -436,7 +475,7 @@ public class FeedFragment extends Fragment
 
 
 
-    private class DownloadTask extends AsyncTask<Void, Void, List<FeedItem>> {
+    private class DownloadTask extends AsyncTask<Void, FeedItem, List<FeedItem>> {
 
         protected List<FeedItem> doInBackground(Void... urls) {
 
@@ -624,7 +663,7 @@ public class FeedFragment extends Fragment
 
 
                 if (user == null) {
-                    Log.e(TAG, "Could not load user information");
+                    Log.e(TAG, "Could not load user information. UserId: " + USER_ID);
                     continue;
                 }
 
@@ -665,29 +704,44 @@ public class FeedFragment extends Fragment
                 //FeedItem feedItem = new FeedItem(photo.getStackId(), bitmap, "Stack Title", 4);
                 FeedItem feedItem = new FeedItem(photo.getPhotoId(), photoBitmap, USER_ID, userBitmap, user.getName(), isLiked);
                 feedItems.add(feedItem);
+
+                publishProgress(feedItem);
             } // for photo : result
 
             return feedItems;
         }
 
         @Override
+        protected void onProgressUpdate(FeedItem... values) {
+            super.onProgressUpdate(values);
+            FeedItem feedItem = values[0];
+
+            mDataset.add(feedItem);
+            mAdapter.notifyItemChanged(mDataset.size());
+        }
+
+        @Override
         protected void onPreExecute() {
             // TODO Auto-generated method stub
             super.onPreExecute();
+
+            mDataset.clear();
         }
 
         protected void onPostExecute(List<FeedItem> result) {
             // TODO: check this.exception
             // TODO: do something with the feed
             // Clear dataset, add new items, then notify
+
+            /*
             mDataset.clear();
             mDataset.addAll(result);
             mAdapter.notifyDataSetChanged();
+            */
 
             mSwipeRefreshLayout.setRefreshing(false);
         }
     }
-
 
 
     private class PhotoLikeTask extends AsyncTask<Integer, Void, Integer> {
@@ -746,6 +800,301 @@ public class FeedFragment extends Fragment
         protected void onPostExecute(Integer position) {
             // Notify the adapter
             mAdapter.notifyItemChanged(position);
+        }
+    }
+
+
+    private class GetStacksTask extends AsyncTask<Void, Void, Integer> {
+
+        protected Integer doInBackground(Void... voids) {
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Query for stacks
+            Stack queryStack = new Stack();
+            queryStack.setUserId(LoginActivity.sUserId); // Set userId to the logged in user
+
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    .withIndexName("UserId-CreatedDate-index")
+                    .withHashKeyValues(queryStack)
+                    //.withRangeKeyCondition("Title", rangeKeyCondition)
+                    .withScanIndexForward(false)
+                    .withConsistentRead(false); //Cannot use consistent read on GSI
+
+
+            PaginatedQueryList<Stack> stackList = mapper.query(Stack.class, queryExpression);
+
+
+
+            // Now that we have the list of stacks, get the first picture of each stack to set the canvas tiles
+            //mDataset = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
+
+            if(stackList == null) {
+                // Stack list was not found.  Don't try inflating the canvas tiles
+                return null;
+            }
+
+            int stackCount = 0;
+            for (int i = 0; i < CANVAS_ROW_COUNT; i++) {
+
+                mCanvasDataset[i] = new CanvasTile[CANVAS_COLUMN_COUNT]; // TODO don't think this is necessary
+
+                for (int x = 0; x < CANVAS_COLUMN_COUNT; x++) {
+                    if(stackCount >= stackList.size()) {
+                        // If we have reached the number of stacks the user has, stop inflating dataset
+                        return stackCount;
+                    }
+                    // Just set the stackId of the canvas tile for now
+                    Stack stack = stackList.get(stackCount);
+                    mCanvasDataset[i][x] = new CanvasTile(stack.getStackId(), stack.getName(), null);
+
+                    stackCount++;
+                }
+
+            }
+
+            return stackCount;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Integer stackCount) {
+            // TODO: check this.exception
+            // TODO: do something with the feed
+
+            // Clear dataset, add new items, then notify
+            //mAdapter.notifyDataSetChanged();
+
+            // If there are stacks, run task to get cover photos
+            if(stackCount > 0) {
+                new DownloadStackCoverPhotoTask().execute(stackCount);
+            }
+        }
+    }
+
+
+    private class DownloadStackCoverPhotoTask extends AsyncTask<Integer, Void, Void> {
+
+        protected Void doInBackground(Integer... params) {
+
+            int numOfStacks = params[0];
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getActivity(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+
+            // First get the photoIds for each tile by querying the StackPhoto table
+
+            // Loop through canvas
+            int stackCount = 0;
+            for (int i = 0; i < CANVAS_ROW_COUNT; i++) {
+
+                for (int x = 0; x < CANVAS_COLUMN_COUNT; x++) {
+
+                    if(stackCount >= numOfStacks) {
+                        // If we have reached the number of stacks the user has, stop querying
+                        break;
+                    }
+
+                    String stackId = mCanvasDataset[i][x].getStackId();
+
+                    // Make sure we have a stackId
+                    if(stackId == null || stackId.isEmpty()) {
+                        stackCount++;
+                        continue;
+                    }
+
+
+                    StackPhoto queryStackPhoto = new StackPhoto();
+                    queryStackPhoto.setStackId(stackId);
+
+
+                    // TODO need to make sure we are getting the most recent photo by sorting/indexing by AddedDate
+                    DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                            .withHashKeyValues(queryStackPhoto)
+                            .withLimit(1) // Only want the first one
+                            //.withRangeKeyCondition("Title", rangeKeyCondition)
+                            .withScanIndexForward(false)
+                            .withConsistentRead(false);
+
+
+                    PaginatedQueryList<StackPhoto> stackPhotoList = mapper.query(StackPhoto.class, queryExpression);
+
+                    // Make sure we found a StackPhoto
+                    if(stackPhotoList == null || stackPhotoList.isEmpty()) {
+                        stackCount++;
+                        continue;
+                    }
+
+
+
+                    /*
+                    Photo queryPhoto = new Photo();
+                    queryPhoto.setPhotoId(stackPhotoList.get(0).getPhotoId());
+
+
+                    // Now use the PhotoId of the stack photo to query for the photo
+                    DynamoDBQueryExpression queryExpressionPhoto = new DynamoDBQueryExpression()
+                            .withIndexName("UserId-UploadDate-index")
+                            .withHashKeyValues(queryPhoto)
+                            //.withRangeKeyCondition("Title", rangeKeyCondition)
+                            .withConsistentRead(false)
+                            .withScanIndexForward(false);
+
+                    */
+
+                    Photo photo = mapper.load(Photo.class, stackPhotoList.get(0).getPhotoId());
+
+
+                    Bitmap bitmap;
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    //options.inSampleSize = 4;
+                    // Convert the photo list to a FeedItem list
+
+                    //Check if the bitmap is cached
+                    bitmap = FeedFragment.getBitmapFromMemCache(photo.getPhotoId());
+                    if (bitmap == null) {
+                        //Bitmap is not cached.  Have to download
+
+
+                        // Convert the photo string to a bitmap
+                        String photoString = photo.getPhoto();
+                        if (photoString == null || photoString.length() <= 0) {
+                            stackCount++;
+                            continue;
+                        }
+                        try {
+                            byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
+                            bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, options);
+
+                            //Add bitmap to the cache
+                            FeedFragment.addBitmapToMemoryCache(String.valueOf(photo.getPhotoId()), bitmap);
+
+                        } catch (Exception e) {
+                            Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
+                            stackCount++;
+                            continue;
+                        }
+                    }
+
+                    // Set the photo of the dataset position we are loading a photo of
+                    if(bitmap != null) {
+                        mCanvasDataset[i][x].setPhoto(bitmap);
+                    }
+
+                    stackCount++;
+                }
+
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Void result) {
+            // TODO: check this.exception
+            // TODO: do something with the feed
+
+            // Clear dataset, add new items, then notify
+            mAdapter.notifyDataSetChanged();
+            //mAdapter.notifyInnerDatasetRowsChanged();
+        }
+    }
+
+
+    private class AddStackPhotoTask extends AsyncTask<String, Void, Void> {
+
+        protected Void doInBackground(String... params) {
+
+            final String STACK_ID = params[0];
+            final String PHOTO_ID = params[1];
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            //AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
+            //TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
+
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+
+            // Get date string
+            DateTime dt = new DateTime(DateTimeZone.UTC);
+            DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+            final String dateString = fmt.print(dt);
+
+
+            try {
+
+                // If photo is in a stack, then insert to the StackPhoto table
+                if (STACK_ID != null && !STACK_ID.isEmpty()) {
+                    StackPhoto stackPhoto = new StackPhoto();
+                    stackPhoto.setStackId(STACK_ID);
+                    stackPhoto.setPhotoId(PHOTO_ID);
+                    stackPhoto.setAddedDate(dateString);
+
+                    mapper.save(stackPhoto);
+                }
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error on Upload Photo: " + e);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Void result) {
+            // TODO: check this.exception
+
+            // TODO Give a confirmation
         }
     }
 }

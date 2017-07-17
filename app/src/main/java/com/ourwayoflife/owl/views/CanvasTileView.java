@@ -147,8 +147,6 @@ public class CanvasTileView extends View {
         // Draw border around entire canvas for testing purposes
         //canvas.drawRect(0,0,getWidth(),getHeight(),mOutlinePaint);
 
-
-
         if(getPhoto() != null) {
             canvas.drawBitmap(getPhoto(), null, mOutlineRect, mOutlinePaint);
         }
@@ -204,7 +202,7 @@ public class CanvasTileView extends View {
         mNameTextPaint.setColor(Color.WHITE);
         mNameTextPaint.setTextAlign(Paint.Align.CENTER);
         mNameTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        mNameTextPaint.setTextSize(55);
+        mNameTextPaint.setTextSize(40);
 
         /*
         mSubheaderTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);

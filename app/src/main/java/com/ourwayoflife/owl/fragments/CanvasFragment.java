@@ -289,7 +289,7 @@ public class CanvasFragment extends Fragment
     // Handles clicks from in the canvas
     @Override
     public void onOuterItemClick(View view, int row, int column) {
-        Toast.makeText(getContext(), "CANVAS ITEM CLICKED: Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
+        Log.d(TAG, "CANVAS ITEM CLICKED: Row " + row + ", Col " + column);
 
         CanvasTile canvasTile = mDataset[row][column];
         if(canvasTile == null) {

@@ -618,6 +618,7 @@ public class UploadActivity extends AppCompatActivity
                     StackPhoto stackPhoto = new StackPhoto();
                     stackPhoto.setStackId(STACK_ID);
                     stackPhoto.setPhotoId(photo.getPhotoId());
+                    stackPhoto.setAddedDate(dateString);
 
                     mapper.save(stackPhoto);
                 }
