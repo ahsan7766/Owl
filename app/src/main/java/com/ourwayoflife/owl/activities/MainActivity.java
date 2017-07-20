@@ -116,6 +116,15 @@ public class MainActivity extends AppCompatActivity
         // If given the extra indication to start canvas fragment, do it
         if (getIntent().getBooleanExtra(OPEN_FRAGMENT_CANVAS, false)) {
 
+            // Make sure we have a UserId
+            final String USER_ID = getIntent().getStringExtra("USER_ID");
+
+            if(USER_ID == null || USER_ID.isEmpty()) {
+                // No UserId found, don't open the canvas
+                Log.e(TAG, "Unable to open Canvas.  UserId was not passed.");
+                Toast.makeText(this, "Cannot open Canvas: User Not Found", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
             //Check if the fragment is already in the stack.
             //If it is, then use that instead of making a new instance
@@ -123,9 +132,15 @@ public class MainActivity extends AppCompatActivity
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             Fragment fragment = fragmentManager.findFragmentByTag(CanvasFragment.class.getName());
 
+
+
+            Bundle args = new Bundle(); // args we will pass to the fragment
+            args.putString("USER_ID", USER_ID); // Pass the USER_ID
+
             // If fragment doesn't exist yet, create one
             if (fragment == null) {
                 fragment = new CanvasFragment();
+                fragment.setArguments(args); // Set the bundle args
                 fragmentTransaction
                         .replace(R.id.flContent, fragment, CanvasFragment.class.getName())
                         .addToBackStack(CanvasFragment.class.getName())

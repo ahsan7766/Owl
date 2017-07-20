@@ -69,7 +69,7 @@ public class StackActivity extends AppCompatActivity
     private String userId; // Used to store the UserId of the owner of the viewed photo/stack
 
     private PagerAdapter mPagerAdapter;
-    private ArrayList<Bitmap> mDatasetPhotos = new ArrayList<>();
+    private ArrayList<Photo> mDatasetPhotos = new ArrayList<>();
 
     private RecyclerView mRecyclerViewComments;
     private RecyclerView.LayoutManager mLayoutManagerComments;
@@ -282,6 +282,7 @@ public class StackActivity extends AppCompatActivity
         // Start the canvas fragment via the main activity
         Intent openFragmentBIntent = new Intent(this, MainActivity.class);
         openFragmentBIntent.putExtra(MainActivity.OPEN_FRAGMENT_CANVAS, true);
+        openFragmentBIntent.putExtra("USER_ID", mDatasetPhotoComments.get(position).getUserId()); // Add the userId so we know who's canvas to open
         startActivity(openFragmentBIntent);
 
 
@@ -356,7 +357,9 @@ public class StackActivity extends AppCompatActivity
             mDatasetPhotos.clear();
 
             // Convert photo string to bitmap
-            String photoString = result.getPhoto();
+            //String photoString = result.getPhoto();
+
+            /*
             try {
                 byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
                 Bitmap bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
@@ -365,6 +368,8 @@ public class StackActivity extends AppCompatActivity
                 Log.e(TAG, "Conversion from String to Bitmap: " + e);
                 finish(); // TODO notify user
             }
+            */
+            mDatasetPhotos.add(result);
 
             return null;
         }
@@ -434,7 +439,8 @@ public class StackActivity extends AppCompatActivity
                 }
 
                 // Convert photo string to bitmap
-                String photoString = photo.getPhoto();
+                //String photoString = photo.getPhoto();
+                /*
                 try {
                     byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
                     Bitmap bitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length);
@@ -443,6 +449,9 @@ public class StackActivity extends AppCompatActivity
                     Log.e(TAG, "Conversion from String to Bitmap: " + e);
                     continue; // TODO notify user
                 }
+                */
+
+                mDatasetPhotos.add(photo);
 
             }
 
