@@ -516,6 +516,7 @@ public class FeedFragment extends Fragment
         }
 
 
+        mDraggingPosition = position; // Update the position of the photo being dragged
 
         return true;
 
@@ -540,8 +541,14 @@ public class FeedFragment extends Fragment
                 //mAdapter.notifyDataSetChanged();
                 Toast.makeText(getActivity(), "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
 
+                // Make sure we have a valid position for the photo
+                if (mDraggingPosition < 0 || mDraggingPosition >= mDataset.size()) {
+                    Log.wtf(TAG, "Attempted to add photo to stack but invalid position found. Photo position: " + mDraggingPosition + ", Dataset size: " + mDataset.size());
+                    return true;
+                }
+
                 // Add the photo to the stack
-                //new AddStackPhotoTask().execute(mCanvasDataset[row][column].getStackId(), m);
+                new AddStackPhotoTask().execute(mCanvasDataset[row][column].getStackId(), mDataset.get(mDraggingPosition).getPhotoId());
                 return true;
 
             case DragEvent.ACTION_DRAG_ENDED:

@@ -354,8 +354,6 @@ public class StackActivity extends AppCompatActivity
                 finish(); // TODO notify user
             }
 
-            mDatasetPhotos.clear();
-
             // Convert photo string to bitmap
             //String photoString = result.getPhoto();
 
@@ -378,6 +376,8 @@ public class StackActivity extends AppCompatActivity
         protected void onPreExecute() {
             // TODO Auto-generated method stub
             super.onPreExecute();
+
+            mDatasetPhotos.clear();
         }
 
         protected void onPostExecute(Void result) {
@@ -413,7 +413,9 @@ public class StackActivity extends AppCompatActivity
 
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(queryStackPhoto)
-                    .withConsistentRead(false);
+                    .withIndexName("StackId-AddedDate-index")
+                    .withConsistentRead(false)
+                    .withScanIndexForward(false); // Get the most recent one first
 
             List<StackPhoto> stackPhotoList = mapper.query(StackPhoto.class, queryExpression);
 
