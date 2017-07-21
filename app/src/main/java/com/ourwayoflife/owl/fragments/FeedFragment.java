@@ -101,6 +101,7 @@ public class FeedFragment extends Fragment
     private final int VIEW_FEED = 200;
     private final int VIEW_TRENDING = 300;
 
+    private int mSelectedView = 0; // Keeps track of what view we are currently on;
 
     public static final int CANVAS_COLUMN_COUNT = 5; // number of columns of pictures in the grid
     public static final int CANVAS_ROW_COUNT = 2; // number of rows of pictures in the grid
@@ -274,16 +275,6 @@ public class FeedFragment extends Fragment
 
 
         mSwipeRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_refresh);
-        // Setup refresh listener which triggers new data loading
-        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                // Code to refresh the list here.
-                // Make sure you call swipeContainer.setRefreshing(false)
-                // once the network request has completed successfully.
-                fetchTimelineAsync(0);
-            }
-        });
 
 
         // Set up show/hide animation for fab
@@ -318,32 +309,59 @@ public class FeedFragment extends Fragment
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Initialize dataset, this data would usually come from a local content provider or
+        if (savedInstanceState != null && savedInstanceState.getParcelableArrayList("FEED_ITEMS") != null) {
+            //Restore the fragment's state here
+            Log.d("TAG", savedInstanceState.toString());
+            mDataset = savedInstanceState.getParcelableArrayList("FEED_ITEMS");
+            Log.d("TAG", "Restoring FeedItem Dataset. Dataset Size: " + mDataset.size());
+        } else {
+            // Retrieve data
+            //new DownloadTask().execute(VIEW_FEED);
+            //downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+            downloadTask = new DownloadTask();
+            downloadTask.execute(VIEW_FEED);
+        }
+
+
         // Set click listeners for the options at the top of the feed
         mTextLikes.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                // Don't need to do anything if we are already on this view
+                if(mSelectedView == VIEW_LIKES) {
+                    return;
+                }
+
                 mTextLikes.setTypeface(null, Typeface.BOLD);
                 mTextFeed.setTypeface(null, Typeface.NORMAL);
                 mTextTrending.setTypeface(null, Typeface.NORMAL);
 
-                new DownloadTask().execute(VIEW_LIKES);
-                //downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
-                //downloadTask = new DownloadTask();
-                //downloadTask.execute(VIEW_LIKES);
+                //new DownloadTask().execute(VIEW_LIKES);
+                downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                downloadTask = new DownloadTask();
+                downloadTask.execute(VIEW_LIKES);
             }
         });
 
         mTextFeed.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                // Don't need to do anything if we are already on this view
+                if(mSelectedView == VIEW_FEED) {
+                    return;
+                }
+
                 mTextLikes.setTypeface(null, Typeface.NORMAL);
                 mTextFeed.setTypeface(null, Typeface.BOLD);
                 mTextTrending.setTypeface(null, Typeface.NORMAL);
 
-                new DownloadTask().execute(VIEW_FEED);
-                //downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
-                //downloadTask = new DownloadTask();
-                //downloadTask.execute(VIEW_FEED);
+                //new DownloadTask().execute(VIEW_FEED);
+                downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                downloadTask = new DownloadTask();
+                downloadTask.execute(VIEW_FEED);
             }
         });
 
@@ -354,6 +372,11 @@ public class FeedFragment extends Fragment
                 Toast.makeText(getContext(), "Trending not yet available.", Toast.LENGTH_SHORT).show();
 
                 /*
+                // Don't need to do anything if we are already on this view
+                if(mSelectedView == VIEW_TRENDING) {
+                    return;
+                }
+
                 mTextLikes.setTypeface(null, Typeface.NORMAL);
                 mTextFeed.setTypeface(null, Typeface.NORMAL);
                 textTrending.setTypeface(null, Typeface.BOLD);
@@ -364,30 +387,27 @@ public class FeedFragment extends Fragment
         });
 
 
-        // Initialize dataset, this data would usually come from a local content provider or
-        if (savedInstanceState != null && savedInstanceState.getParcelableArrayList("FEED_ITEMS") != null) {
-            //Restore the fragment's state here
-            Log.d("TAG", savedInstanceState.toString());
-            mDataset = savedInstanceState.getParcelableArrayList("FEED_ITEMS");
-            Log.d("TAG", "Restoring FeedItem Dataset. Dataset Size: " + mDataset.size());
-        } else {
-            // Retrieve data
-            new DownloadTask().execute(VIEW_FEED);
-        }
+        // Setup refresh listener which triggers new data loading
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // Code to refresh the list here.
+                // Make sure you call swipeContainer.setRefreshing(false)
+                // once the network request has completed successfully.
+
+                downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                downloadTask = new DownloadTask();
+                downloadTask.execute(mSelectedView);
+
+
+            }
+        });
 
         // Get the stacks for the user we are viewing
+        // TODO Should we disable the drag and drop until this is done loading?
         new GetStacksTask().execute();
     }
 
-    public void fetchTimelineAsync(int page) {
-        // Send the network request to fetch the updated data
-        // `client` here is an instance of Android Async HTTP
-        // getHomeTimeline is an example endpoint.
-
-        //initDataset();
-        mSwipeRefreshLayout.setRefreshing(false);
-
-    }
 
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -537,10 +557,17 @@ public class FeedFragment extends Fragment
 
     private class DownloadTask extends AsyncTask<Integer, FeedItem, List<FeedItem>> {
 
+
+        int addedCount = 0; // Keeps track of how many new photos we are adding to the dataset
+        int origDatasetSize = 0; // How many were originally in the dataset
+
         protected List<FeedItem> doInBackground(Integer... params) {
 
             // Get the view mode of the feed (Default to Feed if not passed)
             final int VIEW_MODE = params == null ? VIEW_FEED : params[0];
+
+            // Update the tracker for the currently selected view
+            mSelectedView = VIEW_MODE;
 
             /*
             // Initialize the Amazon Cognito credentials provider
@@ -817,8 +844,35 @@ public class FeedFragment extends Fragment
             super.onProgressUpdate(values);
             FeedItem feedItem = values[0];
 
-            mDataset.add(feedItem);
-            mAdapter.notifyItemChanged(mDataset.size());
+            if(mSwipeRefreshLayout.isRefreshing()) {
+                // If we are refreshing, then check to see if we already have this item in the dataset
+                // If we do, then we can stop downloading because we should already have the rest (since it's sorted by date)
+                // TODO I think there are issues with this.  Need to re-visit
+                boolean isDatasetAlreadyHaveThisPhoto = false;
+                for(FeedItem feedItemLoop : mDataset) {
+                    if(feedItemLoop.equals(feedItem)) {
+                        isDatasetAlreadyHaveThisPhoto = true;
+                        break; // Break the loop
+                    }
+                }
+                if(isDatasetAlreadyHaveThisPhoto) {
+                    cancel(true);
+                } else {
+                    mDataset.add(addedCount, feedItem);
+                    mAdapter.notifyItemInserted(addedCount);
+
+                    addedCount++;
+                }
+
+            } else {
+                // If we aren't refreshing, then were adding each item to the dataset (it was cleared pre-execute)
+                mDataset.add(feedItem);
+                mAdapter.notifyItemChanged(mDataset.size());
+
+                addedCount++;
+            }
+
+
         }
 
         @Override
@@ -826,6 +880,12 @@ public class FeedFragment extends Fragment
             super.onCancelled(feedItems);
             isViewChangedSinceLike = false;
             isUpdatingDataset = false;
+            
+            // If we were refreshing
+            if(mSwipeRefreshLayout.isRefreshing()) {
+                mSwipeRefreshLayout.setRefreshing(false); // Make sure we stop the refreshing spinner
+                mRecyclerView.smoothScrollToPosition(0);
+            }
         }
 
         @Override
@@ -833,6 +893,12 @@ public class FeedFragment extends Fragment
             super.onCancelled();
             isViewChangedSinceLike = false;
             isUpdatingDataset = false;
+
+            // If we were refreshing
+            if(mSwipeRefreshLayout.isRefreshing()) {
+                mSwipeRefreshLayout.setRefreshing(false); // Make sure we stop the refreshing spinner
+                mRecyclerView.smoothScrollToPosition(0);
+            }
         }
 
         @Override
@@ -844,9 +910,14 @@ public class FeedFragment extends Fragment
 
             isUpdatingDataset = true;
 
-            // Clear the dataset and recyclerview
-            mDataset.clear();
-            mAdapter.notifyDataSetChanged();
+            // Clear the dataset and recyclerview, but not if we are just refreshing
+            if(!mSwipeRefreshLayout.isRefreshing()) {
+                mDataset.clear();
+                mAdapter.notifyDataSetChanged();
+            }
+
+            // Store the original size of the dataset
+            origDatasetSize = mDataset.size();
         }
 
         protected void onPostExecute(List<FeedItem> result) {
@@ -861,12 +932,14 @@ public class FeedFragment extends Fragment
             mAdapter.notifyDataSetChanged();
             */
 
-
-            mSwipeRefreshLayout.setRefreshing(false);
-
             isViewChangedSinceLike = false;
-
             isUpdatingDataset = false;
+
+            // If we were refreshing
+            if(mSwipeRefreshLayout.isRefreshing()) {
+                mSwipeRefreshLayout.setRefreshing(false); // Make sure we stop the refreshing spinner
+                mRecyclerView.smoothScrollToPosition(0);
+            }
         }
     }
 

@@ -128,6 +128,7 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
         return mData.get(id);
     }
 
+
     // allows click events to be caught
     public void setClickListener(ItemClickListener itemClickListener) {
         this.mClickListener = itemClickListener;

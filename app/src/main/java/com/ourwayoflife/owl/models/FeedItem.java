@@ -115,6 +115,15 @@ public class FeedItem implements Parcelable{
     */
 
     @Override
+    public boolean equals(Object obj) {
+        //return super.equals(obj);
+        FeedItem feedItem = (FeedItem) obj;
+
+        // TODO may have to add a few other select parameters like LikeCount and Deleted and anything else that could change between refreshes of a page
+        return (feedItem.getPhotoId().equals(this.getPhotoId()));
+    }
+
+    @Override
     public int describeContents() {
         return 0;
     }
