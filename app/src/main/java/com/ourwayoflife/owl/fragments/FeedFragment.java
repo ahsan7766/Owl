@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -26,6 +27,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -93,11 +95,22 @@ public class FeedFragment extends Fragment
 
     private static final String TAG = FeedFragment.class.getName();
 
+    // The different types of views for the data
+    // These will be passed from the onClick of the options to the AsyncTask to determine what to query
+    private final int VIEW_LIKES = 100;
+    private final int VIEW_FEED = 200;
+    private final int VIEW_TRENDING = 300;
+
 
     public static final int CANVAS_COLUMN_COUNT = 5; // number of columns of pictures in the grid
     public static final int CANVAS_ROW_COUNT = 2; // number of rows of pictures in the grid
 
     public static LruCache<String, Bitmap> mMemoryCache; // TODO move this to MainActivity
+
+
+    private TextView mTextLikes;
+    private TextView mTextFeed;
+    private TextView mTextTrending;
 
 
     protected RecyclerView mCanvasRecyclerView;
@@ -120,6 +133,12 @@ public class FeedFragment extends Fragment
 
 
     private OnFragmentInteractionListener mListener;
+
+
+    private boolean isUpdatingDataset = false;
+    private boolean isViewChangedSinceLike = false;
+
+    private DownloadTask downloadTask;
 
     public FeedFragment() {
         // Required empty public constructor
@@ -169,16 +188,6 @@ public class FeedFragment extends Fragment
             }
         };
 
-
-        // Initialize dataset, this data would usually come from a local content provider or
-        if (savedInstanceState != null && savedInstanceState.getParcelableArrayList("FEED_ITEMS") != null) {
-            //Restore the fragment's state here
-            Log.d("TAG", savedInstanceState.toString());
-            mDataset = savedInstanceState.getParcelableArrayList("FEED_ITEMS");
-            Log.d("TAG", "Restoring FeedItem Dataset. Dataset Size: " + mDataset.size());
-        } else {
-            initDataset();
-        }
     }
 
     /**
@@ -213,6 +222,14 @@ public class FeedFragment extends Fragment
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_feed, container, false);
         rootView.setTag(TAG);
+
+
+
+        mTextLikes = rootView.findViewById(R.id.text_likes);
+        mTextFeed = rootView.findViewById(R.id.text_feed);
+        mTextTrending = rootView.findViewById(R.id.text_trending);
+
+
 
         // SET UP CANVAS
         mCanvasRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_feed_canvas_outer);
@@ -301,6 +318,63 @@ public class FeedFragment extends Fragment
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        // Set click listeners for the options at the top of the feed
+        mTextLikes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mTextLikes.setTypeface(null, Typeface.BOLD);
+                mTextFeed.setTypeface(null, Typeface.NORMAL);
+                mTextTrending.setTypeface(null, Typeface.NORMAL);
+
+                new DownloadTask().execute(VIEW_LIKES);
+                //downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                //downloadTask = new DownloadTask();
+                //downloadTask.execute(VIEW_LIKES);
+            }
+        });
+
+        mTextFeed.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mTextLikes.setTypeface(null, Typeface.NORMAL);
+                mTextFeed.setTypeface(null, Typeface.BOLD);
+                mTextTrending.setTypeface(null, Typeface.NORMAL);
+
+                new DownloadTask().execute(VIEW_FEED);
+                //downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                //downloadTask = new DownloadTask();
+                //downloadTask.execute(VIEW_FEED);
+            }
+        });
+
+        mTextTrending.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // TODO Implement trending
+                Toast.makeText(getContext(), "Trending not yet available.", Toast.LENGTH_SHORT).show();
+
+                /*
+                mTextLikes.setTypeface(null, Typeface.NORMAL);
+                mTextFeed.setTypeface(null, Typeface.NORMAL);
+                textTrending.setTypeface(null, Typeface.BOLD);
+
+                new DownloadTask().execute(VIEW_TRENDING);
+                */
+            }
+        });
+
+
+        // Initialize dataset, this data would usually come from a local content provider or
+        if (savedInstanceState != null && savedInstanceState.getParcelableArrayList("FEED_ITEMS") != null) {
+            //Restore the fragment's state here
+            Log.d("TAG", savedInstanceState.toString());
+            mDataset = savedInstanceState.getParcelableArrayList("FEED_ITEMS");
+            Log.d("TAG", "Restoring FeedItem Dataset. Dataset Size: " + mDataset.size());
+        } else {
+            // Retrieve data
+            new DownloadTask().execute(VIEW_FEED);
+        }
+
         // Get the stacks for the user we are viewing
         new GetStacksTask().execute();
     }
@@ -363,23 +437,6 @@ public class FeedFragment extends Fragment
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
-    }
-
-    private void initDataset() {
-        // Set Canvas Data
-        /*
-        mCanvasDataset = new CanvasTile[CANVAS_ROW_COUNT][CANVAS_COLUMN_COUNT];
-        for (int i = 0; i < CANVAS_ROW_COUNT; i++) {
-            mCanvasDataset[i] = new CanvasTile[CANVAS_COLUMN_COUNT];
-
-            for (int x = 0; x < CANVAS_COLUMN_COUNT; x++) {
-                mCanvasDataset[i][x] = new CanvasTile("ROW " + i + " COL " + x, "test", null);
-            }
-        }
-        */
-
-        // Set Feed Data
-        new DownloadTask().execute();
     }
 
 
@@ -469,15 +526,21 @@ public class FeedFragment extends Fragment
 
     @Override
     public void onItemCheckedChange(CompoundButton compoundButton, boolean isChecked, int position) {
-        new PhotoLikeTask().execute(position);
+        // Only like the photo if we are not in the middle of updating the dataset
+        // Also make sure the button is pressed, otherwise we will inadvertently  fire this listener during scrolls
+        if(compoundButton.isPressed() && !isUpdatingDataset) {
+            new PhotoLikeTask().execute(position);
+        }
     }
 
 
 
+    private class DownloadTask extends AsyncTask<Integer, FeedItem, List<FeedItem>> {
 
-    private class DownloadTask extends AsyncTask<Void, FeedItem, List<FeedItem>> {
+        protected List<FeedItem> doInBackground(Integer... params) {
 
-        protected List<FeedItem> doInBackground(Void... urls) {
+            // Get the view mode of the feed (Default to Feed if not passed)
+            final int VIEW_MODE = params == null ? VIEW_FEED : params[0];
 
             /*
             // Initialize the Amazon Cognito credentials provider
@@ -603,12 +666,49 @@ public class FeedFragment extends Fragment
             */
 
 
-            // Scan for photos
+            List<Photo> result = new ArrayList<>(); // Array that the results will be stored in
 
-            DynamoDBScanExpression scanExpression = new DynamoDBScanExpression()
-                    .withLimit(10);
+            // Choose what type of query we are doing based of the VIEW_MODE
+            switch (VIEW_MODE) {
+                case VIEW_LIKES :
+                    // Show only the photos that this person has liked
 
-            PaginatedScanList<Photo> result = mapper.scan(Photo.class, scanExpression);
+
+                    // First get all the PhotoLike's for the user
+                    PhotoLike queryPhotoLike = new PhotoLike();
+                    queryPhotoLike.setUserId(LoginActivity.sUserId);
+
+                    DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                            .withIndexName("UserId-LikeDate-index")
+                            .withHashKeyValues(queryPhotoLike)
+                            .withScanIndexForward(false) // Sort if by most recently liked first
+                            .withConsistentRead(false); // Can't use consistent read on GSI
+
+                    List<PhotoLike> photoLikeList = mapper.query(PhotoLike.class, queryExpression);
+
+                    // Now get the Photos using the PhotoId in the PhotoLike objects
+                    for(PhotoLike photoLike : photoLikeList) {
+                        Photo photo = mapper.load(Photo.class, photoLike.getPhotoId());
+                        result.add(photo);
+                    }
+
+
+                    break;
+
+                case VIEW_TRENDING :
+                    // For now just handle trending the same as feed
+                    //break;
+
+                case VIEW_FEED :
+                default:
+                    // Handle default and VIEW_FEED the same
+                    DynamoDBScanExpression scanExpression = new DynamoDBScanExpression()
+                            .withLimit(15);
+
+                    result = mapper.scan(Photo.class, scanExpression);
+                    break;
+
+            }
 
 
             // ArrayList that the feed items will be stored in for the updated dataset
@@ -617,6 +717,7 @@ public class FeedFragment extends Fragment
 
             // Convert the photo list to a FeedItem list
             for (Photo photo : result) {
+
                 Bitmap photoBitmap;
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 //options.inSampleSize = 4;
@@ -721,11 +822,31 @@ public class FeedFragment extends Fragment
         }
 
         @Override
+        protected void onCancelled(List<FeedItem> feedItems) {
+            super.onCancelled(feedItems);
+            isViewChangedSinceLike = false;
+            isUpdatingDataset = false;
+        }
+
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            isViewChangedSinceLike = false;
+            isUpdatingDataset = false;
+        }
+
+        @Override
         protected void onPreExecute() {
             // TODO Auto-generated method stub
             super.onPreExecute();
 
+            isViewChangedSinceLike = true;
+
+            isUpdatingDataset = true;
+
+            // Clear the dataset and recyclerview
             mDataset.clear();
+            mAdapter.notifyDataSetChanged();
         }
 
         protected void onPostExecute(List<FeedItem> result) {
@@ -733,13 +854,19 @@ public class FeedFragment extends Fragment
             // TODO: do something with the feed
             // Clear dataset, add new items, then notify
 
+
             /*
             mDataset.clear();
             mDataset.addAll(result);
             mAdapter.notifyDataSetChanged();
             */
 
+
             mSwipeRefreshLayout.setRefreshing(false);
+
+            isViewChangedSinceLike = false;
+
+            isUpdatingDataset = false;
         }
     }
 
@@ -749,6 +876,14 @@ public class FeedFragment extends Fragment
         protected Integer doInBackground(Integer... params) {
             // Get the photo like bool
             final int position = params[0];
+
+
+            if(isViewChangedSinceLike) {
+                // View already changed since trying to like.
+                // Just don't try to even like it for now.  Running into a lot of issues
+                //cancel(true);
+            }
+
             final Boolean isLiked = !mDataset.get(position).getLiked(); // Like should be the opposite of whatever it is now
 
             // Initialize the Amazon Cognito credentials provider
@@ -784,8 +919,11 @@ public class FeedFragment extends Fragment
                 mapper.delete(photoLike);
             }
 
-            // Update the position in the dataset
-            mDataset.get(position).setLiked(isLiked);
+            // Update the position in the dataset (only if we are still in the same view)
+            //if(!isViewChangedSinceLike) {
+                mDataset.get(position).setLiked(isLiked);
+            //}
+
 
             return position;
         }
@@ -794,12 +932,18 @@ public class FeedFragment extends Fragment
         protected void onPreExecute() {
             // TODO Auto-generated method stub
             super.onPreExecute();
+
+            isViewChangedSinceLike = false;
         }
 
 
         protected void onPostExecute(Integer position) {
             // Notify the adapter
-            mAdapter.notifyItemChanged(position);
+            //if(!isViewChangedSinceLike) {
+                mAdapter.notifyItemChanged(position);
+            //}
+
+            isViewChangedSinceLike = false;
         }
     }
 

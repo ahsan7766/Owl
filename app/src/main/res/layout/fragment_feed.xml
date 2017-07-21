@@ -26,6 +26,7 @@
         android:weightSum="3">
 
         <TextView
+            android:id="@+id/text_likes"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -34,6 +35,7 @@
             android:textSize="20sp"/>
 
         <TextView
+            android:id="@+id/text_feed"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -43,6 +45,7 @@
             android:textStyle="bold"/>
 
         <TextView
+            android:id="@+id/text_trending"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
