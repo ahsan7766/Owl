@@ -103,6 +103,8 @@ public class FeedFragment extends Fragment
 
     private int mSelectedView = 0; // Keeps track of what view we are currently on;
 
+    private int mDraggingPosition = -1; // Keeps track of which photo is being dragged
+
     public static final int CANVAS_COLUMN_COUNT = 5; // number of columns of pictures in the grid
     public static final int CANVAS_ROW_COUNT = 2; // number of rows of pictures in the grid
 
@@ -137,7 +139,6 @@ public class FeedFragment extends Fragment
 
 
     private boolean isUpdatingDataset = false;
-    private boolean isViewChangedSinceLike = false;
 
     private DownloadTask downloadTask;
 
@@ -340,6 +341,7 @@ public class FeedFragment extends Fragment
 
                 //new DownloadTask().execute(VIEW_LIKES);
                 downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                mSwipeRefreshLayout.setRefreshing(false); // Stop refreshing in case we were before
                 downloadTask = new DownloadTask();
                 downloadTask.execute(VIEW_LIKES);
             }
@@ -354,12 +356,14 @@ public class FeedFragment extends Fragment
                     return;
                 }
 
+
                 mTextLikes.setTypeface(null, Typeface.NORMAL);
                 mTextFeed.setTypeface(null, Typeface.BOLD);
                 mTextTrending.setTypeface(null, Typeface.NORMAL);
 
                 //new DownloadTask().execute(VIEW_FEED);
                 downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                mSwipeRefreshLayout.setRefreshing(false); // Stop refreshing in case we were before
                 downloadTask = new DownloadTask();
                 downloadTask.execute(VIEW_FEED);
             }
@@ -381,7 +385,11 @@ public class FeedFragment extends Fragment
                 mTextFeed.setTypeface(null, Typeface.NORMAL);
                 textTrending.setTypeface(null, Typeface.BOLD);
 
-                new DownloadTask().execute(VIEW_TRENDING);
+                //new DownloadTask().execute(VIEW_TRENDING);
+                downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                mSwipeRefreshLayout.setRefreshing(false); // Stop refreshing in case we were before
+                downloadTask = new DownloadTask();
+                downloadTask.execute(VIEW_TRENDING);
                 */
             }
         });
@@ -506,6 +514,8 @@ public class FeedFragment extends Fragment
         } else {
             view.startDrag(data, shadowBuilder, view, 0);
         }
+
+
 
         return true;
 
@@ -878,9 +888,8 @@ public class FeedFragment extends Fragment
         @Override
         protected void onCancelled(List<FeedItem> feedItems) {
             super.onCancelled(feedItems);
-            isViewChangedSinceLike = false;
             isUpdatingDataset = false;
-            
+
             // If we were refreshing
             if(mSwipeRefreshLayout.isRefreshing()) {
                 mSwipeRefreshLayout.setRefreshing(false); // Make sure we stop the refreshing spinner
@@ -891,7 +900,6 @@ public class FeedFragment extends Fragment
         @Override
         protected void onCancelled() {
             super.onCancelled();
-            isViewChangedSinceLike = false;
             isUpdatingDataset = false;
 
             // If we were refreshing
@@ -905,8 +913,6 @@ public class FeedFragment extends Fragment
         protected void onPreExecute() {
             // TODO Auto-generated method stub
             super.onPreExecute();
-
-            isViewChangedSinceLike = true;
 
             isUpdatingDataset = true;
 
@@ -932,7 +938,6 @@ public class FeedFragment extends Fragment
             mAdapter.notifyDataSetChanged();
             */
 
-            isViewChangedSinceLike = false;
             isUpdatingDataset = false;
 
             // If we were refreshing
@@ -949,13 +954,6 @@ public class FeedFragment extends Fragment
         protected Integer doInBackground(Integer... params) {
             // Get the photo like bool
             final int position = params[0];
-
-
-            if(isViewChangedSinceLike) {
-                // View already changed since trying to like.
-                // Just don't try to even like it for now.  Running into a lot of issues
-                //cancel(true);
-            }
 
             final Boolean isLiked = !mDataset.get(position).getLiked(); // Like should be the opposite of whatever it is now
 
@@ -993,9 +991,9 @@ public class FeedFragment extends Fragment
             }
 
             // Update the position in the dataset (only if we are still in the same view)
-            //if(!isViewChangedSinceLike) {
+            if(!isUpdatingDataset) {
                 mDataset.get(position).setLiked(isLiked);
-            //}
+            }
 
 
             return position;
@@ -1006,17 +1004,28 @@ public class FeedFragment extends Fragment
             // TODO Auto-generated method stub
             super.onPreExecute();
 
-            isViewChangedSinceLike = false;
         }
 
 
         protected void onPostExecute(Integer position) {
             // Notify the adapter
-            //if(!isViewChangedSinceLike) {
-                mAdapter.notifyItemChanged(position);
-            //}
 
-            isViewChangedSinceLike = false;
+            // If we are in the "Likes" view we need to remove the photo from the list
+            // It's impossible to "Like" a photo while in the like view, because we are only viewing photos that we were previously liked
+            if(mSelectedView == VIEW_LIKES) {
+                mDataset.remove(position.intValue());
+                mAdapter.notifyItemRemoved(position);
+            } else {
+                // We are not in the "Likes" view
+
+                // Only update the adapter if we haven't already changed views
+                if(!isUpdatingDataset) {
+                    mAdapter.notifyItemChanged(position);
+                }
+            }
+
+
+
         }
     }
 
