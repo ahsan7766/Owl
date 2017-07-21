@@ -9,15 +9,22 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
 import com.ourwayoflife.owl.R;
+import com.ourwayoflife.owl.adapters.CanvasOuterRecyclerAdapter;
 
 /**
  * Created by Zach on 5/22/17.
  */
 
-public class ProfileCounterView extends View {
+public class ProfileCounterView extends View  {
+
+    private static final String TAG = ProfileCounterView.class.getName();
+
+    private OnTouchListener mOnTouchListener;
 
     private int mHootCount;
     private int mFollowerCount;
@@ -41,6 +48,21 @@ public class ProfileCounterView extends View {
     public interface OnCurrentItemChangedListener {
         void OnCurrentItemChanged(ProfileCounterView source, int currentItem);
     }
+
+
+
+    // parent activity will implement this method to respond to drag events
+    public void setOnTouchListener(OnTouchListener onTouchListener) {
+        this.mOnTouchListener = onTouchListener;
+    }
+
+
+    public interface OnTouchListener {
+        boolean OnTouchLikes();
+        boolean OnTouchFollowers();
+        boolean OnTouchFollowing();
+    }
+
 
     /**
      * Class constructor taking only a context. Use this constructor to create
@@ -268,5 +290,35 @@ public class ProfileCounterView extends View {
         mLinePaint.setStrokeWidth(10);
 
     }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+
+        // We only want the up clicks
+        if(event.getAction() != MotionEvent.ACTION_DOWN) {
+            return false;
+        }
+
+        final float xClick = event.getX();
+        final int width = getWidth() - getPaddingStart() - getPaddingEnd();
+
+        if(xClick < (width / 3) + getPaddingStart() ) {
+            // Click was in the first third of the view
+            return mOnTouchListener != null && mOnTouchListener.OnTouchLikes();
+
+        } else if (xClick >= (width / 3) + getPaddingStart() && xClick <= ((width / 3) * 2) + getPaddingStart()) {
+            // Click was in the second third of the view
+            return mOnTouchListener != null && mOnTouchListener.OnTouchFollowers();
+
+        } else if (xClick > ((width / 3) * 2) + getPaddingStart() ) {
+            // Click was in the last third of the view
+            return mOnTouchListener != null && mOnTouchListener.OnTouchFollowing();
+        }
+
+        return false;
+
+        //return super.onTouchEvent(event);
+    }
+
 
 }

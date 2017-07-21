@@ -14,6 +14,8 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
 import android.support.v7.app.AlertDialog;
@@ -41,6 +43,11 @@ import com.ourwayoflife.owl.models.User;
 import com.ourwayoflife.owl.views.ProfileCounterView;
 import com.ourwayoflife.owl.views.ProfilePictureView;
 
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
+
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
@@ -53,7 +60,8 @@ import java.util.List;
  * create an instance of this fragment.
  */
 public class ProfileFragment extends Fragment implements
-        ProfileEditDialogFragment.ProfileEditDialogListener {
+        ProfileEditDialogFragment.ProfileEditDialogListener,
+        ProfileCounterView.OnTouchListener {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "USER_ID";
@@ -137,20 +145,12 @@ public class ProfileFragment extends Fragment implements
         }
         */
 
-        //Execute task to get user data
-        new DownloadUserTask().execute();
 
-        // Get Like count for profile counter
-        new GetUserLikeCountTask().execute();
-
-        new GetUserFollowerCountTask().execute();
-
-        new GetUserFollowingCountTask().execute();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+                             Bundle savedInstanceState)  {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_profile, container, false);
 
@@ -163,6 +163,11 @@ public class ProfileFragment extends Fragment implements
         mTextUserBio = rootView.findViewById(R.id.text_user_bio);
 
         mButtonEditFollow = rootView.findViewById(R.id.button_edit_follow);
+
+
+        // Set this fragment as a listener of the view's touches
+        mProfileCounterView.setOnTouchListener(this);
+
 
         return rootView;
     }
@@ -219,10 +224,12 @@ public class ProfileFragment extends Fragment implements
                 @Override
                 public void onClick(View view) {
                     // Run task that follows/unfollows the user
-                    //new FollowUserTask().execute();
+                    new FollowUserTask().execute();
                 }
             });
         }
+
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -257,7 +264,20 @@ public class ProfileFragment extends Fragment implements
         super.onResume();
         // Set title bar
         getActivity().setTitle(getString(R.string.title_fragment_profile));
+
+
+        // TODO  try to save instance state or something instead of re-loading this on every resume
+        //Execute task to get user data
+        new DownloadUserTask().execute();
+
+        // Get Like count for profile counter
+        new GetUserLikeCountTask().execute();
+
+        new GetUserFollowerCountTask().execute();
+
+        new GetUserFollowingCountTask().execute();
     }
+
 
     /**
      * This interface must be implemented by activities that contain this
@@ -433,6 +453,40 @@ public class ProfileFragment extends Fragment implements
         }
     }
 
+
+    @Override
+    public boolean OnTouchLikes() {
+        // TODO Implement viewing the user's liked photos when this is clicked
+        Toast.makeText(getContext(), "Viewing other user's Hoots not yet available.", Toast.LENGTH_SHORT).show();
+        return true;
+    }
+
+    @Override
+    public boolean OnTouchFollowers() {
+        // Start the FriendsFragment passing in the UserId of the profile we are viewing
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        Fragment fragment = FriendsFragment.newInstance(mUserId, FriendsFragment.MODE_FOLLOWERS);
+        fragmentManager.
+                beginTransaction()
+                .replace(R.id.flContent, fragment, fragment.getClass().getName())
+                .addToBackStack(fragment.getClass().getName())
+                .commit();
+
+        return true;
+    }
+
+    @Override
+    public boolean OnTouchFollowing() {
+        // Start the FriendsFragment passing in the UserId of the profile we are viewing
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        Fragment fragment = FriendsFragment.newInstance(mUserId, FriendsFragment.MODE_FOLLOWING);
+        fragmentManager.
+                beginTransaction()
+                .replace(R.id.flContent, fragment, fragment.getClass().getName())
+                .addToBackStack(fragment.getClass().getName())
+                .commit();
+        return true;
+    }
 
     private class DownloadUserTask extends AsyncTask<Void, Void, User> {
 
@@ -786,6 +840,56 @@ public class ProfileFragment extends Fragment implements
                 // Profile picture was not updated
                 Toast.makeText(getContext(), "Error while updating Profile Picture", Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+
+    private class FollowUserTask extends AsyncTask<Void, Void, Boolean> {
+
+        protected Boolean doInBackground(Void... urls) {
+            // Double check that the UserId is not null AND that it does NOT match the signed in user
+            if (mUser.getUserId() == null || mUser.getUserId().equals(LoginActivity.sUserId)) {
+                return false;
+            }
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getContext(), // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Get date string
+            DateTime dt = new DateTime(DateTimeZone.UTC);
+            DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+            final String dateString = fmt.print(dt);
+
+            Following following = new Following(LoginActivity.sUserId, mUserId, dateString);
+
+            // Save Following
+            try {
+                mapper.save(following);
+            } catch (Exception e) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Boolean result) {
+            mButtonEditFollow.setText(getString(R.string.unfollow));
         }
     }
 

@@ -20,6 +20,11 @@ public class Following {
 
     public Following() {}
 
+    public Following(String userId, String followingId, String followDate) {
+        mUserId = userId;
+        mFollowingId = followingId;
+        mFollowDate = followDate;
+    }
 
     @DynamoDBHashKey(attributeName = "UserId")
     public String getUserId() {

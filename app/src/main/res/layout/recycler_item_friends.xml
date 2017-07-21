@@ -11,9 +11,9 @@
         android:layout_height="100dp"/>
 
     <TextView
+        android:id="@+id/text_name"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:text="John Doe"
         android:gravity="center_horizontal|top"/>
 
 </LinearLayout>

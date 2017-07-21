@@ -327,7 +327,6 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         void onOuterItemClick(View view, int row, int column);
     }
 
-
     // parent activity will implement this method to respond to drag events
     public interface ItemInnerDragListener {
         boolean onItemDrag(View view, DragEvent dragEvent, int row, int column);

@@ -14,6 +14,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.util.LruCache;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -539,7 +540,7 @@ public class FeedFragment extends Fragment
                 //a.setComment("DRAG");
                 //mAdapter.notifyItemChanged(position);
                 //mAdapter.notifyDataSetChanged();
-                Toast.makeText(getActivity(), "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getActivity(), "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
 
                 // Make sure we have a valid position for the photo
                 if (mDraggingPosition < 0 || mDraggingPosition >= mDataset.size()) {
@@ -1267,9 +1268,9 @@ public class FeedFragment extends Fragment
     }
 
 
-    private class AddStackPhotoTask extends AsyncTask<String, Void, Void> {
+    private class AddStackPhotoTask extends AsyncTask<String, Void, Boolean> {
 
-        protected Void doInBackground(String... params) {
+        protected Boolean doInBackground(String... params) {
 
             final String STACK_ID = params[0];
             final String PHOTO_ID = params[1];
@@ -1313,9 +1314,10 @@ public class FeedFragment extends Fragment
 
             } catch (Exception e) {
                 Log.e(TAG, "Error on Upload Photo: " + e);
+                return false;
             }
 
-            return null;
+            return true;
         }
 
         @Override
@@ -1324,10 +1326,19 @@ public class FeedFragment extends Fragment
             super.onPreExecute();
         }
 
-        protected void onPostExecute(Void result) {
-            // TODO: check this.exception
+        protected void onPostExecute(Boolean success) {
+            // Give a confirmation
+            if(getView() == null) {
+                // Can't show confirmation if we don't have a view to put it in
+                return;
+            }
 
-            // TODO Give a confirmation
+            if(success){
+                // TODO make an undo button?
+                Snackbar.make(getView(), "Photo added to Stack", Snackbar.LENGTH_SHORT).show();
+            } else {
+                Snackbar.make(getView(), "Unable to add Photo to Stack", Snackbar.LENGTH_SHORT).show();
+            }
         }
     }
 }

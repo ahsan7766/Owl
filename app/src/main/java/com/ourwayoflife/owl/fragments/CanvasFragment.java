@@ -157,21 +157,14 @@ public class CanvasFragment extends Fragment
             @Override
             public void onClick(View v) {
                 // Start profile fragment
-                Fragment fragment = null;
-                Class fragmentClass = ProfileFragment.class;
-
-                try {
-                    fragment = (Fragment) fragmentClass.newInstance();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                ProfileFragment fragment = ProfileFragment.newInstance(mUserId, null);
 
                 // Insert the fragment by replacing any existing fragment
                 FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
                 fragmentManager.
                         beginTransaction()
-                        .replace(R.id.flContent, fragment)
-                        .addToBackStack(fragmentClass.getName())
+                        .replace(R.id.flContent, fragment, fragment.getClass().getName())
+                        .addToBackStack(fragment.getClass().getName())
                         .commit();
 
                 // Set action bar title
