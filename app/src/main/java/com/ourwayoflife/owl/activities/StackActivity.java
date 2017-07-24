@@ -436,7 +436,7 @@ public class StackActivity extends AppCompatActivity
                 Photo photo = mapper.load(Photo.class, stackPhoto.getPhotoId());
 
                 if (photo == null || photo.getPhotoId().isEmpty()) {
-                    Log.e(TAG, "Error: Unable to retrieve photo.");
+                    Log.e(TAG, "Unable to retrieve photo.");
                     continue; // TODO notify user
                 }
 

@@ -390,7 +390,7 @@ public class CanvasFragment extends Fragment
     }
 
 
-    private class DownloadStackCoverPhotoTask extends AsyncTask<Integer, Void, Void> {
+    private class DownloadStackCoverPhotoTask extends AsyncTask<Integer, Integer, Void> {
 
         protected Void doInBackground(Integer... params) {
 
@@ -513,6 +513,9 @@ public class CanvasFragment extends Fragment
                     stackCount++;
                 }
 
+
+                publishProgress(i); // Publish progress (giving row number)
+
             }
 
             return null;
@@ -524,12 +527,20 @@ public class CanvasFragment extends Fragment
             super.onPreExecute();
         }
 
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+
+            int row = values[0];
+            mAdapter.notifyItemChanged(row);
+        }
+
         protected void onPostExecute(Void result) {
             // TODO: check this.exception
             // TODO: do something with the feed
 
             // Clear dataset, add new items, then notify
-            mAdapter.notifyDataSetChanged();
+            //mAdapter.notifyDataSetChanged();
             //mAdapter.notifyInnerDatasetRowsChanged();
         }
     }

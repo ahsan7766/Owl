@@ -16,6 +16,7 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
@@ -55,6 +56,8 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -374,8 +377,30 @@ public class UploadActivity extends AppCompatActivity
 
                     if (selectedImage != null) {
                         // One image was selected
-                        String path = getRealPathFromURI(this, selectedImage);
-                        Bitmap bitmap = generateCroppedBitmap(path);
+                        Bitmap bitmap;
+
+                        // Check if the photo is locally stored
+                        if (selectedImage.toString().startsWith("content://com.google.android.apps.photos.content")){
+                            // The photo is NOT locally stored (Could be using Google Photos, etc...
+                            InputStream is;
+                            try {
+                                is = getContentResolver().openInputStream(selectedImage);
+                            } catch (FileNotFoundException e){
+                                Log.e(TAG, "Could not find file. " + e);
+                                e.printStackTrace();
+                                Toast.makeText(this, "Unable to upload photo.", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            Bitmap tempBitmap = BitmapFactory.decodeStream(is);
+                            bitmap = generateCroppedBitmap(tempBitmap);
+
+                        } else {
+                            // The photo we are downloading is stored locally
+                            String path = getRealPathFromURI(this, selectedImage);
+                            bitmap = generateCroppedBitmap(path);
+                        }
+
                         if (bitmap != null) {
                             mDatasetPhotos.add(bitmap);
                         }
@@ -385,9 +410,33 @@ public class UploadActivity extends AppCompatActivity
                         ClipData clipData = imageReturnedIntent.getClipData();
 
                         for (int i = 0; i < clipData.getItemCount(); i++) {
+                            Bitmap bitmap;
                             ClipData.Item item = clipData.getItemAt(i);
-                            String path = getRealPathFromURI(this, item.getUri());
-                            Bitmap bitmap = generateCroppedBitmap(path);
+                            Uri uri = item.getUri();
+
+
+                            // Check if the photo is locally stored
+                            if (uri.toString().startsWith("content://com.google.android.apps.photos.content")){
+                                // The photo is NOT locally stored (Could be using Google Photos, etc...
+                                InputStream is;
+                                try {
+                                    is = getContentResolver().openInputStream(uri);
+                                } catch (FileNotFoundException e){
+                                    Log.e(TAG, "Could not find file. " + e);
+                                    e.printStackTrace();
+                                    Toast.makeText(this, "Unable to upload photo.", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+
+                                Bitmap tempBitmap = BitmapFactory.decodeStream(is);
+                                bitmap = generateCroppedBitmap(tempBitmap);
+
+                            } else {
+                                // The photo we are downloading is stored locally
+                                String path = getRealPathFromURI(this, uri);
+                                bitmap = generateCroppedBitmap(path);
+                            }
+
                             if (bitmap != null) {
                                 mDatasetPhotos.add(bitmap);
                             }
@@ -485,6 +534,11 @@ public class UploadActivity extends AppCompatActivity
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inSampleSize = 2;
         Bitmap srcBmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath(), options);
+
+        return generateCroppedBitmap(srcBmp);
+    }
+
+    public static Bitmap generateCroppedBitmap(Bitmap srcBmp) {
         Bitmap dstBmp;
 
         if (srcBmp.getWidth() >= srcBmp.getHeight()) {

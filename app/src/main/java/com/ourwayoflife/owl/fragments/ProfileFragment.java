@@ -49,6 +49,8 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.List;
 
 /**
@@ -225,6 +227,18 @@ public class ProfileFragment extends Fragment implements
         }
 
 
+
+        // TODO  try to save instance state or something instead of re-loading this on every resume
+        //Execute task to get user data
+        new DownloadUserTask().execute();
+
+        // Get Like count for profile counter
+        new GetUserLikeCountTask().execute();
+
+        new GetUserFollowerCountTask().execute();
+
+        new GetUserFollowingCountTask().execute();
+
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -260,17 +274,6 @@ public class ProfileFragment extends Fragment implements
         // Set title bar
         getActivity().setTitle(getString(R.string.title_fragment_profile));
 
-
-        // TODO  try to save instance state or something instead of re-loading this on every resume
-        //Execute task to get user data
-        new DownloadUserTask().execute();
-
-        // Get Like count for profile counter
-        new GetUserLikeCountTask().execute();
-
-        new GetUserFollowerCountTask().execute();
-
-        new GetUserFollowingCountTask().execute();
     }
 
 
@@ -328,12 +331,35 @@ public class ProfileFragment extends Fragment implements
 
                     if (selectedImage != null) {
                         // One image was selected
-                        String path = UploadActivity.getRealPathFromURI(getContext(), selectedImage);
-                        Bitmap bitmap = UploadActivity.generateCroppedBitmap(path);
+                        Bitmap bitmap;
+
+                        // Check if the photo is locally stored
+                        if (selectedImage.toString().startsWith("content://com.google.android.apps.photos.content")){
+                            // The photo is NOT locally stored (Could be using Google Photos, etc...
+                            InputStream is;
+                            try {
+                                is = getContext().getContentResolver().openInputStream(selectedImage);
+                            } catch (FileNotFoundException e){
+                                Log.e(TAG, "Could not find file. " + e);
+                                e.printStackTrace();
+                                Toast.makeText(getContext(), "Unable to upload photo.", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            Bitmap tempBitmap = BitmapFactory.decodeStream(is);
+                            bitmap = UploadActivity.generateCroppedBitmap(tempBitmap);
+
+                        } else {
+                            // The photo we are downloading is stored locally
+                            String path = UploadActivity.getRealPathFromURI(getContext(), selectedImage);
+                            bitmap = UploadActivity.generateCroppedBitmap(path);
+                        }
+
                         if (bitmap != null) {
                             // Run task to upload profile picture
                             new UpdateProfilePictureTask().execute(bitmap);
                         }
+
                     } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
                         // Multiple images selected
                         Toast.makeText(getContext(), "Error: Multiple images were selected", Toast.LENGTH_SHORT).show();
