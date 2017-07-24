@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -47,12 +48,9 @@ public class CanvasFragment extends Fragment
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "USER_ID";
-    private static final String ARG_PARAM2 = "param2";
 
-
-    // TODO: Rename and change types of parameters
-    private String mUserId = LoginActivity.sUserId; // Default the userId to the logged in user
-    private String mParam2;
+    // Parameters
+    private String mUserId;
 
     private User mUser; // User object that can be used in multiple places
 
@@ -81,15 +79,13 @@ public class CanvasFragment extends Fragment
      * this fragment using the provided parameters.
      *
      * @param userId Parameter 1.
-     * @param param2 Parameter 2.
      * @return A new instance of fragment CanvasFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static CanvasFragment newInstance(String userId, String param2) {
+    public static CanvasFragment newInstance(String userId) {
         CanvasFragment fragment = new CanvasFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, userId);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -102,12 +98,18 @@ public class CanvasFragment extends Fragment
         if (getArguments() != null) {
             // Get the UserId of the profile we are viewing
             mUserId = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
         }
 
-        // If no userId was found, set it to the signed in user
+        // Make sure we have a UserId
         if(mUserId == null || mUserId.isEmpty()) {
-            mUserId = LoginActivity.sUserId;
+            Log.e(TAG, "Started CanvasFragment without passing in UserId.  Ending Fragment");
+            // Notify the user we are unable to show the canvas
+            if(getView() != null) {
+                Snackbar.make(getView(), getString(R.string.error_view_canvas), Snackbar.LENGTH_SHORT);
+            } else {
+                Toast.makeText(getContext(), getString(R.string.error_view_canvas), Toast.LENGTH_SHORT).show();
+            }
+            getActivity().onBackPressed(); // Press back button to simulate exiting fragment
         }
 
         // Initialize dataset, this data would usually come from a local content provider or
@@ -122,7 +124,6 @@ public class CanvasFragment extends Fragment
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_canvas, container, false);
         rootView.setTag(TAG);
-
 
 
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_canvas_outer);
@@ -157,7 +158,7 @@ public class CanvasFragment extends Fragment
             @Override
             public void onClick(View v) {
                 // Start profile fragment
-                ProfileFragment fragment = ProfileFragment.newInstance(mUserId, null);
+                ProfileFragment fragment = ProfileFragment.newInstance(mUserId);
 
                 // Insert the fragment by replacing any existing fragment
                 FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
@@ -168,7 +169,7 @@ public class CanvasFragment extends Fragment
                         .commit();
 
                 // Set action bar title
-                getActivity().setTitle("User");
+                getActivity().setTitle(getString(R.string.title_fragment_profile));
             }
         });
 
@@ -189,7 +190,7 @@ public class CanvasFragment extends Fragment
 
         //return inflater.inflate(R.layout.fragment_feed, container, false);
 
-
+        // Initialize dataset
         new DownloadUserTask().execute();
 
         return rootView;

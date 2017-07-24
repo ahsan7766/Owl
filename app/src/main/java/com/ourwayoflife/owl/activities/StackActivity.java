@@ -649,6 +649,11 @@ public class StackActivity extends AppCompatActivity
 
         protected Boolean doInBackground(Void... params) {
 
+            // Make sure we have a photoId and logged in UserId
+            if(photoId == null || photoId.isEmpty() || LoginActivity.sUserId == null || LoginActivity.sUserId.isEmpty()) {
+                return false;
+            }
+
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     StackActivity.this, // Context

@@ -91,6 +91,10 @@
     <string name="permission_rationale_contacts">"Contacts permissions are needed for providing email
         completions."
     </string>
+
+    <string name="error_view_canvas">Unable to view Canvas</string>
+
+
     <string name="title_activity_main">Owl</string>
     <string name="title_activity_stack">Stack</string>
     <string name="title_activity_upload">Upload</string>

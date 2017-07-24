@@ -16,6 +16,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.util.LruCache;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
@@ -77,7 +78,8 @@ import java.util.Map;
  * create an instance of this fragment.
  */
 public class FeedFragment extends Fragment
-        implements FeedRecyclerAdapter.ItemClickListener,
+        implements FeedRecyclerAdapter.ImageClickListener,
+        FeedRecyclerAdapter.ProfileClickListener,
         FeedRecyclerAdapter.ItemLongClickListener,
         FeedRecyclerAdapter.ItemCheckedChangeListener,
         CanvasOuterRecyclerAdapter.ItemInnerDragListener {
@@ -227,11 +229,9 @@ public class FeedFragment extends Fragment
         rootView.setTag(TAG);
 
 
-
         mTextLikes = rootView.findViewById(R.id.text_likes);
         mTextFeed = rootView.findViewById(R.id.text_feed);
         mTextTrending = rootView.findViewById(R.id.text_trending);
-
 
 
         // SET UP CANVAS
@@ -267,7 +267,8 @@ public class FeedFragment extends Fragment
         // set up the RecyclerView
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new FeedRecyclerAdapter(getActivity(), mDataset);
-        mAdapter.setClickListener(this);
+        mAdapter.setImageClickListener(this);
+        mAdapter.setProfileClickListener(this);
         mAdapter.setLongClickListener(this);
         //mAdapter.setDragListener(this);
         mAdapter.setOnCheckedChangeListener(this);
@@ -332,7 +333,7 @@ public class FeedFragment extends Fragment
             public void onClick(View view) {
 
                 // Don't need to do anything if we are already on this view
-                if(mSelectedView == VIEW_LIKES) {
+                if (mSelectedView == VIEW_LIKES) {
                     return;
                 }
 
@@ -353,7 +354,7 @@ public class FeedFragment extends Fragment
             public void onClick(View view) {
 
                 // Don't need to do anything if we are already on this view
-                if(mSelectedView == VIEW_FEED) {
+                if (mSelectedView == VIEW_FEED) {
                     return;
                 }
 
@@ -418,7 +419,6 @@ public class FeedFragment extends Fragment
     }
 
 
-
     // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
@@ -477,7 +477,7 @@ public class FeedFragment extends Fragment
 
     public static Bitmap getBitmapFromMemCache(String key) {
         Bitmap bitmap = mMemoryCache.get(key);
-        if(bitmap != null) {
+        if (bitmap != null) {
             Log.d(TAG, "Retreived bitmap from cache. Key: " + key);
         }
         return bitmap;
@@ -485,13 +485,32 @@ public class FeedFragment extends Fragment
     }
 
 
-    // Handle an item in the feed being clicked
+    // Handle a photo in the feed being clicked
     @Override
-    public void onItemClick(View view, int position) {
+    public void onImageClick(View view, int position) {
         Intent intent = new Intent(getContext(), StackActivity.class);
         intent.putExtra("USER_ID", mDataset.get(position).getUserId());
         intent.putExtra("PHOTO_ID", mDataset.get(position).getPhotoId());
         view.getContext().startActivity(intent);
+    }
+
+    // Handle a profile in the feed being clicked
+    @Override
+    public void onProfileClick(View view, int position) {
+        // Start canvas fragment
+        // Pass in the UserId of the photo that was clicked
+        CanvasFragment fragment = CanvasFragment.newInstance(mDataset.get(position).getUserId());
+
+        // Insert the fragment by replacing any existing fragment
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        fragmentManager.
+                beginTransaction()
+                .replace(R.id.flContent, fragment, fragment.getClass().getName())
+                .addToBackStack(fragment.getClass().getName())
+                .commit();
+
+        // Set action bar title
+        getActivity().setTitle(getString(R.string.title_fragment_canvas));
     }
 
     // Handle an item in the feed being long clicked
@@ -566,11 +585,10 @@ public class FeedFragment extends Fragment
     public void onItemCheckedChange(CompoundButton compoundButton, boolean isChecked, int position) {
         // Only like the photo if we are not in the middle of updating the dataset
         // Also make sure the button is pressed, otherwise we will inadvertently  fire this listener during scrolls
-        if(compoundButton.isPressed() && !isUpdatingDataset) {
+        if (compoundButton.isPressed() && !isUpdatingDataset) {
             new PhotoLikeTask().execute(position);
         }
     }
-
 
 
     private class DownloadTask extends AsyncTask<Integer, FeedItem, List<FeedItem>> {
@@ -715,7 +733,7 @@ public class FeedFragment extends Fragment
 
             // Choose what type of query we are doing based of the VIEW_MODE
             switch (VIEW_MODE) {
-                case VIEW_LIKES :
+                case VIEW_LIKES:
                     // Show only the photos that this person has liked
 
 
@@ -732,7 +750,7 @@ public class FeedFragment extends Fragment
                     List<PhotoLike> photoLikeList = mapper.query(PhotoLike.class, queryExpression);
 
                     // Now get the Photos using the PhotoId in the PhotoLike objects
-                    for(PhotoLike photoLike : photoLikeList) {
+                    for (PhotoLike photoLike : photoLikeList) {
                         Photo photo = mapper.load(Photo.class, photoLike.getPhotoId());
                         result.add(photo);
                     }
@@ -740,11 +758,11 @@ public class FeedFragment extends Fragment
 
                     break;
 
-                case VIEW_TRENDING :
+                case VIEW_TRENDING:
                     // For now just handle trending the same as feed
                     //break;
 
-                case VIEW_FEED :
+                case VIEW_FEED:
                 default:
                     // Handle default and VIEW_FEED the same
                     DynamoDBScanExpression scanExpression = new DynamoDBScanExpression()
@@ -844,7 +862,7 @@ public class FeedFragment extends Fragment
 
 
                 // Figure out of the user has previously liked the photo
-                PhotoLike photoLike =  mapper.load(PhotoLike.class, photo.getPhotoId(), LoginActivity.sUserId);
+                PhotoLike photoLike = mapper.load(PhotoLike.class, photo.getPhotoId(), LoginActivity.sUserId);
                 boolean isLiked = (photoLike != null && photoLike.getLikeDate() != null && !photoLike.getLikeDate().isEmpty()); // If photoLike isn't null, then user currently 'likes' this photo
 
                 //FeedItem feedItem = new FeedItem(photo.getStackId(), bitmap, "Stack Title", 4);
@@ -862,18 +880,18 @@ public class FeedFragment extends Fragment
             super.onProgressUpdate(values);
             FeedItem feedItem = values[0];
 
-            if(mSwipeRefreshLayout.isRefreshing()) {
+            if (mSwipeRefreshLayout.isRefreshing()) {
                 // If we are refreshing, then check to see if we already have this item in the dataset
                 // If we do, then we can stop downloading because we should already have the rest (since it's sorted by date)
                 // TODO I think there are issues with this.  Need to re-visit
                 boolean isDatasetAlreadyHaveThisPhoto = false;
-                for(FeedItem feedItemLoop : mDataset) {
-                    if(feedItemLoop.equals(feedItem)) {
+                for (FeedItem feedItemLoop : mDataset) {
+                    if (feedItemLoop.equals(feedItem)) {
                         isDatasetAlreadyHaveThisPhoto = true;
                         break; // Break the loop
                     }
                 }
-                if(isDatasetAlreadyHaveThisPhoto) {
+                if (isDatasetAlreadyHaveThisPhoto) {
                     cancel(true);
                 } else {
                     mDataset.add(addedCount, feedItem);
@@ -899,7 +917,7 @@ public class FeedFragment extends Fragment
             isUpdatingDataset = false;
 
             // If we were refreshing
-            if(mSwipeRefreshLayout.isRefreshing()) {
+            if (mSwipeRefreshLayout.isRefreshing()) {
                 mSwipeRefreshLayout.setRefreshing(false); // Make sure we stop the refreshing spinner
                 mRecyclerView.smoothScrollToPosition(0);
             }
@@ -911,7 +929,7 @@ public class FeedFragment extends Fragment
             isUpdatingDataset = false;
 
             // If we were refreshing
-            if(mSwipeRefreshLayout.isRefreshing()) {
+            if (mSwipeRefreshLayout.isRefreshing()) {
                 mSwipeRefreshLayout.setRefreshing(false); // Make sure we stop the refreshing spinner
                 mRecyclerView.smoothScrollToPosition(0);
             }
@@ -925,7 +943,7 @@ public class FeedFragment extends Fragment
             isUpdatingDataset = true;
 
             // Clear the dataset and recyclerview, but not if we are just refreshing
-            if(!mSwipeRefreshLayout.isRefreshing()) {
+            if (!mSwipeRefreshLayout.isRefreshing()) {
                 mDataset.clear();
                 mAdapter.notifyDataSetChanged();
             }
@@ -949,7 +967,7 @@ public class FeedFragment extends Fragment
             isUpdatingDataset = false;
 
             // If we were refreshing
-            if(mSwipeRefreshLayout.isRefreshing()) {
+            if (mSwipeRefreshLayout.isRefreshing()) {
                 mSwipeRefreshLayout.setRefreshing(false); // Make sure we stop the refreshing spinner
                 mRecyclerView.smoothScrollToPosition(0);
             }
@@ -984,7 +1002,7 @@ public class FeedFragment extends Fragment
             photoLike.setUserId(LoginActivity.sUserId);
 
             // We are adding a PhotoLike to the table
-            if(isLiked) {
+            if (isLiked) {
                 // Get date string
                 DateTime dt = new DateTime(DateTimeZone.UTC);
                 DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
@@ -999,7 +1017,7 @@ public class FeedFragment extends Fragment
             }
 
             // Update the position in the dataset (only if we are still in the same view)
-            if(!isUpdatingDataset) {
+            if (!isUpdatingDataset) {
                 mDataset.get(position).setLiked(isLiked);
             }
 
@@ -1020,18 +1038,17 @@ public class FeedFragment extends Fragment
 
             // If we are in the "Likes" view we need to remove the photo from the list
             // It's impossible to "Like" a photo while in the like view, because we are only viewing photos that we were previously liked
-            if(mSelectedView == VIEW_LIKES) {
+            if (mSelectedView == VIEW_LIKES) {
                 mDataset.remove(position.intValue());
                 mAdapter.notifyItemRemoved(position);
             } else {
                 // We are not in the "Likes" view
 
                 // Only update the adapter if we haven't already changed views
-                if(!isUpdatingDataset) {
+                if (!isUpdatingDataset) {
                     mAdapter.notifyItemChanged(position);
                 }
             }
-
 
 
         }
@@ -1071,11 +1088,10 @@ public class FeedFragment extends Fragment
             PaginatedQueryList<Stack> stackList = mapper.query(Stack.class, queryExpression);
 
 
-
             // Now that we have the list of stacks, get the first picture of each stack to set the canvas tiles
             //mDataset = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
 
-            if(stackList == null) {
+            if (stackList == null) {
                 // Stack list was not found.  Don't try inflating the canvas tiles
                 return null;
             }
@@ -1086,7 +1102,7 @@ public class FeedFragment extends Fragment
                 mCanvasDataset[i] = new CanvasTile[CANVAS_COLUMN_COUNT]; // TODO don't think this is necessary
 
                 for (int x = 0; x < CANVAS_COLUMN_COUNT; x++) {
-                    if(stackCount >= stackList.size()) {
+                    if (stackCount >= stackList.size()) {
                         // If we have reached the number of stacks the user has, stop inflating dataset
                         return stackCount;
                     }
@@ -1116,7 +1132,7 @@ public class FeedFragment extends Fragment
             //mAdapter.notifyDataSetChanged();
 
             // If there are stacks, run task to get cover photos
-            if(stackCount > 0) {
+            if (stackCount > 0) {
                 new DownloadStackCoverPhotoTask().execute(stackCount);
             }
         }
@@ -1152,7 +1168,7 @@ public class FeedFragment extends Fragment
 
                 for (int x = 0; x < CANVAS_COLUMN_COUNT; x++) {
 
-                    if(stackCount >= numOfStacks) {
+                    if (stackCount >= numOfStacks) {
                         // If we have reached the number of stacks the user has, stop querying
                         break;
                     }
@@ -1160,7 +1176,7 @@ public class FeedFragment extends Fragment
                     String stackId = mCanvasDataset[i][x].getStackId();
 
                     // Make sure we have a stackId
-                    if(stackId == null || stackId.isEmpty()) {
+                    if (stackId == null || stackId.isEmpty()) {
                         stackCount++;
                         continue;
                     }
@@ -1182,7 +1198,7 @@ public class FeedFragment extends Fragment
                     PaginatedQueryList<StackPhoto> stackPhotoList = mapper.query(StackPhoto.class, queryExpression);
 
                     // Make sure we found a StackPhoto
-                    if(stackPhotoList == null || stackPhotoList.isEmpty()) {
+                    if (stackPhotoList == null || stackPhotoList.isEmpty()) {
                         stackCount++;
                         continue;
                     }
@@ -1239,7 +1255,7 @@ public class FeedFragment extends Fragment
                     }
 
                     // Set the photo of the dataset position we are loading a photo of
-                    if(bitmap != null) {
+                    if (bitmap != null) {
                         mCanvasDataset[i][x].setPhoto(bitmap);
                     }
 
@@ -1328,12 +1344,12 @@ public class FeedFragment extends Fragment
 
         protected void onPostExecute(Boolean success) {
             // Give a confirmation
-            if(getView() == null) {
+            if (getView() == null) {
                 // Can't show confirmation if we don't have a view to put it in
                 return;
             }
 
-            if(success){
+            if (success) {
                 // TODO make an undo button?
                 Snackbar.make(getView(), "Photo added to Stack", Snackbar.LENGTH_SHORT).show();
             } else {

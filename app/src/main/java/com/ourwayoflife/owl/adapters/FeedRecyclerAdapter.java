@@ -25,7 +25,8 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
 
     private ArrayList<FeedItem> mData = new ArrayList<>();
     private LayoutInflater mInflater;
-    private ItemClickListener mClickListener;
+    private ImageClickListener mImageClickListener;
+    private ProfileClickListener mProfileClickListener;
     private ItemLongClickListener mLongClickListener;
     private ItemDragListener mDragListener;
     private ItemCheckedChangeListener mOnCheckedChangeListener;
@@ -60,14 +61,10 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
         FeedItem feedItem = mData.get(position);
-        //holder.mFeedItemView.setPhoto(feedItem.getPhoto());
         holder.mImage.setImageBitmap(feedItem.getPhoto());
         holder.mProfilePictureView.setBitmap(feedItem.getUserPicture());
         holder.mTextName.setText(feedItem.getUserName());
         holder.mToggleButtonLike.setChecked(feedItem.getLiked());
-
-        //holder.mFeedItemView.setHeader(feedItem.getHeader());
-        //holder.mFeedItemView.setPhotoCount(feedItem.getPhotoCount());
     }
 
     // total number of cells
@@ -79,8 +76,10 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
 
     // stores and recycles views as they are scrolled off screen
     public class ViewHolder extends RecyclerView.ViewHolder
-            implements View.OnClickListener, View.OnLongClickListener, View.OnDragListener {
-        //public FeedItemView mFeedItemView;
+            implements //View.OnClickListener,
+             View.OnLongClickListener, View.OnDragListener {
+
+
         public ImageView mImage;
         public ProfilePictureView mProfilePictureView;
         public TextView mTextName;
@@ -88,7 +87,6 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
 
         public ViewHolder(View itemView) {
             super(itemView);
-            //mFeedItemView = (FeedItemView) itemView.findViewById(R.id.feed_category);
             mImage = itemView.findViewById(R.id.image);
             mProfilePictureView = itemView.findViewById(R.id.profile_picture);
             mTextName = itemView.findViewById(R.id.text_name);
@@ -102,15 +100,48 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
                 }
             });
 
-            itemView.setOnClickListener(this);
-            itemView.setOnLongClickListener(this);
-            itemView.setOnDragListener(this);
+
+            //itemView.setOnClickListener(this);
+
+            mImage.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (mImageClickListener != null) mImageClickListener.onImageClick(view, getAdapterPosition());
+                }
+            });
+
+            mProfilePictureView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (mProfileClickListener != null) mProfileClickListener.onProfileClick(view, getAdapterPosition());
+                }
+            });
+
+            mTextName.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    if (mProfileClickListener != null) mProfileClickListener.onProfileClick(view, getAdapterPosition());
+                }
+            });
+
+
+            //itemView.setOnLongClickListener(this);
+            //itemView.setOnDragListener(this);
+
+            mImage.setOnLongClickListener(this);
+            mImage.setOnDragListener(this);
+
+
         }
 
+
+        /*
         @Override
         public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+            if (mImageClickListener != null) mImageClickListener.onImageClick(view, getAdapterPosition());
         }
+        */
+
 
         @Override
         public boolean onLongClick(View view) {
@@ -130,8 +161,13 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
 
 
     // allows click events to be caught
-    public void setClickListener(ItemClickListener itemClickListener) {
-        this.mClickListener = itemClickListener;
+    public void setImageClickListener(ImageClickListener imageClickListener) {
+        this.mImageClickListener = imageClickListener;
+    }
+
+    // allows click events to be caught
+    public void setProfileClickListener(ProfileClickListener profileClickListener) {
+        this.mProfileClickListener = profileClickListener;
     }
 
     // allows long click events to be caught
@@ -150,8 +186,13 @@ public class FeedRecyclerAdapter extends RecyclerView.Adapter<FeedRecyclerAdapte
     }
 
     // parent activity will implement this method to respond to click events
-    public interface ItemClickListener {
-        void onItemClick(View view, int position);
+    public interface ImageClickListener {
+        void onImageClick(View view, int position);
+    }
+
+    // parent activity will implement this method to respond to click events
+    public interface ProfileClickListener {
+        void onProfileClick(View view, int position);
     }
 
     // parent activity will implement this method to respond to click events
