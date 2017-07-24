@@ -37,7 +37,6 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.google.android.gms.auth.GoogleAuthUtil;
@@ -46,7 +45,6 @@ import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.LoginActivity;
 import com.ourwayoflife.owl.activities.MainActivity;
 import com.ourwayoflife.owl.activities.StackActivity;
-import com.ourwayoflife.owl.activities.UploadActivity;
 import com.ourwayoflife.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.ourwayoflife.owl.adapters.FeedRecyclerAdapter;
 import com.ourwayoflife.owl.models.CanvasTile;
@@ -62,7 +60,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -143,7 +140,11 @@ public class FeedFragment extends Fragment
 
     private boolean isUpdatingDataset = false;
 
-    private DownloadTask downloadTask;
+    private DownloadTask mDownloadTask;
+    private GetStacksTask mGetStacksTask;
+    private PhotoLikeTask mPhotoLikeTask;
+    private DownloadStackCoverPhotoTask mDownloadStackCoverPhotoTask;
+    private AddStackPhotoTask mAddStackPhotoTask;
 
     public FeedFragment() {
         // Required empty public constructor
@@ -321,9 +322,9 @@ public class FeedFragment extends Fragment
         } else {
             // Retrieve data
             //new DownloadTask().execute(VIEW_FEED);
-            //downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
-            downloadTask = new DownloadTask();
-            downloadTask.execute(VIEW_FEED);
+            //mDownloadTask.cancel(true); // Make sure any previous mDownloadTask is cancelled
+            mDownloadTask = new DownloadTask();
+            mDownloadTask.execute(VIEW_FEED);
         }
 
 
@@ -342,10 +343,10 @@ public class FeedFragment extends Fragment
                 mTextTrending.setTypeface(null, Typeface.NORMAL);
 
                 //new DownloadTask().execute(VIEW_LIKES);
-                downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                mDownloadTask.cancel(true); // Make sure any previous mDownloadTask is cancelled
                 mSwipeRefreshLayout.setRefreshing(false); // Stop refreshing in case we were before
-                downloadTask = new DownloadTask();
-                downloadTask.execute(VIEW_LIKES);
+                mDownloadTask = new DownloadTask();
+                mDownloadTask.execute(VIEW_LIKES);
             }
         });
 
@@ -364,10 +365,10 @@ public class FeedFragment extends Fragment
                 mTextTrending.setTypeface(null, Typeface.NORMAL);
 
                 //new DownloadTask().execute(VIEW_FEED);
-                downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                mDownloadTask.cancel(true); // Make sure any previous mDownloadTask is cancelled
                 mSwipeRefreshLayout.setRefreshing(false); // Stop refreshing in case we were before
-                downloadTask = new DownloadTask();
-                downloadTask.execute(VIEW_FEED);
+                mDownloadTask = new DownloadTask();
+                mDownloadTask.execute(VIEW_FEED);
             }
         });
 
@@ -388,10 +389,10 @@ public class FeedFragment extends Fragment
                 textTrending.setTypeface(null, Typeface.BOLD);
 
                 //new DownloadTask().execute(VIEW_TRENDING);
-                downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
+                mDownloadTask.cancel(true); // Make sure any previous mDownloadTask is cancelled
                 mSwipeRefreshLayout.setRefreshing(false); // Stop refreshing in case we were before
-                downloadTask = new DownloadTask();
-                downloadTask.execute(VIEW_TRENDING);
+                mDownloadTask = new DownloadTask();
+                mDownloadTask.execute(VIEW_TRENDING);
                 */
             }
         });
@@ -405,9 +406,9 @@ public class FeedFragment extends Fragment
                 // Make sure you call swipeContainer.setRefreshing(false)
                 // once the network request has completed successfully.
 
-                downloadTask.cancel(true); // Make sure any previous downloadTask is cancelled
-                downloadTask = new DownloadTask();
-                downloadTask.execute(mSelectedView);
+                mDownloadTask.cancel(true); // Make sure any previous mDownloadTask is cancelled
+                mDownloadTask = new DownloadTask();
+                mDownloadTask.execute(mSelectedView);
 
 
             }
@@ -415,7 +416,8 @@ public class FeedFragment extends Fragment
 
         // Get the stacks for the user we are viewing
         // TODO Should we disable the drag and drop until this is done loading?
-        new GetStacksTask().execute();
+        mGetStacksTask = new GetStacksTask();
+        mGetStacksTask.execute();
     }
 
 
@@ -443,6 +445,41 @@ public class FeedFragment extends Fragment
         mListener = null;
     }
 
+
+    /**
+     * Called when the Fragment is no longer resumed.  This is generally
+     * tied to {@link android.app.Activity#onPause() Activity.onPause} of the containing
+     * Activity's lifecycle.
+     */
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        // If any of the async tasks are running, cancel them
+
+        if (mDownloadTask != null && mDownloadTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mDownloadTask.cancel(true);
+        }
+
+        if (mGetStacksTask != null && mGetStacksTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mGetStacksTask.cancel(true);
+        }
+
+        if (mPhotoLikeTask != null && mPhotoLikeTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mPhotoLikeTask.cancel(true);
+        }
+
+        if (mDownloadStackCoverPhotoTask != null && mDownloadStackCoverPhotoTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mDownloadStackCoverPhotoTask.cancel(true);
+        }
+
+        if (mAddStackPhotoTask != null && mAddStackPhotoTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mAddStackPhotoTask.cancel(true);
+        }
+
+    }
+
+
     /**
      * Called when the fragment is visible to the user and actively running.
      */
@@ -451,6 +488,10 @@ public class FeedFragment extends Fragment
         super.onResume();
         // Set title bar
         getActivity().setTitle(getString(R.string.title_fragment_feed));
+
+
+        // Clear the back stack of all fragments except for this one
+        //getActivity().getSupportFragmentManager().popBackStack(FeedFragment.class.getName(), FragmentManager.POP_BACK_STACK_INCLUSIVE);
     }
 
     /**
@@ -568,7 +609,8 @@ public class FeedFragment extends Fragment
                 }
 
                 // Add the photo to the stack
-                new AddStackPhotoTask().execute(mCanvasDataset[row][column].getStackId(), mDataset.get(mDraggingPosition).getPhotoId());
+                mAddStackPhotoTask = new AddStackPhotoTask();
+                mAddStackPhotoTask.execute(mCanvasDataset[row][column].getStackId(), mDataset.get(mDraggingPosition).getPhotoId());
                 return true;
 
             case DragEvent.ACTION_DRAG_ENDED:
@@ -586,7 +628,8 @@ public class FeedFragment extends Fragment
         // Only like the photo if we are not in the middle of updating the dataset
         // Also make sure the button is pressed, otherwise we will inadvertently  fire this listener during scrolls
         if (compoundButton.isPressed() && !isUpdatingDataset) {
-            new PhotoLikeTask().execute(position);
+            mPhotoLikeTask = new PhotoLikeTask();
+            mPhotoLikeTask.execute(position);
         }
     }
 
@@ -1133,7 +1176,8 @@ public class FeedFragment extends Fragment
 
             // If there are stacks, run task to get cover photos
             if (stackCount > 0) {
-                new DownloadStackCoverPhotoTask().execute(stackCount);
+                mDownloadStackCoverPhotoTask = new DownloadStackCoverPhotoTask();
+                mDownloadStackCoverPhotoTask.execute(stackCount);
             }
         }
     }

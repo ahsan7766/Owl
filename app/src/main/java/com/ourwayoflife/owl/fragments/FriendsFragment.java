@@ -100,7 +100,7 @@ public class FriendsFragment extends Fragment
         if (mUserId == null || mUserId.isEmpty() || mMode == null || mMode.isEmpty()) {
             Toast.makeText(getContext(), "Error loading data", Toast.LENGTH_SHORT).show();
             Log.e(TAG, "UserId or Mode not passed into FriendsFragment.  Ending fragment.");
-            getActivity().onBackPressed(); // End fragment by simulating back press
+            //getActivity().onBackPressed(); // End fragment by simulating back press
         }
 
     }
@@ -234,7 +234,7 @@ public class FriendsFragment extends Fragment
                 // Mode doesn't match.  May have passed an invalid mode.
                 Toast.makeText(getContext(), "Error loading data", Toast.LENGTH_SHORT).show();
                 Log.e(TAG, "Mode not valid. Ending fragment.");
-                getActivity().onBackPressed(); // End fragment by simulating back press
+                //getActivity().onBackPressed(); // End fragment by simulating back press
         }
     }
 
@@ -245,15 +245,16 @@ public class FriendsFragment extends Fragment
         // Go to the canvas of that profile
 
 
-        //Check if the fragment is already in the stack.
-        //If it is, then use that instead of making a new instance
+
+        // Check if the fragment is already in the stack.
+        // If it is, then use that instead of making a new instance
         FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         Fragment fragment = fragmentManager.findFragmentByTag(CanvasFragment.class.getName());
 
         // If fragment doesn't exist yet, create one
         if (fragment == null) {
-            fragment = new CanvasFragment();
+            fragment = CanvasFragment.newInstance(mDataset.get(position).getUserId());
             fragmentTransaction
                     .replace(R.id.flContent, fragment, CanvasFragment.class.getName())
                     .addToBackStack(CanvasFragment.class.getName())
@@ -265,7 +266,19 @@ public class FriendsFragment extends Fragment
                         .addToBackStack(fragmentClass.getName())
                         .commit();
                         */
-            fragmentManager.popBackStackImmediate(CanvasFragment.class.getName(), 0);
+
+            // Remove the existing CanvasFragment from the stack first
+            //fragmentTransaction
+            //        .remove(fragment);
+
+            //fragmentManager.popBackStackImmediate(CanvasFragment.class.getName(), 0);
+            Fragment newFragment = CanvasFragment.newInstance(mDataset.get(position).getUserId());
+            fragmentTransaction
+                    .replace(R.id.flContent, newFragment, CanvasFragment.class.getName())
+                    .addToBackStack(CanvasFragment.class.getName())
+                    .commit();
+
+
         }
 
 
@@ -314,6 +327,7 @@ public class FriendsFragment extends Fragment
 
                 DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                         .withHashKeyValues(queryFollowing)
+                        .withIndexName("UserId-FollowDate-index")
                         .withScanIndexForward(true) // Order so that the most recently followed are last (it will be reversed when we insert into the dataset)
                         .withConsistentRead(false); // Can't use consistent read on GSI
 
@@ -326,14 +340,27 @@ public class FriendsFragment extends Fragment
                     publishProgress();
                 }
             } else if(mMode.equals(MODE_FOLLOWERS)) {
+                queryFollowing.setFollowingId(mUserId);
 
-                // TODO
+                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                        .withHashKeyValues(queryFollowing)
+                        .withIndexName("FollowingId-FollowDate-index")
+                        .withScanIndexForward(true) // Order so that the most recently followed are last (it will be reversed when we insert into the dataset)
+                        .withConsistentRead(false); // Can't use consistent read on GSI
+
+                followingList =  mapper.query(Following.class, queryExpression);
+
+                // Now that we have the list of Following, use that to load the user's data for each row
+                for(Following following : followingList) {
+                    User user = mapper.load(User.class, following.getUserId());
+                    mDataset.add(user);
+                    publishProgress();
+                }
 
             } else {
                 // Invalid mode
                 return false;
             }
-
 
             // Load user
             return true;
@@ -341,10 +368,8 @@ public class FriendsFragment extends Fragment
 
         @Override
         protected void onPreExecute() {
-            // TODO Auto-generated method stub
             super.onPreExecute();
-
-            mDataset.clear();
+            mDataset.clear(); // Make sure dataset is cleared
         }
 
         @Override
@@ -354,56 +379,11 @@ public class FriendsFragment extends Fragment
         }
 
         protected void onPostExecute(Boolean success) {
-            // TODO: check this.exception
-            // TODO: do something with the feed
-            // Clear dataset, add new items, then notify
-
-
-            /*
-            // If the user is not retrieved, then close the fragment
-            if (user == null || user.getUserId() == null || user.getUserId().isEmpty()) {
-                Toast.makeText(getActivity(), "Unable to retrieve user data", Toast.LENGTH_SHORT).show();
-                // End fragment by popping itself from the stack
-                getActivity().getSupportFragmentManager().beginTransaction().remove(ProfileFragment.this).commit();
-                return;
+            // If not successful, notify user and exit fragment
+            if(!success) {
+                Toast.makeText(getContext(), "Unable to retrieve user list", Toast.LENGTH_SHORT).show();
+                //getActivity().onBackPressed(); // Press back to leave fragment
             }
-
-            // Set the class' user variable
-            mUser = user;
-
-            // Update the UI to whatever the user's data is
-            // Get the user's profile picture bitmap
-            //Check if the bitmap is cached
-            Bitmap userBitmap;
-            BitmapFactory.Options optionsUser = new BitmapFactory.Options();
-            //options.inSampleSize = 4;
-            userBitmap = FeedFragment.getBitmapFromMemCache("u" + mUser.getUserId()); // Added a 'u' in front in case there is an overlap between a userId and photoId
-            userPhoto:
-            if (userBitmap == null) {
-                //Bitmap is not cached.  Have to download
-
-                // Convert the photo string to a bitmap
-                String photoString = mUser.getPhoto();
-                if (photoString == null || photoString.length() <= 0) {
-                    break userPhoto;
-                }
-                try {
-                    byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
-                    userBitmap = BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.length, optionsUser);
-
-                    //Add bitmap to the cache
-                    FeedFragment.addBitmapToMemoryCache(String.valueOf("u" + mUser.getUserId()), userBitmap);
-                } catch (Exception e) {
-                    Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
-                }
-            }
-
-            mProfilePictureView.setBitmap(userBitmap);
-
-            mTextUserName.setText(mUser.getName());
-            mTextUserBio.setText(mUser.getBio());
-            */
-
         }
     }
 }

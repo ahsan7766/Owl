@@ -43,7 +43,7 @@ import com.ourwayoflife.owl.views.ProfilePictureView;
  */
 
 public class CanvasFragment extends Fragment
-    implements CanvasOuterRecyclerAdapter.OuterItemClickListener{
+        implements CanvasOuterRecyclerAdapter.OuterItemClickListener {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -69,6 +69,10 @@ public class CanvasFragment extends Fragment
 
 
     private OnFragmentInteractionListener mListener;
+
+    private DownloadUserTask mDownloadUserTask;
+    private GetStacksTask mGetStacksTask;
+    private DownloadStackCoverPhotoTask mDownloadStackCoverPhotoTask;
 
     public CanvasFragment() {
         // Required empty public constructor
@@ -101,15 +105,18 @@ public class CanvasFragment extends Fragment
         }
 
         // Make sure we have a UserId
-        if(mUserId == null || mUserId.isEmpty()) {
+        if (mUserId == null || mUserId.isEmpty()) {
             Log.e(TAG, "Started CanvasFragment without passing in UserId.  Ending Fragment");
             // Notify the user we are unable to show the canvas
-            if(getView() != null) {
+            if (getView() != null) {
                 Snackbar.make(getView(), getString(R.string.error_view_canvas), Snackbar.LENGTH_SHORT);
             } else {
                 Toast.makeText(getContext(), getString(R.string.error_view_canvas), Toast.LENGTH_SHORT).show();
             }
-            getActivity().onBackPressed(); // Press back button to simulate exiting fragment
+
+            //getActivity().getSupportFragmentManager().popBackStack();
+            //getActivity().onBackPressed(); // Press back button to simulate exiting fragment
+            Toast.makeText(getContext(), "Unable to load user data.", Toast.LENGTH_SHORT).show();
         }
 
         // Initialize dataset, this data would usually come from a local content provider or
@@ -132,7 +139,6 @@ public class CanvasFragment extends Fragment
         mRecyclerView.setItemViewCacheSize(20);
         mRecyclerView.setDrawingCacheEnabled(true);
         mRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
-
 
 
         // set up the RecyclerView
@@ -191,7 +197,8 @@ public class CanvasFragment extends Fragment
         //return inflater.inflate(R.layout.fragment_feed, container, false);
 
         // Initialize dataset
-        new DownloadUserTask().execute();
+        mDownloadUserTask = new DownloadUserTask();
+        mDownloadUserTask.execute();
 
         return rootView;
 
@@ -212,7 +219,8 @@ public class CanvasFragment extends Fragment
         super.onViewCreated(view, savedInstanceState);
 
         // Get the stacks for the user we are viewing
-        new GetStacksTask().execute();
+        mGetStacksTask = new GetStacksTask();
+        mGetStacksTask.execute();
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -237,6 +245,30 @@ public class CanvasFragment extends Fragment
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    /**
+     * Called when the Fragment is no longer resumed.  This is generally
+     * tied to {@link android.app.Activity#onPause() Activity.onPause} of the containing
+     * Activity's lifecycle.
+     */
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        // If any async tasks are running, cancel them
+
+        if (mDownloadUserTask != null && mDownloadUserTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mDownloadUserTask.cancel(true);
+        }
+
+        if (mGetStacksTask != null && mGetStacksTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mGetStacksTask.cancel(true);
+        }
+
+        if (mDownloadStackCoverPhotoTask != null && mDownloadStackCoverPhotoTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mDownloadStackCoverPhotoTask.cancel(true);
+        }
     }
 
     /**
@@ -286,13 +318,13 @@ public class CanvasFragment extends Fragment
         Log.d(TAG, "CANVAS ITEM CLICKED: Row " + row + ", Col " + column);
 
         CanvasTile canvasTile = mDataset[row][column];
-        if(canvasTile == null) {
+        if (canvasTile == null) {
             // Don't start stack activity if we don't have a canvasTile in the position that was clicked
             return;
         }
 
         final String STACK_ID = mDataset[row][column].getStackId();
-        if(STACK_ID == null || STACK_ID.isEmpty()) {
+        if (STACK_ID == null || STACK_ID.isEmpty()) {
             // Don't start stack activity if we don't have a stackId to pass it
             return;
         }
@@ -309,6 +341,7 @@ public class CanvasFragment extends Fragment
 
         protected Integer doInBackground(Void... voids) {
 
+
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getContext(), // Context
@@ -318,6 +351,7 @@ public class CanvasFragment extends Fragment
                     getString(R.string.cognito_auth_role), // Authenticated Role ARN
                     Regions.US_EAST_1 // Region
             );
+
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
@@ -338,11 +372,10 @@ public class CanvasFragment extends Fragment
             PaginatedQueryList<Stack> stackList = mapper.query(Stack.class, queryExpression);
 
 
-
             // Now that we have the list of stacks, get the first picture of each stack to set the canvas tiles
             //mDataset = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
 
-            if(stackList == null) {
+            if (stackList == null) {
                 // Stack list was not found.  Don't try inflating the canvas tiles
                 return null;
             }
@@ -353,7 +386,7 @@ public class CanvasFragment extends Fragment
                 mDataset[i] = new CanvasTile[COLUMN_COUNT]; // TODO don't think this is necessary
 
                 for (int x = 0; x < COLUMN_COUNT; x++) {
-                    if(stackCount >= stackList.size()) {
+                    if (stackCount >= stackList.size()) {
                         // If we have reached the number of stacks the user has, stop inflating dataset
                         return stackCount;
                     }
@@ -367,6 +400,7 @@ public class CanvasFragment extends Fragment
             }
 
             return stackCount;
+
         }
 
         @Override
@@ -383,8 +417,9 @@ public class CanvasFragment extends Fragment
             //mAdapter.notifyDataSetChanged();
 
             // If there are stacks, run task to get cover photos
-            if(stackCount > 0) {
-                new DownloadStackCoverPhotoTask().execute(stackCount);
+            if (stackCount > 0) {
+                mDownloadStackCoverPhotoTask = new DownloadStackCoverPhotoTask();
+                mDownloadStackCoverPhotoTask.execute(stackCount);
             }
         }
     }
@@ -419,7 +454,7 @@ public class CanvasFragment extends Fragment
 
                 for (int x = 0; x < COLUMN_COUNT; x++) {
 
-                    if(stackCount >= numOfStacks) {
+                    if (stackCount >= numOfStacks) {
                         // If we have reached the number of stacks the user has, stop querying
                         break;
                     }
@@ -427,7 +462,7 @@ public class CanvasFragment extends Fragment
                     String stackId = mDataset[i][x].getStackId();
 
                     // Make sure we have a stackId
-                    if(stackId == null || stackId.isEmpty()) {
+                    if (stackId == null || stackId.isEmpty()) {
                         stackCount++;
                         continue;
                     }
@@ -436,43 +471,24 @@ public class CanvasFragment extends Fragment
                     StackPhoto queryStackPhoto = new StackPhoto();
                     queryStackPhoto.setStackId(stackId);
 
-
-                    // TODO need to make sure we are getting the most recent photo by sorting/indexing by AddedDate
                     DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                             .withHashKeyValues(queryStackPhoto)
+                            .withIndexName("StackId-AddedDate-index")
                             .withLimit(1) // Only want the first one
                             //.withRangeKeyCondition("Title", rangeKeyCondition)
                             .withScanIndexForward(false)
-                            .withConsistentRead(false);
-
+                            .withConsistentRead(false); // Can't use consistent read on GSI
 
                     PaginatedQueryList<StackPhoto> stackPhotoList = mapper.query(StackPhoto.class, queryExpression);
 
                     // Make sure we found a StackPhoto
-                    if(stackPhotoList == null || stackPhotoList.isEmpty()) {
+                    if (stackPhotoList == null || stackPhotoList.isEmpty()) {
                         stackCount++;
                         continue;
                     }
 
-
-
-                    /*
-                    Photo queryPhoto = new Photo();
-                    queryPhoto.setPhotoId(stackPhotoList.get(0).getPhotoId());
-
-
-                    // Now use the PhotoId of the stack photo to query for the photo
-                    DynamoDBQueryExpression queryExpressionPhoto = new DynamoDBQueryExpression()
-                            .withIndexName("UserId-UploadDate-index")
-                            .withHashKeyValues(queryPhoto)
-                            //.withRangeKeyCondition("Title", rangeKeyCondition)
-                            .withConsistentRead(false)
-                            .withScanIndexForward(false);
-
-                    */
-
+                    // Load the photo using the PhotoId from the StackPhoto
                     Photo photo = mapper.load(Photo.class, stackPhotoList.get(0).getPhotoId());
-
 
                     Bitmap bitmap;
                     BitmapFactory.Options options = new BitmapFactory.Options();
@@ -506,7 +522,7 @@ public class CanvasFragment extends Fragment
                     }
 
                     // Set the photo of the dataset position we are loading a photo of
-                    if(bitmap != null) {
+                    if (bitmap != null) {
                         mDataset[i][x].setPhoto(bitmap);
                     }
 

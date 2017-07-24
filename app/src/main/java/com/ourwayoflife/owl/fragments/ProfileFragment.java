@@ -85,7 +85,16 @@ public class ProfileFragment extends Fragment implements
 
     private OnFragmentInteractionListener mListener;
 
-    ProfileEditDialogFragment mProfileEditDialog;
+    private ProfileEditDialogFragment mProfileEditDialog;
+
+    private DownloadUserTask mDownloadUserTask;
+    private CheckFollowingTask mCheckFollowingTask;
+    private FollowUserTask mFollowUserTask;
+    private UpdateProfilePictureTask mUpdateProfilePictureTask;
+    private UpdateUserTask mUpdateUserTask;
+    private GetUserLikeCountTask mGetUserLikeCountTask;
+    private GetUserFollowerCountTask mGetUserFollowerCountTask;
+    private GetUserFollowingCountTask mGetUserFollowingCountTask;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -210,34 +219,40 @@ public class ProfileFragment extends Fragment implements
                     mProfileEditDialog.setName(mUser.getName());
                     mProfileEditDialog.setEmail(mUser.getEmail());
                     mProfileEditDialog.setBio(mUser.getBio());
-                    mProfileEditDialog.show(getFragmentManager(), "ProfileEditDialogFragment");
+                    mProfileEditDialog.show(getActivity().getSupportFragmentManager(), ProfileEditDialogFragment.class.getName());
                 }
             });
         } else {
             // Otherwise, check if the user is following this user we are viewing to set the button text to either follow or unfollow
-            new CheckFollowingTask().execute();
+
+            mCheckFollowingTask = new CheckFollowingTask();
+            mCheckFollowingTask.execute();
 
             mButtonEditFollow.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     // Run task that follows/unfollows the user
-                    new FollowUserTask().execute();
+                    mFollowUserTask = new FollowUserTask();
+                    mFollowUserTask.execute();
                 }
             });
         }
 
 
-
         // TODO  try to save instance state or something instead of re-loading this on every resume
         //Execute task to get user data
-        new DownloadUserTask().execute();
+        mDownloadUserTask = new DownloadUserTask();
+        mDownloadUserTask.execute();
 
         // Get Like count for profile counter
-        new GetUserLikeCountTask().execute();
+        mGetUserLikeCountTask = new GetUserLikeCountTask();
+        mGetUserLikeCountTask.execute();
 
-        new GetUserFollowerCountTask().execute();
+        mGetUserFollowerCountTask = new GetUserFollowerCountTask();
+        mGetUserFollowerCountTask.execute();
 
-        new GetUserFollowingCountTask().execute();
+        mGetUserFollowingCountTask = new GetUserFollowingCountTask();
+        mGetUserFollowingCountTask.execute();
 
     }
 
@@ -263,6 +278,52 @@ public class ProfileFragment extends Fragment implements
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+
+    /**
+     * Called when the Fragment is no longer resumed.  This is generally
+     * tied to {@link android.app.Activity#onPause() Activity.onPause} of the containing
+     * Activity's lifecycle.
+     */
+    @Override
+    public void onPause() {
+        super.onPause();
+
+        // If any of the async tasks are running, cancel them
+
+        if (mDownloadUserTask != null && mDownloadUserTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mDownloadUserTask.cancel(true);
+        }
+
+        if (mCheckFollowingTask != null && mCheckFollowingTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mCheckFollowingTask.cancel(true);
+        }
+
+        if (mFollowUserTask != null && mFollowUserTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mFollowUserTask.cancel(true);
+        }
+
+        if (mUpdateProfilePictureTask != null && mUpdateProfilePictureTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mUpdateProfilePictureTask.cancel(true);
+        }
+
+        if (mUpdateUserTask != null && mUpdateUserTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mUpdateUserTask.cancel(true);
+        }
+
+        if (mGetUserLikeCountTask != null && mGetUserLikeCountTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mGetUserLikeCountTask.cancel(true);
+        }
+
+        if (mGetUserFollowerCountTask != null && mGetUserFollowerCountTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mGetUserFollowerCountTask.cancel(true);
+        }
+
+        if (mGetUserFollowingCountTask != null && mGetUserFollowingCountTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mGetUserFollowingCountTask.cancel(true);
+        }
+
     }
 
     /**
@@ -309,7 +370,8 @@ public class ProfileFragment extends Fragment implements
         mUser.setName(dialog.getName());
         mUser.setBio(dialog.getBio());
 
-        new UpdateUserTask().execute();
+        mUpdateUserTask = new UpdateUserTask();
+        mUpdateUserTask.execute();
 
     }
 
@@ -334,12 +396,12 @@ public class ProfileFragment extends Fragment implements
                         Bitmap bitmap;
 
                         // Check if the photo is locally stored
-                        if (selectedImage.toString().startsWith("content://com.google.android.apps.photos.content")){
+                        if (selectedImage.toString().startsWith("content://com.google.android.apps.photos.content")) {
                             // The photo is NOT locally stored (Could be using Google Photos, etc...
                             InputStream is;
                             try {
                                 is = getContext().getContentResolver().openInputStream(selectedImage);
-                            } catch (FileNotFoundException e){
+                            } catch (FileNotFoundException e) {
                                 Log.e(TAG, "Could not find file. " + e);
                                 e.printStackTrace();
                                 Toast.makeText(getContext(), "Unable to upload photo.", Toast.LENGTH_SHORT).show();
@@ -357,7 +419,8 @@ public class ProfileFragment extends Fragment implements
 
                         if (bitmap != null) {
                             // Run task to upload profile picture
-                            new UpdateProfilePictureTask().execute(bitmap);
+                            mUpdateProfilePictureTask = new UpdateProfilePictureTask();
+                            mUpdateProfilePictureTask.execute(bitmap);
                         }
 
                     } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
@@ -508,6 +571,8 @@ public class ProfileFragment extends Fragment implements
                 .commit();
         return true;
     }
+
+
 
     private class DownloadUserTask extends AsyncTask<Void, Void, User> {
 
