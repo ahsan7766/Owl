@@ -17,6 +17,8 @@ public class Photo {
     private String mUploadDate;
     private String mUserId;
     private String mPhoto;
+    private boolean mIsDeleted;
+    private String mDeletedDate;
 
     public Photo() {
     }
@@ -59,5 +61,23 @@ public class Photo {
 
     public void setPhoto(String photo) {
         mPhoto = photo;
+    }
+
+    @DynamoDBAttribute(attributeName = "IsDeleted")
+    public boolean isDeleted() {
+        return mIsDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        mIsDeleted = deleted;
+    }
+
+    @DynamoDBAttribute(attributeName = "DeletedDate")
+    public String getDeletedDate() {
+        return mDeletedDate;
+    }
+
+    public void setDeletedDate(String deletedDate) {
+        mDeletedDate = deletedDate;
     }
 }

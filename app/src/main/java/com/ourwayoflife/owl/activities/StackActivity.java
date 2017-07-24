@@ -2,16 +2,19 @@ package com.ourwayoflife.owl.activities;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -83,6 +86,16 @@ public class StackActivity extends AppCompatActivity
 
     private EditText mEditTextComment;
 
+
+    private CheckPhotoLikeTask mCheckPhotoLikeTask;
+    private CheckPhotoLikeCountTask mCheckPhotoLikeCountTask;
+    private DownloadPhotoTask mDownloadPhotoTask;
+    private DownloadPhotoCommentsTask mDownloadPhotoCommentsTask;
+    private CheckStackLikeTask mCheckStackLikeTask;
+    private CheckStackLikeCountTask mCheckStackLikeCountTask;
+    private DownloadStackPhotosTask mDownloadStackPhotosTask;
+    private DeletePhotoTask mDeletePhotoTask;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -117,15 +130,19 @@ public class StackActivity extends AppCompatActivity
             // Check if photo was previously liked
             // TODO instead of this, just pass a boolean to this activity that says if the photo
             // was already liked.  If that bool extra is missing, then run this AsyncTask
-            new CheckPhotoLikeTask().execute();
+            mCheckPhotoLikeTask = new CheckPhotoLikeTask();
+            mCheckPhotoLikeTask.execute();
 
-            new CheckPhotoLikeCountTask().execute();
+            mCheckPhotoLikeCountTask = new CheckPhotoLikeCountTask();
+            mCheckPhotoLikeCountTask.execute();
 
             // Download photo
-            new DownloadPhotoTask().execute();
+            mDownloadPhotoTask = new DownloadPhotoTask();
+            mDownloadPhotoTask.execute();
 
             // Get the comments for the photo
-            new DownloadPhotoCommentsTask().execute();
+            mDownloadPhotoCommentsTask = new DownloadPhotoCommentsTask();
+            mDownloadPhotoCommentsTask.execute();
 
         } else if (stackId != null && stackId.length() > 0) {
             // Stack mode
@@ -133,11 +150,14 @@ public class StackActivity extends AppCompatActivity
             // Check if photo was previously liked
             // TODO instead of this, (if easier) just pass a boolean to this activity that says if the stack
             // was already liked.  If that bool extra is missing, then run this AsyncTask
-            new CheckStackLikeTask().execute();
+            mCheckStackLikeTask = new CheckStackLikeTask();
+            mCheckStackLikeTask.execute();
 
-            new CheckStackLikeCountTask().execute();
+            mCheckStackLikeCountTask = new CheckStackLikeCountTask();
+            mCheckStackLikeCountTask.execute();
 
-            new DownloadStackPhotosTask().execute();
+            mDownloadStackPhotosTask = new DownloadStackPhotosTask();
+            mDownloadStackPhotosTask.execute();
 
             //finish();
         } else {
@@ -243,7 +263,23 @@ public class StackActivity extends AppCompatActivity
                 return true;
 
             case R.id.action_delete:
-                Toast.makeText(this, "DELETE PHOTO FEATURE NOT YET IMPLEMENTED", Toast.LENGTH_SHORT).show(); // TODO Delete photo feature
+                // Show confirmation
+                new AlertDialog.Builder(this)
+                        .setTitle(getString(R.string.dialog_title_delete_photo))
+                        .setMessage(getString(R.string.dialog_message_delete_photo))
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                // Run the delete photo task
+                                mDeletePhotoTask = new DeletePhotoTask();
+                                mDeletePhotoTask.execute();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, null) // No listener for the negative option
+                        .setCancelable(true)
+                        .show(); // Show the dialog
+
+
                 return true;
 
             default:
@@ -650,7 +686,7 @@ public class StackActivity extends AppCompatActivity
         protected Boolean doInBackground(Void... params) {
 
             // Make sure we have a photoId and logged in UserId
-            if(photoId == null || photoId.isEmpty() || LoginActivity.sUserId == null || LoginActivity.sUserId.isEmpty()) {
+            if (photoId == null || photoId.isEmpty() || LoginActivity.sUserId == null || LoginActivity.sUserId.isEmpty()) {
                 return false;
             }
 
@@ -955,6 +991,67 @@ public class StackActivity extends AppCompatActivity
                 mIntLikeCount--;
             }
             updateLikeCountUI();
+        }
+    }
+
+
+    private class DeletePhotoTask extends AsyncTask<Void, Void, Boolean> {
+
+        protected Boolean doInBackground(Void... params) {
+            // Make sure we have a PhotoId
+            if (photoId == null || photoId.isEmpty() || mDatasetPhotos.get(0) == null) {
+                return false;
+            }
+            // Since we are in Photo mode, there should only be 1 photo in the dataset
+            // This will be the photo we are deleting
+            Photo photo = mDatasetPhotos.get(0);
+
+            // Double check to make sure the Photo's UserId is the same as the logged in user
+            if (!photo.getUserId().equals(LoginActivity.sUserId)) {
+                return false;
+            }
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            photo.setDeleted(true);
+
+            // We are adding a PhotoLike to the table
+            // Get date string
+            DateTime dt = new DateTime(DateTimeZone.UTC);
+            DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+            final String dateString = fmt.print(dt);
+            photo.setDeletedDate(dateString);
+
+            // Save the photo with the altered deleted attributes in the DB
+            mapper.save(photo);
+
+            return true;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Boolean success) {
+            if (success) {
+                Toast.makeText(StackActivity.this, "Photo Deleted", Toast.LENGTH_SHORT).show();
+                finish();
+            } else {
+                Toast.makeText(StackActivity.this, "Photo Deletion Unsuccessful", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 }

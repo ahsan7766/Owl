@@ -636,7 +636,6 @@ public class FeedFragment extends Fragment
 
     private class DownloadTask extends AsyncTask<Integer, FeedItem, List<FeedItem>> {
 
-
         int addedCount = 0; // Keeps track of how many new photos we are adding to the dataset
         int origDatasetSize = 0; // How many were originally in the dataset
 
@@ -823,6 +822,11 @@ public class FeedFragment extends Fragment
 
             // Convert the photo list to a FeedItem list
             for (Photo photo : result) {
+
+                if(photo.isDeleted()) {
+                    // Don't load photo if it's deleted
+                    continue;
+                }
 
                 Bitmap photoBitmap;
                 BitmapFactory.Options options = new BitmapFactory.Options();
