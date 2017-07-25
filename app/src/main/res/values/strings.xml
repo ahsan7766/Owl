@@ -113,8 +113,11 @@
     <string name="action_settings">Settings</string>
 
 
+    <!-- Feed -->
+    <string name="text_empty_feed">No photos</string>
+
     <!-- Canvas -->
-    <string name="view_profile">View Profile</string>'
+    <string name="view_profile">View Profile</string>
 
     <!-- Profile -->
     <string name="edit">Edit</string>
@@ -128,8 +131,15 @@
     <string name="message_photo_deleted">This photo has been deleted</string>
     <string name="message_error_load_photo">Error loading photo</string>
 
+
+    <!-- Friends -->
+    <string name="text_empty_followers">No followers</string>
+    <string name="text_empty_following">Not following anyone</string>
+
+
     <!-- Comments Recycler Adapter-->
     <string name="user_not_found">User not found</string>
+    <string name="text_empty_comments">No comments</string>
 
     <!-- FeedCategoryView -->
     <string name="photos">Photos</string>

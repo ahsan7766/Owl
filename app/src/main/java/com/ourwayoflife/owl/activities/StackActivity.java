@@ -55,6 +55,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.w3c.dom.Text;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -80,6 +81,8 @@ public class StackActivity extends AppCompatActivity
     private ArrayList<Photo> mDatasetPhotos = new ArrayList<>();
 
     private RecyclerView mRecyclerViewComments;
+    private TextView mTextEmptyComments;
+
     private RecyclerView.LayoutManager mLayoutManagerComments;
     private PhotoCommentsRecyclerAdapter mAdapterPhotoComments;
     private StackCommentsRecyclerAdapter mAdapterStackComments;
@@ -204,8 +207,9 @@ public class StackActivity extends AppCompatActivity
         // TODO Change number of likes based on query
 
 
-        // Initialize RecyclerView
+        // Initialize RecyclerView and its empty view
         mRecyclerViewComments = findViewById(R.id.recycler_comments);
+        mTextEmptyComments = findViewById(R.id.text_empty_comments);
 
         // Initialize Dataset
         // TODO Initialize Dataset
@@ -614,8 +618,9 @@ public class StackActivity extends AppCompatActivity
         protected void onPostExecute(List<PhotoComment> result) {
 
             if (result.size() <= 0) {
-                // TODO: if there's no comments, show an empty view or something
-
+                // If there's no comments, hide the recyclerview and show the empty view
+                mRecyclerViewComments.setVisibility(View.GONE);
+                mTextEmptyComments.setVisibility(View.VISIBLE);
             } else {
                 // Add comments to dataset and notify adapter
                 mDatasetPhotoComments.addAll(result);
@@ -676,8 +681,9 @@ public class StackActivity extends AppCompatActivity
         protected void onPostExecute(List<StackComment> result) {
 
             if (result.size() <= 0) {
-                // TODO: if there's no comments, show an empty view or something
-
+                // If there's no comments, hide the recyclerview and show the empty view
+                mRecyclerViewComments.setVisibility(View.GONE);
+                mTextEmptyComments.setVisibility(View.VISIBLE);
             } else {
                 // Add comments to dataset and notify adapter
                 mDatasetStackComments.addAll(result);
@@ -810,6 +816,12 @@ public class StackActivity extends AppCompatActivity
             //new DownloadPhotoCommentsTask().execute(photoId);
             mDatasetPhotoComments.add(photoComment);
             mAdapterPhotoComments.notifyItemInserted(mDatasetPhotoComments.size());
+
+            // If the empty view is show (this is the first comment posted) hide the empty view and show the recycler
+            if(mTextEmptyComments.getVisibility() == View.VISIBLE) {
+                mTextEmptyComments.setVisibility(View.GONE);
+                mRecyclerViewComments.setVisibility(View.VISIBLE);
+            }
         }
 
     }
@@ -868,6 +880,12 @@ public class StackActivity extends AppCompatActivity
             //new DownloadPhotoCommentsTask().execute(photoId);
             mDatasetStackComments.add(stackComment);
             mAdapterStackComments.notifyItemInserted(mDatasetStackComments.size());
+
+            // If the empty view is show (this is the first comment posted) hide the empty view and show the recycler
+            if(mTextEmptyComments.getVisibility() == View.VISIBLE) {
+                mTextEmptyComments.setVisibility(View.GONE);
+                mRecyclerViewComments.setVisibility(View.VISIBLE);
+            }
         }
 
     }

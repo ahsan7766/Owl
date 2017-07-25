@@ -135,7 +135,7 @@ public class CanvasFragment extends Fragment
 
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_canvas_outer);
 
-        //mRecyclerView.setHasFixedSize(true); //TODO see if this works
+        //mRecyclerViewFeed.setHasFixedSize(true); //TODO see if this works
         mRecyclerView.setItemViewCacheSize(20);
         mRecyclerView.setDrawingCacheEnabled(true);
         mRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
@@ -183,7 +183,7 @@ public class CanvasFragment extends Fragment
 
         /*
         final FloatingActionButton fab = ((MainActivity) getActivity()).getFloatingActionButton();
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener(){
+        mRecyclerViewFeed.addOnScrollListener(new RecyclerView.OnScrollListener(){
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy){
                 if (dy > 0)
@@ -299,12 +299,12 @@ public class CanvasFragment extends Fragment
 
     /*
     private void initDataset() {
-        mDataset = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
+        mDatasetFeed = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
         for (int i = 0; i < ROW_COUNT; i++) {
-            mDataset[i] = new CanvasTile[COLUMN_COUNT];
+            mDatasetFeed[i] = new CanvasTile[COLUMN_COUNT];
 
             for (int x = 0; x < COLUMN_COUNT; x++) {
-                mDataset[i][x] = new CanvasTile("ROW " + i + " COL " + x);
+                mDatasetFeed[i][x] = new CanvasTile("ROW " + i + " COL " + x);
             }
 
         }
@@ -373,7 +373,7 @@ public class CanvasFragment extends Fragment
 
 
             // Now that we have the list of stacks, get the first picture of each stack to set the canvas tiles
-            //mDataset = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
+            //mDatasetFeed = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
 
             if (stackList == null) {
                 // Stack list was not found.  Don't try inflating the canvas tiles
@@ -414,7 +414,7 @@ public class CanvasFragment extends Fragment
             // TODO: do something with the feed
 
             // Clear dataset, add new items, then notify
-            //mAdapter.notifyDataSetChanged();
+            //mAdapterFeed.notifyDataSetChanged();
 
             // If there are stacks, run task to get cover photos
             if (stackCount > 0) {
@@ -560,8 +560,8 @@ public class CanvasFragment extends Fragment
             // TODO: do something with the feed
 
             // Clear dataset, add new items, then notify
-            //mAdapter.notifyDataSetChanged();
-            //mAdapter.notifyInnerDatasetRowsChanged();
+            //mAdapterFeed.notifyDataSetChanged();
+            //mAdapterFeed.notifyInnerDatasetRowsChanged();
         }
     }
 

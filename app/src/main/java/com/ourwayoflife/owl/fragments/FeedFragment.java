@@ -116,20 +116,21 @@ public class FeedFragment extends Fragment
     private TextView mTextTrending;
 
 
-    protected RecyclerView mCanvasRecyclerView;
-    protected CanvasOuterRecyclerAdapter mCanvasAdapter;
-    protected RecyclerView.LayoutManager mCanvasLayoutManager;
-    protected CanvasTile[][] mCanvasDataset = new CanvasTile[CANVAS_ROW_COUNT][CANVAS_COLUMN_COUNT];
+    protected RecyclerView mRecyclerViewCanvas;
+    protected CanvasOuterRecyclerAdapter mAdapterCanvas;
+    protected RecyclerView.LayoutManager mLayoutManagerCanvas;
+    protected CanvasTile[][] mDatasetCanvas = new CanvasTile[CANVAS_ROW_COUNT][CANVAS_COLUMN_COUNT];
 
 
     private static final int SPAN_COUNT = 1; // number of columns in the grid
     private static final int DATASET_COUNT = 10;
 
     private SwipeRefreshLayout mSwipeRefreshLayout;
-    protected RecyclerView mRecyclerView;
-    protected FeedRecyclerAdapter mAdapter;
-    protected RecyclerView.LayoutManager mLayoutManager;
-    protected ArrayList<FeedItem> mDataset = new ArrayList<>();
+    protected RecyclerView mRecyclerViewFeed;
+    protected TextView mTextEmptyFeed;
+    protected FeedRecyclerAdapter mAdapterFeed;
+    protected RecyclerView.LayoutManager mLayoutManagerFeed;
+    protected ArrayList<FeedItem> mDatasetFeed = new ArrayList<>();
 
 
     private HashMap<String, User> mUserHashMap = new HashMap<>(); // Used so we don't have to repeat querying for user data
@@ -218,7 +219,7 @@ public class FeedFragment extends Fragment
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        //outState.putParcelableArrayList("FEED_ITEMS", mDataset);
+        //outState.putParcelableArrayList("FEED_ITEMS", mDatasetFeed);
     }
 
     @Override
@@ -236,54 +237,55 @@ public class FeedFragment extends Fragment
 
 
         // SET UP CANVAS
-        mCanvasRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_feed_canvas_outer);
-        //mRecyclerView.setHasFixedSize(true); //TODO see if this works
-        mCanvasRecyclerView.setItemViewCacheSize(20);
-        mCanvasRecyclerView.setDrawingCacheEnabled(true);
-        mCanvasRecyclerView.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
+        mRecyclerViewCanvas = rootView.findViewById(R.id.recycler_feed_canvas_outer);
+        //mRecyclerViewFeed.setHasFixedSize(true); //TODO see if this works
+        mRecyclerViewCanvas.setItemViewCacheSize(20);
+        mRecyclerViewCanvas.setDrawingCacheEnabled(true);
+        mRecyclerViewCanvas.setDrawingCacheQuality(View.DRAWING_CACHE_QUALITY_HIGH);
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
-        mCanvasLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
+        mLayoutManagerCanvas = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
 
         // set up the RecyclerView
-        mCanvasRecyclerView.setLayoutManager(mCanvasLayoutManager);
-        mCanvasAdapter = new CanvasOuterRecyclerAdapter(getActivity(), mCanvasDataset);
-        //mCanvasAdapter.setClickListener(this);
-        mCanvasAdapter.setInnerDragListener(this);
+        mRecyclerViewCanvas.setLayoutManager(mLayoutManagerCanvas);
+        mAdapterCanvas = new CanvasOuterRecyclerAdapter(getActivity(), mDatasetCanvas);
+        //mAdapterCanvas.setClickListener(this);
+        mAdapterCanvas.setInnerDragListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
-        mCanvasRecyclerView.setAdapter(mCanvasAdapter);
+        mRecyclerViewCanvas.setAdapter(mAdapterCanvas);
 
 
-        // SET UP FEED
-        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_feed);
+        // Set up recycler and its empty view
+        mRecyclerViewFeed = rootView.findViewById(R.id.recycler_feed);
+        mTextEmptyFeed = rootView.findViewById(R.id.text_empty_feed);
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
-        mLayoutManager = new GridLayoutManager(getActivity(), SPAN_COUNT);
+        mLayoutManagerFeed = new GridLayoutManager(getActivity(), SPAN_COUNT);
 
         // set up the RecyclerView
-        mRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new FeedRecyclerAdapter(getActivity(), mDataset);
-        mAdapter.setImageClickListener(this);
-        mAdapter.setProfileClickListener(this);
-        mAdapter.setLongClickListener(this);
-        //mAdapter.setDragListener(this);
-        mAdapter.setOnCheckedChangeListener(this);
+        mRecyclerViewFeed.setLayoutManager(mLayoutManagerFeed);
+        mAdapterFeed = new FeedRecyclerAdapter(getActivity(), mDatasetFeed);
+        mAdapterFeed.setImageClickListener(this);
+        mAdapterFeed.setProfileClickListener(this);
+        mAdapterFeed.setLongClickListener(this);
+        //mAdapterFeed.setDragListener(this);
+        mAdapterFeed.setOnCheckedChangeListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
-        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerViewFeed.setAdapter(mAdapterFeed);
 
 
-        mSwipeRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.swipe_refresh);
+        mSwipeRefreshLayout = rootView.findViewById(R.id.swipe_refresh);
 
 
         // Set up show/hide animation for fab
         final FloatingActionButton fab = ((MainActivity) getActivity()).getFloatingActionButton();
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        mRecyclerViewFeed.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 if (dy > 0)
@@ -317,8 +319,8 @@ public class FeedFragment extends Fragment
         if (savedInstanceState != null && savedInstanceState.getParcelableArrayList("FEED_ITEMS") != null) {
             //Restore the fragment's state here
             Log.d("TAG", savedInstanceState.toString());
-            mDataset = savedInstanceState.getParcelableArrayList("FEED_ITEMS");
-            Log.d("TAG", "Restoring FeedItem Dataset. Dataset Size: " + mDataset.size());
+            mDatasetFeed = savedInstanceState.getParcelableArrayList("FEED_ITEMS");
+            Log.d("TAG", "Restoring FeedItem Dataset. Dataset Size: " + mDatasetFeed.size());
         } else {
             // Retrieve data
             //new DownloadTask().execute(VIEW_FEED);
@@ -530,8 +532,8 @@ public class FeedFragment extends Fragment
     @Override
     public void onImageClick(View view, int position) {
         Intent intent = new Intent(getContext(), StackActivity.class);
-        intent.putExtra("USER_ID", mDataset.get(position).getUserId());
-        intent.putExtra("PHOTO_ID", mDataset.get(position).getPhotoId());
+        intent.putExtra("USER_ID", mDatasetFeed.get(position).getUserId());
+        intent.putExtra("PHOTO_ID", mDatasetFeed.get(position).getPhotoId());
         view.getContext().startActivity(intent);
     }
 
@@ -540,7 +542,7 @@ public class FeedFragment extends Fragment
     public void onProfileClick(View view, int position) {
         // Start canvas fragment
         // Pass in the UserId of the photo that was clicked
-        CanvasFragment fragment = CanvasFragment.newInstance(mDataset.get(position).getUserId());
+        CanvasFragment fragment = CanvasFragment.newInstance(mDatasetFeed.get(position).getUserId());
 
         // Insert the fragment by replacing any existing fragment
         FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
@@ -563,7 +565,7 @@ public class FeedFragment extends Fragment
         //v.vibrate(500);
 
         // Animate the top RecyclerView to expand it and allow dragging
-        mCanvasRecyclerView.setVisibility(View.VISIBLE);
+        mRecyclerViewCanvas.setVisibility(View.VISIBLE);
 
 
         // Show a shadow of the image that is being dragged when it is long clicked
@@ -590,34 +592,34 @@ public class FeedFragment extends Fragment
         switch (dragEvent.getAction()) {
             case DragEvent.ACTION_DRAG_STARTED:
                 // drag has started, return true to tell that you're listening to the drag
-                //mRecyclerView.setNestedScrollingEnabled(false);
+                //mRecyclerViewFeed.setNestedScrollingEnabled(false);
 
                 return true;
 
             case DragEvent.ACTION_DROP:
                 // the dragged item was dropped into this view
-                //CanvasTile a = mDataset[0][position];
+                //CanvasTile a = mDatasetFeed[0][position];
                 //a.setComment("DRAG");
-                //mAdapter.notifyItemChanged(position);
-                //mAdapter.notifyDataSetChanged();
+                //mAdapterFeed.notifyItemChanged(position);
+                //mAdapterFeed.notifyDataSetChanged();
                 //Toast.makeText(getActivity(), "Dragged Photo To Row " + row + ", Col " + column, Toast.LENGTH_SHORT).show();
 
                 // Make sure we have a valid position for the photo
-                if (mDraggingPosition < 0 || mDraggingPosition >= mDataset.size()) {
-                    Log.wtf(TAG, "Attempted to add photo to stack but invalid position found. Photo position: " + mDraggingPosition + ", Dataset size: " + mDataset.size());
+                if (mDraggingPosition < 0 || mDraggingPosition >= mDatasetFeed.size()) {
+                    Log.wtf(TAG, "Attempted to add photo to stack but invalid position found. Photo position: " + mDraggingPosition + ", Dataset size: " + mDatasetFeed.size());
                     return true;
                 }
 
                 // Add the photo to the stack
                 mAddStackPhotoTask = new AddStackPhotoTask();
-                mAddStackPhotoTask.execute(mCanvasDataset[row][column].getStackId(), mDataset.get(mDraggingPosition).getPhotoId());
+                mAddStackPhotoTask.execute(mDatasetCanvas[row][column].getStackId(), mDatasetFeed.get(mDraggingPosition).getPhotoId());
                 return true;
 
             case DragEvent.ACTION_DRAG_ENDED:
                 // the drag has ended
 
                 // Hide the top canvas
-                mCanvasRecyclerView.setVisibility(View.GONE);
+                mRecyclerViewCanvas.setVisibility(View.GONE);
                 return false;
         }
         return false;
@@ -664,7 +666,7 @@ public class FeedFragment extends Fragment
             // Otherwise, make sure you delete the cache files that are not needed
 
             int count = 0;
-            for (FeedItem feedItem : mDataset) {
+            for (FeedItem feedItem : mDatasetFeed) {
                 // Convert bitmap to file
                 try {
 
@@ -932,7 +934,7 @@ public class FeedFragment extends Fragment
                 // If we do, then we can stop downloading because we should already have the rest (since it's sorted by date)
                 // TODO I think there are issues with this.  Need to re-visit
                 boolean isDatasetAlreadyHaveThisPhoto = false;
-                for (FeedItem feedItemLoop : mDataset) {
+                for (FeedItem feedItemLoop : mDatasetFeed) {
                     if (feedItemLoop.equals(feedItem)) {
                         isDatasetAlreadyHaveThisPhoto = true;
                         break; // Break the loop
@@ -941,16 +943,16 @@ public class FeedFragment extends Fragment
                 if (isDatasetAlreadyHaveThisPhoto) {
                     cancel(true);
                 } else {
-                    mDataset.add(addedCount, feedItem);
-                    mAdapter.notifyItemInserted(addedCount);
+                    mDatasetFeed.add(addedCount, feedItem);
+                    mAdapterFeed.notifyItemInserted(addedCount);
 
                     addedCount++;
                 }
 
             } else {
                 // If we aren't refreshing, then were adding each item to the dataset (it was cleared pre-execute)
-                mDataset.add(feedItem);
-                mAdapter.notifyItemChanged(mDataset.size());
+                mDatasetFeed.add(feedItem);
+                mAdapterFeed.notifyItemChanged(mDatasetFeed.size());
 
                 addedCount++;
             }
@@ -966,7 +968,7 @@ public class FeedFragment extends Fragment
             // If we were refreshing
             if (mSwipeRefreshLayout.isRefreshing()) {
                 mSwipeRefreshLayout.setRefreshing(false); // Make sure we stop the refreshing spinner
-                mRecyclerView.smoothScrollToPosition(0);
+                mRecyclerViewFeed.smoothScrollToPosition(0);
             }
         }
 
@@ -978,7 +980,7 @@ public class FeedFragment extends Fragment
             // If we were refreshing
             if (mSwipeRefreshLayout.isRefreshing()) {
                 mSwipeRefreshLayout.setRefreshing(false); // Make sure we stop the refreshing spinner
-                mRecyclerView.smoothScrollToPosition(0);
+                mRecyclerViewFeed.smoothScrollToPosition(0);
             }
         }
 
@@ -991,32 +993,35 @@ public class FeedFragment extends Fragment
 
             // Clear the dataset and recyclerview, but not if we are just refreshing
             if (!mSwipeRefreshLayout.isRefreshing()) {
-                mDataset.clear();
-                mAdapter.notifyDataSetChanged();
+                mDatasetFeed.clear();
+                mAdapterFeed.notifyDataSetChanged();
             }
 
             // Store the original size of the dataset
-            origDatasetSize = mDataset.size();
+            origDatasetSize = mDatasetFeed.size();
         }
 
         protected void onPostExecute(List<FeedItem> result) {
             // TODO: check this.exception
             // TODO: do something with the feed
-            // Clear dataset, add new items, then notify
 
 
-            /*
-            mDataset.clear();
-            mDataset.addAll(result);
-            mAdapter.notifyDataSetChanged();
-            */
+            if(mDatasetFeed.isEmpty()) {
+                // If there are no photos, hide the recycler and show the empty view
+                mRecyclerViewFeed.setVisibility(View.GONE);
+                mTextEmptyFeed.setVisibility(View.VISIBLE);
+            } else {
+                // Otherwise, make sure the recycler is shown
+                mRecyclerViewFeed.setVisibility(View.VISIBLE);
+                mTextEmptyFeed.setVisibility(View.GONE);
+            }
 
             isUpdatingDataset = false;
 
             // If we were refreshing
             if (mSwipeRefreshLayout.isRefreshing()) {
                 mSwipeRefreshLayout.setRefreshing(false); // Make sure we stop the refreshing spinner
-                mRecyclerView.smoothScrollToPosition(0);
+                mRecyclerViewFeed.smoothScrollToPosition(0);
             }
         }
     }
@@ -1028,7 +1033,7 @@ public class FeedFragment extends Fragment
             // Get the photo like bool
             final int position = params[0];
 
-            final Boolean isLiked = !mDataset.get(position).getLiked(); // Like should be the opposite of whatever it is now
+            final Boolean isLiked = !mDatasetFeed.get(position).getLiked(); // Like should be the opposite of whatever it is now
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
@@ -1045,7 +1050,7 @@ public class FeedFragment extends Fragment
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
             PhotoLike photoLike = new PhotoLike();
-            photoLike.setPhotoId(mDataset.get(position).getPhotoId());
+            photoLike.setPhotoId(mDatasetFeed.get(position).getPhotoId());
             photoLike.setUserId(LoginActivity.sUserId);
 
             // We are adding a PhotoLike to the table
@@ -1065,7 +1070,7 @@ public class FeedFragment extends Fragment
 
             // Update the position in the dataset (only if we are still in the same view)
             if (!isUpdatingDataset) {
-                mDataset.get(position).setLiked(isLiked);
+                mDatasetFeed.get(position).setLiked(isLiked);
             }
 
 
@@ -1086,14 +1091,14 @@ public class FeedFragment extends Fragment
             // If we are in the "Likes" view we need to remove the photo from the list
             // It's impossible to "Like" a photo while in the like view, because we are only viewing photos that we were previously liked
             if (mSelectedView == VIEW_LIKES) {
-                mDataset.remove(position.intValue());
-                mAdapter.notifyItemRemoved(position);
+                mDatasetFeed.remove(position.intValue());
+                mAdapterFeed.notifyItemRemoved(position);
             } else {
                 // We are not in the "Likes" view
 
                 // Only update the adapter if we haven't already changed views
                 if (!isUpdatingDataset) {
-                    mAdapter.notifyItemChanged(position);
+                    mAdapterFeed.notifyItemChanged(position);
                 }
             }
 
@@ -1136,7 +1141,7 @@ public class FeedFragment extends Fragment
 
 
             // Now that we have the list of stacks, get the first picture of each stack to set the canvas tiles
-            //mDataset = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
+            //mDatasetFeed = new CanvasTile[ROW_COUNT][COLUMN_COUNT];
 
             if (stackList == null) {
                 // Stack list was not found.  Don't try inflating the canvas tiles
@@ -1146,7 +1151,7 @@ public class FeedFragment extends Fragment
             int stackCount = 0;
             for (int i = 0; i < CANVAS_ROW_COUNT; i++) {
 
-                mCanvasDataset[i] = new CanvasTile[CANVAS_COLUMN_COUNT]; // TODO don't think this is necessary
+                mDatasetCanvas[i] = new CanvasTile[CANVAS_COLUMN_COUNT]; // TODO don't think this is necessary
 
                 for (int x = 0; x < CANVAS_COLUMN_COUNT; x++) {
                     if (stackCount >= stackList.size()) {
@@ -1155,7 +1160,7 @@ public class FeedFragment extends Fragment
                     }
                     // Just set the stackId of the canvas tile for now
                     Stack stack = stackList.get(stackCount);
-                    mCanvasDataset[i][x] = new CanvasTile(stack.getStackId(), stack.getName(), null);
+                    mDatasetCanvas[i][x] = new CanvasTile(stack.getStackId(), stack.getName(), null);
 
                     stackCount++;
                 }
@@ -1176,7 +1181,7 @@ public class FeedFragment extends Fragment
             // TODO: do something with the feed
 
             // Clear dataset, add new items, then notify
-            //mAdapter.notifyDataSetChanged();
+            //mAdapterFeed.notifyDataSetChanged();
 
             // If there are stacks, run task to get cover photos
             if (stackCount > 0) {
@@ -1221,7 +1226,7 @@ public class FeedFragment extends Fragment
                         break;
                     }
 
-                    String stackId = mCanvasDataset[i][x].getStackId();
+                    String stackId = mDatasetCanvas[i][x].getStackId();
 
                     // Make sure we have a stackId
                     if (stackId == null || stackId.isEmpty()) {
@@ -1291,7 +1296,7 @@ public class FeedFragment extends Fragment
 
                     // Set the photo of the dataset position we are loading a photo of
                     if (bitmap != null) {
-                        mCanvasDataset[i][x].setPhoto(bitmap);
+                        mDatasetCanvas[i][x].setPhoto(bitmap);
                     }
 
                     stackCount++;
@@ -1314,7 +1319,7 @@ public class FeedFragment extends Fragment
             super.onProgressUpdate(values);
 
             int row = values[0];
-            mAdapter.notifyItemChanged(row);
+            mAdapterFeed.notifyItemChanged(row);
         }
 
         protected void onPostExecute(Void result) {
@@ -1322,8 +1327,8 @@ public class FeedFragment extends Fragment
             // TODO: do something with the feed
 
             // Clear dataset, add new items, then notify
-            //mAdapter.notifyDataSetChanged();
-            //mAdapter.notifyInnerDatasetRowsChanged();
+            //mAdapterFeed.notifyDataSetChanged();
+            //mAdapterFeed.notifyInnerDatasetRowsChanged();
         }
     }
 

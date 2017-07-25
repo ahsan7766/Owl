@@ -1,8 +1,6 @@
 package com.ourwayoflife.owl.fragments;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,17 +11,16 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.ourwayoflife.owl.R;
@@ -58,7 +55,8 @@ public class FriendsFragment extends Fragment
     private static final int SPAN_COUNT = 3; // number of columns in the grid
     private static final int DATASET_COUNT = 20;
 
-    protected RecyclerView mRecyclerView;
+    protected RecyclerView mRecyclerFriends;
+    protected TextView mTextEmptyFriends;
     protected FriendsRecyclerAdapter mAdapter;
     protected RecyclerView.LayoutManager mLayoutManager;
     protected ArrayList<User> mDataset = new ArrayList<>();
@@ -113,7 +111,9 @@ public class FriendsFragment extends Fragment
         View rootView = inflater.inflate(R.layout.fragment_friends, container, false);
         rootView.setTag(TAG);
 
-        mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_friends);
+        // Set up recycler and empty view
+        mRecyclerFriends = rootView.findViewById(R.id.recycler_friends);
+        mTextEmptyFriends = rootView.findViewById(R.id.text_empty_friends);
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
@@ -121,16 +121,16 @@ public class FriendsFragment extends Fragment
         mLayoutManager = new GridLayoutManager(getActivity(), SPAN_COUNT);
 
         // set up the RecyclerView
-        mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerFriends.setLayoutManager(mLayoutManager);
         mAdapter = new FriendsRecyclerAdapter(getActivity(), mDataset);
         mAdapter.setClickListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
-        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerFriends.setAdapter(mAdapter);
 
 
         final FloatingActionButton fab = ((MainActivity) getActivity()).getFloatingActionButton();
-        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        mRecyclerFriends.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 if (dy > 0)
@@ -205,9 +205,9 @@ public class FriendsFragment extends Fragment
 
     private void initDataset() {
         /*
-        mDataset = new String[DATASET_COUNT];
+        mDatasetFeed = new String[DATASET_COUNT];
         for (int i = 0; i < DATASET_COUNT; i++) {
-            mDataset[i] = "Category #" + i;
+            mDatasetFeed[i] = "Category #" + i;
         }
         */
 
@@ -224,10 +224,12 @@ public class FriendsFragment extends Fragment
         switch (mMode) {
             case MODE_FOLLOWERS:
                 getActivity().setTitle(getString(R.string.followers));
+                mTextEmptyFriends.setText(getString(R.string.text_empty_followers));
                 break;
 
             case MODE_FOLLOWING:
                 getActivity().setTitle(getString(R.string.following));
+                mTextEmptyFriends.setText(getString(R.string.text_empty_following));
                 break;
 
             default:
@@ -319,7 +321,7 @@ public class FriendsFragment extends Fragment
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
             // First load the list of users that this user is following/followed by (depends on which mode we are in)
-            List<Following> followingList = new ArrayList<>();
+            List<Following> followingList;
             Following queryFollowing = new Following();
 
             if (mMode.equals(MODE_FOLLOWING)) {
@@ -384,6 +386,18 @@ public class FriendsFragment extends Fragment
                 Toast.makeText(getContext(), "Unable to retrieve user list", Toast.LENGTH_SHORT).show();
                 //getActivity().onBackPressed(); // Press back to leave fragment
             }
+
+
+            if(mDataset.isEmpty()) {
+                // If there are no photos, hide the recycler and show the empty view
+                mRecyclerFriends.setVisibility(View.GONE);
+                mTextEmptyFriends.setVisibility(View.VISIBLE);
+            } else {
+                // Otherwise, make sure the recycler is shown
+                mRecyclerFriends.setVisibility(View.VISIBLE);
+                mTextEmptyFriends.setVisibility(View.GONE);
+            }
+
         }
     }
 }

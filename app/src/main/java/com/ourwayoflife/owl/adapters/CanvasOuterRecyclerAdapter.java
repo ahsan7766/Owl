@@ -76,7 +76,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         viewHolder.mRecycler.setLayoutManager(viewHolder.mZLayoutManager);
 
         //viewHolder.mZDatasetInner = new CanvasTile[CanvasFragment.COLUMN_COUNT];
-        //viewHolder.mZDatasetInner = mDataset[rowCount + 1];
+        //viewHolder.mZDatasetInner = mDatasetFeed[rowCount + 1];
         viewHolder.mZAdapterInner = new CanvasInnerRecyclerAdapter(parent.getContext(), viewHolder.mZDatasetInner, rowCount);
 
         viewHolder.mZAdapterInner.setInnerClickListener(this);
@@ -103,11 +103,11 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
-        mLayoutManager = new LinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
-        //mLayoutManager = new CanvasInnerLinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
+        mLayoutManagerFeed = new LinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
+        //mLayoutManagerFeed = new CanvasInnerLinearLayoutManager(parent.getContext(), LinearLayoutManager.HORIZONTAL, false);
 
         // set up the RecyclerView
-        mInnerRecyclerView.setLayoutManager(mLayoutManager);
+        mInnerRecyclerView.setLayoutManager(mLayoutManagerFeed);
 
         mDatasetInner = new CanvasTile[CanvasFragment.COLUMN_COUNT];
         mAdapterInner = new CanvasInnerRecyclerAdapter(parent.getContext(), mDatasetInner, rowCount);
@@ -134,12 +134,12 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
     public void onBindViewHolder(CanvasOuterRecyclerAdapter.ViewHolder holder, int position) {
 
         /*
-        holder.mZDatasetInner = mDataset[position];
+        holder.mZDatasetInner = mDatasetFeed[position];
         holder.mZAdapterInner.notifyDataSetChanged();
         */
 
         /*
-        mDatasetInner = mDataset[position];
+        mDatasetInner = mDatasetFeed[position];
         mAdapterInner.notifyDataSetChanged();
         */
 
@@ -188,12 +188,12 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
             mRecycler.setLayoutManager(mZLayoutManager);
 
             //viewHolder.mZDatasetInner = new CanvasTile[CanvasFragment.COLUMN_COUNT];
-            //viewHolder.mZDatasetInner = mDataset[rowCount + 1];
+            //viewHolder.mZDatasetInner = mDatasetFeed[rowCount + 1];
             //mZAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mZDatasetInner, rowCount));
             mZAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mZDatasetInner, getAdapterPosition());
             //mZAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mZDatasetInner, (int) itemView.getTag());
 
-            //mZAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mDataset[getAdapterPosition() + 1], rowCount);
+            //mZAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mDatasetFeed[getAdapterPosition() + 1], rowCount);
 
             mZAdapterInner.setInnerClickListener(this);
             mZAdapterInner.setDragListener(this);
@@ -269,7 +269,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
                 int x = Math.round(dragEvent.getX());
 
-                int translatedX = x - offset; // mAdapter.getScrollDistance();
+                int translatedX = x - offset; // mAdapterFeed.getScrollDistance();
 
                 //Log.d(TAG, "x: " + x + ", HorizontalScrollOffset: " + offset);
                 Log.d(TAG, "x: " + x + ", TranslatedX: " + translatedX);
@@ -359,7 +359,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
             int x = Math.round(dragEvent.getX());
 
-            int translatedX = x - offset; // mAdapter.getScrollDistance();
+            int translatedX = x - offset; // mAdapterFeed.getScrollDistance();
 
             //Log.d(TAG, "x: " + x + ", HorizontalScrollOffset: " + offset);
             Log.d(TAG, "x: " + x + ", TranslatedX: " + translatedX);
@@ -389,7 +389,7 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
         for (int i = 0; i < CanvasFragment.ROW_COUNT; i++) {
             if (mDataset[i] != null) {
-                //mAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mDataset[i], i);
+                //mAdapterInner = new CanvasInnerRecyclerAdapter(mContext, mDatasetFeed[i], i);
                 //mAdapterInner.notifyDataSetChanged();
             }
         }
@@ -398,9 +398,9 @@ public class CanvasOuterRecyclerAdapter extends RecyclerView.Adapter<CanvasOuter
 
     /*
     private void initDataset() {
-        mDataset = new CanvasTile[CanvasFragment.COLUMN_COUNT];
+        mDatasetFeed = new CanvasTile[CanvasFragment.COLUMN_COUNT];
         for (int i = 0; i < CanvasFragment.COLUMN_COUNT; i++) {
-            mDataset[i] = new CanvasTile("#" + i);
+            mDatasetFeed[i] = new CanvasTile("#" + i);
         }
     }
     */
