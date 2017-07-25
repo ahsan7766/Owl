@@ -110,17 +110,14 @@ public class FeedFragment extends Fragment
 
     public static LruCache<String, Bitmap> mMemoryCache; // TODO move this to MainActivity
 
-
     private TextView mTextLikes;
     private TextView mTextFeed;
     private TextView mTextTrending;
-
 
     protected RecyclerView mRecyclerViewCanvas;
     protected CanvasOuterRecyclerAdapter mAdapterCanvas;
     protected RecyclerView.LayoutManager mLayoutManagerCanvas;
     protected CanvasTile[][] mDatasetCanvas = new CanvasTile[CANVAS_ROW_COUNT][CANVAS_COLUMN_COUNT];
-
 
     private static final int SPAN_COUNT = 1; // number of columns in the grid
     private static final int DATASET_COUNT = 10;
@@ -132,12 +129,9 @@ public class FeedFragment extends Fragment
     protected RecyclerView.LayoutManager mLayoutManagerFeed;
     protected ArrayList<FeedItem> mDatasetFeed = new ArrayList<>();
 
-
     private HashMap<String, User> mUserHashMap = new HashMap<>(); // Used so we don't have to repeat querying for user data
 
-
     private OnFragmentInteractionListener mListener;
-
 
     private boolean isUpdatingDataset = false;
 
@@ -197,30 +191,6 @@ public class FeedFragment extends Fragment
 
     }
 
-    /**
-     * Called to ask the fragment to save its current dynamic state, so it
-     * can later be reconstructed in a new instance of its process is
-     * restarted.  If a new instance of the fragment later needs to be
-     * created, the data you place in the Bundle here will be available
-     * in the Bundle given to {@link #onCreate(Bundle)},
-     * {@link #onCreateView(LayoutInflater, ViewGroup, Bundle)}, and
-     * {@link #onActivityCreated(Bundle)}.
-     * <p>
-     * <p>This corresponds to {@link android.app.Activity#onSaveInstanceState(Bundle)
-     * Activity.onSaveInstanceState(Bundle)} and most of the discussion there
-     * applies here as well.  Note however: <em>this method may be called
-     * at any time before {@link #onDestroy()}</em>.  There are many situations
-     * where a fragment may be mostly torn down (such as when placed on the
-     * back stack with no UI showing), but its state will not be saved until
-     * its owning activity actually needs to save its state.
-     *
-     * @param outState Bundle in which to place your saved state.
-     */
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        //outState.putParcelableArrayList("FEED_ITEMS", mDatasetFeed);
-    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -408,7 +378,9 @@ public class FeedFragment extends Fragment
                 // Make sure you call swipeContainer.setRefreshing(false)
                 // once the network request has completed successfully.
 
-                mDownloadTask.cancel(true); // Make sure any previous mDownloadTask is cancelled
+                if(mDownloadTask != null && mDownloadTask.getStatus()== AsyncTask.Status.RUNNING) {
+                    mDownloadTask.cancel(true); // Make sure any previous mDownloadTask is cancelled
+                }
                 mDownloadTask = new DownloadTask();
                 mDownloadTask.execute(mSelectedView);
 

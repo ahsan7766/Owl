@@ -116,17 +116,6 @@ public class ProfileFragment extends Fragment implements
         return fragment;
     }
 
-    /**
-     * Called when the Fragment is visible to the user.  This is generally
-     * tied to {@link android.app.Activity#onStart() Activity.onStart} of the containing
-     * Activity's lifecycle.
-     */
-    @Override
-    public void onStart() {
-        super.onStart();
-
-    }
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -541,8 +530,14 @@ public class ProfileFragment extends Fragment implements
 
     @Override
     public boolean OnTouchLikes() {
-        // TODO Implement viewing the user's liked photos when this is clicked
-        Toast.makeText(getContext(), "Viewing other user's Hoots not yet available.", Toast.LENGTH_SHORT).show();
+        // Start the LikesFragment passing in the UserId of the profile we are viewing
+        FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+        Fragment fragment = LikesFragment.newInstance(mUserId);
+        fragmentManager.
+                beginTransaction()
+                .replace(R.id.flContent, fragment, fragment.getClass().getName())
+                .addToBackStack(fragment.getClass().getName())
+                .commit();
         return true;
     }
 
@@ -556,7 +551,6 @@ public class ProfileFragment extends Fragment implements
                 .replace(R.id.flContent, fragment, fragment.getClass().getName())
                 .addToBackStack(fragment.getClass().getName())
                 .commit();
-
         return true;
     }
 
