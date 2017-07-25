@@ -123,8 +123,13 @@
     <string name="edit_profile">Edit Profile</string>
 
     <!-- Stack -->
+    <string name="photo">Photo</string>
+    <string name="stack">Stack</string>
     <string name="message_photo_deleted">This photo has been deleted</string>
     <string name="message_error_load_photo">Error loading photo</string>
+
+    <!-- Comments Recycler Adapter-->
+    <string name="user_not_found">User not found</string>
 
     <!-- FeedCategoryView -->
     <string name="photos">Photos</string>

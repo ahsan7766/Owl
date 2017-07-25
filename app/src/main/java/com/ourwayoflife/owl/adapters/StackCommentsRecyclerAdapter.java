@@ -3,7 +3,6 @@ package com.ourwayoflife.owl.adapters;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.util.Log;
@@ -12,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.models.PhotoComment;
 import com.ourwayoflife.owl.models.StackComment;
@@ -28,21 +26,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * Created by Zach on 5/25/17.
+ * Created by admin on 7/25/17.
  */
 
-public class PhotoCommentsRecyclerAdapter extends RecyclerView.Adapter<PhotoCommentsRecyclerAdapter.ViewHolder> {
+public class StackCommentsRecyclerAdapter extends RecyclerView.Adapter<StackCommentsRecyclerAdapter.ViewHolder> {
 
-    private static final String TAG = PhotoCommentsRecyclerAdapter.class.getName();
+    private static final String TAG = StackCommentsRecyclerAdapter.class.getName();
 
-    private ArrayList<PhotoComment> mData = new ArrayList<>();
+    private ArrayList<StackComment> mData = new ArrayList<>();
     private HashMap<String, User> mUserHashMap = new HashMap<>();
     private Context mContext;
     private LayoutInflater mInflater;
-    private PhotoCommentsRecyclerAdapter.ItemClickListener mClickListener;
+    private StackCommentsRecyclerAdapter.ItemClickListener mClickListener;
 
     // data is passed into the constructor
-    public PhotoCommentsRecyclerAdapter(Context context, ArrayList<PhotoComment> data, HashMap<String, User> userHashMap) {
+    public StackCommentsRecyclerAdapter(Context context, ArrayList<StackComment> data, HashMap<String, User> userHashMap) {
         this.mContext = context;
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
@@ -51,18 +49,18 @@ public class PhotoCommentsRecyclerAdapter extends RecyclerView.Adapter<PhotoComm
 
     // inflates the cell layout from xml when needed
     @Override
-    public PhotoCommentsRecyclerAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public StackCommentsRecyclerAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = mInflater.inflate(R.layout.recycler_item_comment, parent, false);
-        PhotoCommentsRecyclerAdapter.ViewHolder viewHolder = new PhotoCommentsRecyclerAdapter.ViewHolder(view);
+        StackCommentsRecyclerAdapter.ViewHolder viewHolder = new StackCommentsRecyclerAdapter.ViewHolder(view);
         return viewHolder;
     }
 
     // binds the data to the TextView in each cell
     @Override
-    public void onBindViewHolder(PhotoCommentsRecyclerAdapter.ViewHolder holder, int position) {
-        PhotoComment photoComment = mData.get(position);
+    public void onBindViewHolder(StackCommentsRecyclerAdapter.ViewHolder holder, int position) {
+        StackComment stackComment = mData.get(position);
 
-        User user = mUserHashMap.get(photoComment.getUserId());
+        User user = mUserHashMap.get(stackComment.getUserId());
         if (user != null) {
             String photoString = user.getPhoto();
             // Only try getting the bitmap is we have a string for the profile picture
@@ -80,11 +78,11 @@ public class PhotoCommentsRecyclerAdapter extends RecyclerView.Adapter<PhotoComm
             holder.mTextName.setText(user.getName());
 
             // Need to convert date string to a more readable format
-            DateTime dateTime = ISODateTimeFormat.basicDateTime().parseDateTime(photoComment.getCommentDate());
+            DateTime dateTime = ISODateTimeFormat.basicDateTime().parseDateTime(stackComment.getCommentDate());
             DateTimeFormatter fmt = DateTimeFormat.forPattern("h:mm aa");
             holder.mTextDate.setText(fmt.print(dateTime));
 
-            holder.mTextComment.setText(photoComment.getComment());
+            holder.mTextComment.setText(stackComment.getComment());
         } else {
             holder.mTextName.setText(mContext.getString(R.string.user_not_found));
         }
@@ -121,12 +119,12 @@ public class PhotoCommentsRecyclerAdapter extends RecyclerView.Adapter<PhotoComm
     }
 
     // convenience method for getting data at click position
-    public PhotoComment getItem(int id) {
+    public StackComment getItem(int id) {
         return mData.get(id);
     }
 
     // allows clicks events to be caught
-    public void setClickListener(PhotoCommentsRecyclerAdapter.ItemClickListener itemClickListener) {
+    public void setClickListener(StackCommentsRecyclerAdapter.ItemClickListener itemClickListener) {
         this.mClickListener = itemClickListener;
     }
 

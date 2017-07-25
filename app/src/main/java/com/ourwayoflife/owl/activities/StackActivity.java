@@ -38,12 +38,14 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.adapters.PhotoCommentsRecyclerAdapter;
+import com.ourwayoflife.owl.adapters.StackCommentsRecyclerAdapter;
 import com.ourwayoflife.owl.adapters.StackPhotoPagerAdapter;
 import com.ourwayoflife.owl.fragments.CanvasFragment;
 import com.ourwayoflife.owl.fragments.StackPhotoPagerFragment;
 import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.PhotoComment;
 import com.ourwayoflife.owl.models.PhotoLike;
+import com.ourwayoflife.owl.models.StackComment;
 import com.ourwayoflife.owl.models.StackLike;
 import com.ourwayoflife.owl.models.StackPhoto;
 import com.ourwayoflife.owl.models.User;
@@ -58,10 +60,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Stack;
 
 public class StackActivity extends AppCompatActivity
         implements StackPhotoPagerFragment.OnFragmentInteractionListener,
         PhotoCommentsRecyclerAdapter.ItemClickListener,
+        StackCommentsRecyclerAdapter.ItemClickListener,
         CanvasFragment.OnFragmentInteractionListener {
 
 
@@ -77,7 +81,9 @@ public class StackActivity extends AppCompatActivity
     private RecyclerView mRecyclerViewComments;
     private RecyclerView.LayoutManager mLayoutManagerComments;
     private PhotoCommentsRecyclerAdapter mAdapterPhotoComments;
+    private StackCommentsRecyclerAdapter mAdapterStackComments;
     private ArrayList<PhotoComment> mDatasetPhotoComments = new ArrayList<>();
+    private ArrayList<StackComment> mDatasetStackComments = new ArrayList<>();
     private HashMap<String, User> mUserHashMap = new HashMap<>();
 
     private TextView mTextLikeCount;
@@ -91,6 +97,9 @@ public class StackActivity extends AppCompatActivity
     private CheckPhotoLikeCountTask mCheckPhotoLikeCountTask;
     private DownloadPhotoTask mDownloadPhotoTask;
     private DownloadPhotoCommentsTask mDownloadPhotoCommentsTask;
+    private DownloadStackCommentsTask mDownloadStackCommentsTask;
+    private UploadPhotoCommentTask mUploadPhotoCommentTask;
+    private UploadStackCommentTask mUploadStackCommentTask;
     private CheckStackLikeTask mCheckStackLikeTask;
     private CheckStackLikeCountTask mCheckStackLikeCountTask;
     private DownloadStackPhotosTask mDownloadStackPhotosTask;
@@ -124,8 +133,10 @@ public class StackActivity extends AppCompatActivity
 
         // If a photo was included in the extras, then the activity is in photo mode
         if (photoId != null && photoId.length() > 0) {
+            stackId = null; // Null out stackId since we have a photoId
+
             // Photo mode
-            setTitle("Photo"); // Set Title
+            setTitle(getString(R.string.photo)); // Set Title
 
             // Check if photo was previously liked
             // TODO instead of this, just pass a boolean to this activity that says if the photo
@@ -145,7 +156,10 @@ public class StackActivity extends AppCompatActivity
             mDownloadPhotoCommentsTask.execute();
 
         } else if (stackId != null && stackId.length() > 0) {
+            photoId = null; // Null out photoId since we are in stack mode
+
             // Stack mode
+            setTitle(getString(R.string.stack)); // Set Title
 
             // Check if photo was previously liked
             // TODO instead of this, (if easier) just pass a boolean to this activity that says if the stack
@@ -156,11 +170,19 @@ public class StackActivity extends AppCompatActivity
             mCheckStackLikeCountTask = new CheckStackLikeCountTask();
             mCheckStackLikeCountTask.execute();
 
+            // Download photos
             mDownloadStackPhotosTask = new DownloadStackPhotosTask();
             mDownloadStackPhotosTask.execute();
 
+            // Get the comments for the stack
+            mDownloadStackCommentsTask = new DownloadStackCommentsTask();
+            mDownloadStackCommentsTask.execute();
+
             //finish();
         } else {
+            photoId = null;
+            stackId = null;
+
             Log.wtf(TAG, "PHOTO_ID and STACK_ID both not found, but StackActivity was launched. Finishing Activity...");
             finish();
         }
@@ -193,12 +215,24 @@ public class StackActivity extends AppCompatActivity
 
         // set up the RecyclerView
         mRecyclerViewComments.setLayoutManager(mLayoutManagerComments);
-        mAdapterPhotoComments = new PhotoCommentsRecyclerAdapter(this, mDatasetPhotoComments, mUserHashMap);
-        mAdapterPhotoComments.setClickListener(this);
+        if (photoId != null) {
+            // We are in photo mode
+            mAdapterPhotoComments = new PhotoCommentsRecyclerAdapter(this, mDatasetPhotoComments, mUserHashMap);
+            mAdapterPhotoComments.setClickListener(this);
 
-        // Set CustomAdapter as the adapter for RecyclerView.
-        mRecyclerViewComments.setAdapter(mAdapterPhotoComments);
+            // Set CustomAdapter as the adapter for RecyclerView.
+            mRecyclerViewComments.setAdapter(mAdapterPhotoComments);
+        } else if (stackId != null) {
+            // We are in stack mode
+            mAdapterStackComments = new StackCommentsRecyclerAdapter(this, mDatasetStackComments, mUserHashMap);
+            mAdapterStackComments.setClickListener(this);
 
+            // Set CustomAdapter as the adapter for RecyclerView.
+            mRecyclerViewComments.setAdapter(mAdapterStackComments);
+        } else {
+            Log.wtf(TAG, "PHOTO_ID and STACK_ID both not found, but trying to load comments.  Finishing activity...");
+            finish();
+        }
 
         // Set up comment send edittext and button
         mEditTextComment = findViewById(R.id.edit_text_comment);
@@ -210,19 +244,45 @@ public class StackActivity extends AppCompatActivity
 
                 // Check that comment isn't empty
                 if (!comment.isEmpty()) {
-                    PhotoComment photoComment = new PhotoComment();
-                    photoComment.setUserId(LoginActivity.sUserId);
-                    photoComment.setComment(comment);
 
-                    DateTime dt = new DateTime(DateTimeZone.UTC);
-                    DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
-                    final String dateString = fmt.print(dt);
-                    photoComment.setCommentDate(dateString);
+                    if(photoId != null) {
+                        // Photo mode
+                        PhotoComment photoComment = new PhotoComment();
+                        photoComment.setUserId(LoginActivity.sUserId);
+                        photoComment.setComment(comment);
 
-                    photoComment.setPhotoId(photoId);
+                        DateTime dt = new DateTime(DateTimeZone.UTC);
+                        DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                        final String dateString = fmt.print(dt);
+                        photoComment.setCommentDate(dateString);
 
-                    // Upload the comment
-                    new UploadCommentTask().execute(photoComment);
+                        photoComment.setPhotoId(photoId);
+
+                        // Upload the comment
+                        mUploadPhotoCommentTask = new UploadPhotoCommentTask();
+                        mUploadPhotoCommentTask.execute(photoComment);
+
+                    } else if(stackId != null) {
+                        // Stack mode
+                        StackComment stackComment = new StackComment();
+                        stackComment.setUserId(LoginActivity.sUserId);
+                        stackComment.setComment(comment);
+
+                        DateTime dt = new DateTime(DateTimeZone.UTC);
+                        DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                        final String dateString = fmt.print(dt);
+                        stackComment.setCommentDate(dateString);
+
+                        stackComment.setStackId(stackId);
+
+                        // Upload the comment
+                        mUploadStackCommentTask = new UploadStackCommentTask();
+                        mUploadStackCommentTask.execute(stackComment);
+                    }else {
+                        Log.wtf(TAG, "PHOTO_ID and STACK_ID both not found, but trying to comment.  Finishing activity...");
+                        finish();
+                    }
+
                 }
             }
         });
@@ -319,7 +379,16 @@ public class StackActivity extends AppCompatActivity
         // Start the canvas fragment via the main activity
         Intent openFragmentBIntent = new Intent(this, MainActivity.class);
         openFragmentBIntent.putExtra(MainActivity.OPEN_FRAGMENT_CANVAS, true);
-        openFragmentBIntent.putExtra("USER_ID", mDatasetPhotoComments.get(position).getUserId()); // Add the userId so we know who's canvas to open
+        if(photoId != null) {
+            // Photo mode
+            openFragmentBIntent.putExtra("USER_ID", mDatasetPhotoComments.get(position).getUserId()); // Add the userId so we know who's canvas to open
+        } else if (stackId != null) {
+            // Stack mode
+            openFragmentBIntent.putExtra("USER_ID", mDatasetStackComments.get(position).getUserId()); // Add the userId so we know who's canvas to open
+        } else {
+            Log.wtf(TAG, "PHOTO_ID and STACK_ID both not found, but trying to go to canvas of user who commented.  Finishing activity...");
+            finish();
+        }
         startActivity(openFragmentBIntent);
 
 
@@ -363,6 +432,7 @@ public class StackActivity extends AppCompatActivity
         // TODO evenually add formatting for large numbers with locale (Ex: 1k instead of 1,000)
         mTextLikeCount.setText(NumberFormat.getInstance().format(mIntLikeCount));
     }
+
 
     private class DownloadPhotoTask extends AsyncTask<Void, Void, Void> {
 
@@ -551,14 +621,16 @@ public class StackActivity extends AppCompatActivity
 
         @Override
         protected void onPreExecute() {
-            // TODO Auto-generated method stub
             super.onPreExecute();
+            mDatasetPhotoComments.clear(); // Clear the dataset
+
         }
 
         protected void onPostExecute(List<PhotoComment> result) {
 
             if (result.size() <= 0) {
                 // TODO: if there's no comments, show an empty view or something
+
             } else {
                 // Add comments to dataset and notify adapter
                 mDatasetPhotoComments.addAll(result);
@@ -576,9 +648,67 @@ public class StackActivity extends AppCompatActivity
     }
 
 
+    private class DownloadStackCommentsTask extends AsyncTask<Void, Void, List<StackComment>> {
+
+        protected List<StackComment> doInBackground(Void... params) {
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Query for PhotoComments
+            StackComment queryStackComment = new StackComment();
+            queryStackComment.setStackId(stackId);
+
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    .withIndexName("StackId-CommentDate-index")
+                    .withHashKeyValues(queryStackComment)
+                    .withScanIndexForward(true) // Set sort forward to true so oldest comment is retrieved first
+                    .withConsistentRead(false); //Consistent read must be false when using GSI
+
+            return mapper.query(StackComment.class, queryExpression);
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mDatasetStackComments.clear(); // Clear the dataset
+        }
+
+        protected void onPostExecute(List<StackComment> result) {
+
+            if (result.size() <= 0) {
+                // TODO: if there's no comments, show an empty view or something
+
+            } else {
+                // Add comments to dataset and notify adapter
+                mDatasetStackComments.addAll(result);
+
+                // Put all the unique userIds in an array to download all the user's data
+                //ArrayList<String> userIdList = new ArrayList<>();
+                for (StackComment stackComment : result) {
+                    mUserHashMap.put(stackComment.getUserId(), null);
+                }
+
+                new DownloadUsersTask().execute();
+                //mAdapterStackComments.notifyDataSetChanged();
+            }
+        }
+    }
+
+
     private class DownloadUsersTask extends AsyncTask<Void, Void, Void> {
         DynamoDBMapper mapper;
-
 
         protected Void doInBackground(Void... params) {
 
@@ -621,14 +751,22 @@ public class StackActivity extends AppCompatActivity
         }
 
         protected void onPostExecute(Void result) {
-
-            mAdapterPhotoComments.notifyDataSetChanged();
+            if(photoId != null) {
+                // Photo mode
+                mAdapterPhotoComments.notifyDataSetChanged();
+            } else if(stackId != null){
+                // Stack mode
+                mAdapterStackComments.notifyDataSetChanged();
+            } else {
+                Log.wtf(TAG, "PHOTO_ID and STACK_ID both not found, but trying to load users for comments.  Finishing activity...");
+                finish();
+            }
         }
 
     }
 
 
-    private class UploadCommentTask extends AsyncTask<PhotoComment, Void, PhotoComment> {
+    private class UploadPhotoCommentTask extends AsyncTask<PhotoComment, Void, PhotoComment> {
 
         protected PhotoComment doInBackground(PhotoComment... params) {
             // Get the photo
@@ -653,7 +791,7 @@ public class StackActivity extends AppCompatActivity
 
             if (photoComment.getCommentId() == null || photoComment.getCommentId().isEmpty()) {
                 Log.e(TAG, "Error: Unable to post comment.");
-                cancel(true); // TODO notify user that comment couldn't be posted
+                return null;
             }
 
             return photoComment;
@@ -661,11 +799,17 @@ public class StackActivity extends AppCompatActivity
 
         @Override
         protected void onPreExecute() {
-            // TODO Auto-generated method stub
             super.onPreExecute();
         }
 
         protected void onPostExecute(PhotoComment photoComment) {
+            if(photoComment == null) {
+                // Comment was not posted
+                // Notify user and don't clear EditText or add comment to dataset
+                Toast.makeText(StackActivity.this, "Error posting comment.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             // Clear the comment EditText since the comment has sent
             mEditTextComment.setText("");
 
@@ -677,6 +821,61 @@ public class StackActivity extends AppCompatActivity
 
     }
 
+
+    private class UploadStackCommentTask extends AsyncTask<StackComment, Void, StackComment> {
+
+        protected StackComment doInBackground(StackComment... params) {
+            // Get the photo
+            StackComment stackComment = params[0];
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Save StackComment
+            mapper.save(stackComment);
+
+            if (stackComment.getCommentId() == null || stackComment.getCommentId().isEmpty()) {
+                Log.e(TAG, "Error: Unable to post comment.");
+                return null;
+            }
+
+            return stackComment;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(StackComment stackComment) {
+            if(stackComment == null) {
+                // Comment was not posted
+                // Notify user and don't clear EditText or add comment to dataset
+                Toast.makeText(StackActivity.this, "Error posting comment.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Clear the comment EditText since the comment has sent
+            mEditTextComment.setText("");
+
+            // Now that comment is posted, add the comment the photo comments
+            //new DownloadPhotoCommentsTask().execute(photoId);
+            mDatasetStackComments.add(stackComment);
+            mAdapterStackComments.notifyItemInserted(mDatasetStackComments.size());
+        }
+
+    }
 
     /**
      * Checks if the photo has previously been liked by this user.
