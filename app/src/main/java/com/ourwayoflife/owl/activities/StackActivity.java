@@ -635,6 +635,9 @@ public class StackActivity extends AppCompatActivity
 
             // Download users
             // Even if there are no comments, we want to download the info for the logged in user in case they comment
+            if(mDownloadUsersTask.getStatus() == Status.RUNNING) {
+                mDownloadUsersTask.cancel(true);
+            }
             mDownloadUsersTask = new DownloadUsersTask();
             mDownloadUsersTask.execute();
         }
@@ -698,6 +701,9 @@ public class StackActivity extends AppCompatActivity
 
             // Download users
             // Even if there are no comments, we want to download the info for the logged in user in case they comment
+            if(mDownloadUsersTask.getStatus() == Status.RUNNING) {
+                mDownloadUsersTask.cancel(true);
+            }
             mDownloadUsersTask = new DownloadUsersTask();
             mDownloadUsersTask.execute();
         }

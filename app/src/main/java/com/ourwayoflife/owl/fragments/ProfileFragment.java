@@ -231,9 +231,10 @@ public class ProfileFragment extends Fragment implements
             mButtonEditFollow.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    // Run task that follows/unfollows the user
+                    // Run task to follow/unfollow the user
+                    // The boolean we pass should be 'true' if we are already following (when the button text is 'unfollow')
                     mFollowUserTask = new FollowUserTask();
-                    mFollowUserTask.execute();
+                    mFollowUserTask.execute(mButtonEditFollow.getText().toString().equals(getString(R.string.unfollow)));
                 }
             });
         }
@@ -930,12 +931,15 @@ public class ProfileFragment extends Fragment implements
     }
 
 
-    private class FollowUserTask extends AsyncTask<Void, Void, Boolean> {
+    private class FollowUserTask extends AsyncTask<Boolean, Void, Boolean> {
 
-        protected Boolean doInBackground(Void... urls) {
+        protected Boolean doInBackground(Boolean... params) {
+            
+            final boolean isFollowing = params[0];
+            
             // Double check that the UserId is not null AND that it does NOT match the signed in user
             if (mUser.getUserId() == null || mUser.getUserId().equals(LoginActivity.sUserId)) {
-                return false;
+                return null;
             }
 
             // Initialize the Amazon Cognito credentials provider
@@ -951,21 +955,40 @@ public class ProfileFragment extends Fragment implements
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
-            // Get date string
-            DateTime dt = new DateTime(DateTimeZone.UTC);
-            DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
-            final String dateString = fmt.print(dt);
 
-            Following following = new Following(LoginActivity.sUserId, mUserId, dateString);
 
-            // Save Following
-            try {
-                mapper.save(following);
-            } catch (Exception e) {
-                return false;
+            if(isFollowing) {
+                // We are already following, so we need to unfollow
+                Following following = new Following();
+                following.setUserId(LoginActivity.sUserId);
+                following.setFollowingId(mUserId);
+                try{
+                    mapper.delete(following);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error when attempting to unfollow: " + e);
+                    return null; // Return null to signify error
+                }
+                
+            } else {
+                // We were not already following, so we need to follow
+                
+                // Get date string
+                DateTime dt = new DateTime(DateTimeZone.UTC);
+                DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                final String dateString = fmt.print(dt);
+
+                Following following = new Following(LoginActivity.sUserId, mUserId, dateString);
+
+                // Save Following
+                try {
+                    mapper.save(following);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error when attempting to follow: " + e);
+                    return null; // Return null to signify error
+                }
             }
-
-            return true;
+            
+            return !isFollowing;
         }
 
         @Override
@@ -974,8 +997,20 @@ public class ProfileFragment extends Fragment implements
             super.onPreExecute();
         }
 
-        protected void onPostExecute(Boolean result) {
-            mButtonEditFollow.setText(getString(R.string.unfollow));
+        protected void onPostExecute(Boolean isNowFollowing) {
+            
+            if(isNowFollowing == null) {
+                Toast.makeText(getContext(), "Error attempting to follow/unfollow", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            if(isNowFollowing) {
+                // We are NOW following the user
+                mButtonEditFollow.setText(getString(R.string.unfollow));
+            } else {
+                // We are now NOT following the user
+                mButtonEditFollow.setText(getString(R.string.follow));
+            }
         }
     }
 
