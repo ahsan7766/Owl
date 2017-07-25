@@ -24,6 +24,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -104,6 +105,7 @@ public class StackActivity extends AppCompatActivity
     private CheckStackLikeCountTask mCheckStackLikeCountTask;
     private DownloadStackPhotosTask mDownloadStackPhotosTask;
     private DeletePhotoTask mDeletePhotoTask;
+    private DownloadUsersTask mDownloadUsersTask;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -234,6 +236,9 @@ public class StackActivity extends AppCompatActivity
             finish();
         }
 
+        // Add the logged in user to the user hash map so we have their information already loaded in case they comment
+        mUserHashMap.put(LoginActivity.sUserId, null);
+
         // Set up comment send edittext and button
         mEditTextComment = findViewById(R.id.edit_text_comment);
         ImageButton imageButtonComment = findViewById(R.id.image_buton_comment);
@@ -353,7 +358,6 @@ public class StackActivity extends AppCompatActivity
         // User picture was pressed
         // Go to the canvas of that profile
 
-
         /*
         // Start canvas fragment
         Fragment fragment = null;
@@ -390,36 +394,6 @@ public class StackActivity extends AppCompatActivity
             finish();
         }
         startActivity(openFragmentBIntent);
-
-
-        // Start canvas fragment
-        /*
-        Fragment fragment = null;
-        Class fragmentClass = CanvasFragment.class;
-
-        try {
-            fragment = (Fragment) fragmentClass.newInstance();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        // Insert the fragment by replacing any existing fragment
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        fragmentManager.
-                beginTransaction()
-                .replace(R.id.flContent, fragment)
-                .addToBackStack(fragmentClass.getName())
-                .commit();
-        */
-
-
-        /*
-        // Start the Canvas Activity
-        Intent intent = new Intent(this, CanvasActivity.class);
-        startActivity(intent);
-        */
-
-
     }
 
     @Override
@@ -431,6 +405,17 @@ public class StackActivity extends AppCompatActivity
     private void updateLikeCountUI() {
         // TODO evenually add formatting for large numbers with locale (Ex: 1k instead of 1,000)
         mTextLikeCount.setText(NumberFormat.getInstance().format(mIntLikeCount));
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager inputManager =
+                (InputMethodManager) StackActivity.this.
+                        getSystemService(Context.INPUT_METHOD_SERVICE);
+        if(StackActivity.this.getCurrentFocus() != null) {
+            inputManager.hideSoftInputFromWindow(
+                    StackActivity.this.getCurrentFocus().getWindowToken(),
+                    InputMethodManager.HIDE_NOT_ALWAYS);
+        }
     }
 
 
@@ -641,9 +626,12 @@ public class StackActivity extends AppCompatActivity
                     mUserHashMap.put(photoComment.getUserId(), null);
                 }
 
-                new DownloadUsersTask().execute();
-                //mAdapterPhotoComments.notifyDataSetChanged();
             }
+
+            // Download users
+            // Even if there are no comments, we want to download the info for the logged in user in case they comment
+            mDownloadUsersTask = new DownloadUsersTask();
+            mDownloadUsersTask.execute();
         }
     }
 
@@ -700,9 +688,12 @@ public class StackActivity extends AppCompatActivity
                     mUserHashMap.put(stackComment.getUserId(), null);
                 }
 
-                new DownloadUsersTask().execute();
-                //mAdapterStackComments.notifyDataSetChanged();
             }
+
+            // Download users
+            // Even if there are no comments, we want to download the info for the logged in user in case they comment
+            mDownloadUsersTask = new DownloadUsersTask();
+            mDownloadUsersTask.execute();
         }
     }
 
@@ -810,6 +801,8 @@ public class StackActivity extends AppCompatActivity
                 return;
             }
 
+            hideKeyboard();
+
             // Clear the comment EditText since the comment has sent
             mEditTextComment.setText("");
 
@@ -865,6 +858,8 @@ public class StackActivity extends AppCompatActivity
                 Toast.makeText(StackActivity.this, "Error posting comment.", Toast.LENGTH_SHORT).show();
                 return;
             }
+
+            hideKeyboard();
 
             // Clear the comment EditText since the comment has sent
             mEditTextComment.setText("");
