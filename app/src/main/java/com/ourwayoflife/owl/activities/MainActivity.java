@@ -267,14 +267,11 @@ public class MainActivity extends AppCompatActivity
             case R.id.nav_settings:
                 fragmentClass = SettingsFragment.class;
                 break;
-            /*
-            case R.id.nav_share:
-                fragmentClass = FeedFragment.class;
+            case R.id.nav_all_users:
+                fragmentClass = FriendsFragment.class;
+                args.putString("USER_ID", LoginActivity.sUserId); // TODO probably remove after beta or when searching is implemented
+                args.putString("MODE", "MODE_ALL_USERS");
                 break;
-            case R.id.nav_send:
-                fragmentClass = FeedFragment.class;
-                break;
-                */
             default:
                 fragmentClass = FeedFragment.class;
         }
@@ -331,7 +328,7 @@ public class MainActivity extends AppCompatActivity
         // Set action bar title
         setTitle(item.getTitle());
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }

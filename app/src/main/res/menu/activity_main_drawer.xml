@@ -5,22 +5,22 @@
         <item
             android:id="@+id/nav_feed"
             android:icon="@drawable/ic_menu_gallery"
-            android:title="Feed" />
+            android:title="@string/nav_menu_feed" />
 
         <item
             android:id="@+id/nav_profile"
             android:icon="@drawable/ic_person"
-            android:title="Profile" />
+            android:title="@string/nav_menu_profile" />
 
         <item
             android:id="@+id/nav_messages"
             android:icon="@drawable/ic_message"
-            android:title="Messages" />
+            android:title="@string/nav_menu_messages" />
 
         <item
             android:id="@+id/nav_canvas"
             android:icon="@drawable/ic_grid_on"
-            android:title="My Canvas" />
+            android:title="@string/nav_menu_canvas" />
         <!--
         <item
             android:id="@+id/nav_friends"
@@ -30,22 +30,18 @@
         <item
             android:id="@+id/nav_settings"
             android:icon="@drawable/ic_menu_manage"
-            android:title="Settings" />
+            android:title="@string/nav_menu_settings" />
     </group>
 
-    <!--
-    <item android:title="Communicate">
+
+    <item android:title="Beta">
         <menu>
             <item
-                android:id="@+id/nav_share"
-                android:icon="@drawable/ic_menu_share"
-                android:title="Share" />
-            <item
-                android:id="@+id/nav_send"
-                android:icon="@drawable/ic_menu_send"
-                android:title="Send" />
+                android:id="@+id/nav_all_users"
+                android:icon="@drawable/ic_people"
+                android:title="@string/nav_menu_all_users" />
         </menu>
     </item>
-    -->
+
 
 </menu>

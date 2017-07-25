@@ -21,12 +21,14 @@ import android.widget.Toast;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.MainActivity;
 import com.ourwayoflife.owl.adapters.FriendsRecyclerAdapter;
 import com.ourwayoflife.owl.models.Following;
+import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.User;
 
 import java.util.ArrayList;
@@ -41,6 +43,7 @@ public class FriendsFragment extends Fragment
 
     public static final String MODE_FOLLOWING = "MODE_FOLLOWING";
     public static final String MODE_FOLLOWERS = "MODE_FOLLOWERS";
+    public static final String MODE_ALL_USERS = "MODE_ALL_USERS";
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -232,6 +235,11 @@ public class FriendsFragment extends Fragment
                 mTextEmptyFriends.setText(getString(R.string.text_empty_following));
                 break;
 
+            case MODE_ALL_USERS:
+                getActivity().setTitle(getString(R.string.all_users));
+                mTextEmptyFriends.setText(getString(R.string.text_empty_all_users));
+                break;
+
             default:
                 // Mode doesn't match.  May have passed an invalid mode.
                 Toast.makeText(getContext(), "Error loading data", Toast.LENGTH_SHORT).show();
@@ -245,7 +253,6 @@ public class FriendsFragment extends Fragment
 
         // User picture was pressed
         // Go to the canvas of that profile
-
 
 
         // Check if the fragment is already in the stack.
@@ -324,48 +331,62 @@ public class FriendsFragment extends Fragment
             List<Following> followingList;
             Following queryFollowing = new Following();
 
-            if (mMode.equals(MODE_FOLLOWING)) {
-                queryFollowing.setUserId(mUserId);
+            switch (mMode) {
+                case MODE_FOLLOWING:
+                    queryFollowing.setUserId(mUserId);
 
-                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
-                        .withHashKeyValues(queryFollowing)
-                        .withIndexName("UserId-FollowDate-index")
-                        .withScanIndexForward(true) // Order so that the most recently followed are last (it will be reversed when we insert into the dataset)
-                        .withConsistentRead(false); // Can't use consistent read on GSI
+                    DynamoDBQueryExpression queryExpressionFollowing = new DynamoDBQueryExpression()
+                            .withHashKeyValues(queryFollowing)
+                            .withIndexName("UserId-FollowDate-index")
+                            .withScanIndexForward(true) // Order so that the most recently followed are last (it will be reversed when we insert into the dataset)
+                            .withConsistentRead(false); // Can't use consistent read on GSI
 
-                followingList =  mapper.query(Following.class, queryExpression);
+                    followingList = mapper.query(Following.class, queryExpressionFollowing);
 
-                // Now that we have the list of Following, use that to load the user's data for each row
-                for(Following following : followingList) {
-                    User user = mapper.load(User.class, following.getFollowingId());
-                    mDataset.add(user);
+                    // Now that we have the list of Following, use that to load the user's data for each row
+                    for (Following following : followingList) {
+                        User user = mapper.load(User.class, following.getFollowingId());
+                        mDataset.add(user);
+                        publishProgress();
+                    }
+                    return true;
+
+                case MODE_FOLLOWERS:
+                    queryFollowing.setFollowingId(mUserId);
+
+                    DynamoDBQueryExpression queryExpressionFollowers = new DynamoDBQueryExpression()
+                            .withHashKeyValues(queryFollowing)
+                            .withIndexName("FollowingId-FollowDate-index")
+                            .withScanIndexForward(true) // Order so that the most recently followed are last (it will be reversed when we insert into the dataset)
+                            .withConsistentRead(false); // Can't use consistent read on GSI
+
+                    followingList = mapper.query(Following.class, queryExpressionFollowers);
+
+                    // Now that we have the list of Following, use that to load the user's data for each row
+                    for (Following following : followingList) {
+                        User user = mapper.load(User.class, following.getUserId());
+                        mDataset.add(user);
+                        publishProgress();
+                    }
+
+                    return true;
+
+                case MODE_ALL_USERS:
+
+                    DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
+                    //.withLimit(15);
+
+                    List<User> result = mapper.scan(User.class, scanExpression);
+                    mDataset.addAll(result);
                     publishProgress();
-                }
-            } else if(mMode.equals(MODE_FOLLOWERS)) {
-                queryFollowing.setFollowingId(mUserId);
 
-                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
-                        .withHashKeyValues(queryFollowing)
-                        .withIndexName("FollowingId-FollowDate-index")
-                        .withScanIndexForward(true) // Order so that the most recently followed are last (it will be reversed when we insert into the dataset)
-                        .withConsistentRead(false); // Can't use consistent read on GSI
+                    return true;
 
-                followingList =  mapper.query(Following.class, queryExpression);
-
-                // Now that we have the list of Following, use that to load the user's data for each row
-                for(Following following : followingList) {
-                    User user = mapper.load(User.class, following.getUserId());
-                    mDataset.add(user);
-                    publishProgress();
-                }
-
-            } else {
-                // Invalid mode
-                return false;
+                default:
+                    // Invalid mode
+                    return false;
             }
 
-            // Load user
-            return true;
         }
 
         @Override
@@ -382,13 +403,13 @@ public class FriendsFragment extends Fragment
 
         protected void onPostExecute(Boolean success) {
             // If not successful, notify user and exit fragment
-            if(!success) {
+            if (!success) {
                 Toast.makeText(getContext(), "Unable to retrieve user list", Toast.LENGTH_SHORT).show();
                 //getActivity().onBackPressed(); // Press back to leave fragment
             }
 
 
-            if(mDataset.isEmpty()) {
+            if (mDataset.isEmpty()) {
                 // If there are no photos, hide the recycler and show the empty view
                 mRecyclerFriends.setVisibility(View.GONE);
                 mTextEmptyFriends.setVisibility(View.VISIBLE);

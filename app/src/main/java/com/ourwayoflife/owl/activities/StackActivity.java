@@ -59,6 +59,7 @@ import org.w3c.dom.Text;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -635,7 +636,7 @@ public class StackActivity extends AppCompatActivity
 
             // Download users
             // Even if there are no comments, we want to download the info for the logged in user in case they comment
-            if(mDownloadUsersTask.getStatus() == Status.RUNNING) {
+            if(mDownloadUsersTask != null && mDownloadUsersTask.getStatus() == Status.RUNNING) {
                 mDownloadUsersTask.cancel(true);
             }
             mDownloadUsersTask = new DownloadUsersTask();
@@ -701,7 +702,7 @@ public class StackActivity extends AppCompatActivity
 
             // Download users
             // Even if there are no comments, we want to download the info for the logged in user in case they comment
-            if(mDownloadUsersTask.getStatus() == Status.RUNNING) {
+            if(mDownloadUsersTask != null &&  mDownloadUsersTask.getStatus() == Status.RUNNING) {
                 mDownloadUsersTask.cancel(true);
             }
             mDownloadUsersTask = new DownloadUsersTask();
@@ -710,27 +711,31 @@ public class StackActivity extends AppCompatActivity
     }
 
 
-    private class DownloadUsersTask extends AsyncTask<Void, Void, Void> {
+    private class DownloadUsersTask extends AsyncTask<Void, Void, Boolean> {
         DynamoDBMapper mapper;
 
-        protected Void doInBackground(Void... params) {
+        protected Boolean doInBackground(Void... params) {
 
             // Iterate through users and load their info
             Iterator it = mUserHashMap.keySet().iterator();
-            while (it.hasNext()) {
-                String key = (String) it.next();
-                //String key = entry.getKey().toString();
-                it.remove(); // avoids a ConcurrentModificationException (we already have the key anyway)
+            try {
+                while (it.hasNext()) {
+                    String key = (String) it.next();
+                    //String key = entry.getKey().toString();
+                    it.remove(); // avoids a ConcurrentModificationException (we already have the key anyway)
 
+                    User user = mapper.load(User.class, key);
 
-                User user = mapper.load(User.class, key);
-
-                if (user != null && !user.getUserId().isEmpty()) {
-                    mUserHashMap.put(key, user);
+                    if (user != null && !user.getUserId().isEmpty()) {
+                        mUserHashMap.put(key, user);
+                    }
                 }
+            } catch (ConcurrentModificationException e) {
+                Log.e(TAG, "Error loading Users: " + e);
+                return false;
             }
 
-            return null;
+            return true;
         }
 
         @Override
@@ -753,7 +758,13 @@ public class StackActivity extends AppCompatActivity
 
         }
 
-        protected void onPostExecute(Void result) {
+        protected void onPostExecute(Boolean success) {
+
+            // Even if it isn't a success, notify the adapter anyway
+            if(!success) {
+                Toast.makeText(StackActivity.this, "Error loading user data", Toast.LENGTH_SHORT).show();
+            }
+
             if(photoId != null) {
                 // Photo mode
                 mAdapterPhotoComments.notifyDataSetChanged();
