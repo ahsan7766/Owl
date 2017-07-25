@@ -433,7 +433,7 @@ public class CanvasFragment extends Fragment
 
             // Initialize the Amazon Cognito credentials provider
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getActivity(), // Context
+                    getContext(), // Context
                     getString(R.string.aws_account_id), // AWS Account ID
                     getString(R.string.cognito_identity_pool), // Identity Pool ID
                     getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
@@ -467,7 +467,6 @@ public class CanvasFragment extends Fragment
                         continue;
                     }
 
-
                     StackPhoto queryStackPhoto = new StackPhoto();
                     queryStackPhoto.setStackId(stackId);
 
@@ -489,6 +488,12 @@ public class CanvasFragment extends Fragment
 
                     // Load the photo using the PhotoId from the StackPhoto
                     Photo photo = mapper.load(Photo.class, stackPhotoList.get(0).getPhotoId());
+
+                    // If the photo is deleted, don't set the bitmap. Just continue the loop
+                    if (photo.isDeleted()) {
+                        stackCount++;
+                        continue;
+                    }
 
                     Bitmap bitmap;
                     BitmapFactory.Options options = new BitmapFactory.Options();
@@ -528,7 +533,6 @@ public class CanvasFragment extends Fragment
 
                     stackCount++;
                 }
-
 
                 publishProgress(i); // Publish progress (giving row number)
 

@@ -3,15 +3,19 @@ package com.ourwayoflife.owl.adapters;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Base64;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.fragments.FeedFragment;
@@ -49,9 +53,26 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
         //LayoutInflater layoutInflater = LayoutInflater.from(mContext);
         //ViewGroup viewGroup = (ViewGroup) layoutInflater.inflate(bitmap.getLa)
 
-
         ImageView imageView = new ImageView(mContext);
         imageView.findViewById(R.id.image);
+
+        // Check if photo is deleted
+        if (photo.isDeleted()) {
+            // If the photo is deleted, don't load the bitmap
+            // Instead show the text view, and set the text
+            TextView textView = generateMessageTextView(true);
+            container.addView(textView);
+            return textView;
+        }
+
+        if (photo.getPhoto() == null || photo.getPhoto().isEmpty()) {
+            // If the photo string is not found, don't load the bitmap
+            // Instead show the text view, and set the text
+            TextView textView = generateMessageTextView(true);
+            container.addView(textView);
+            return textView;
+        }
+
 
         //imageView.setImageBitmap(mData.get(position));
 
@@ -67,8 +88,12 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
 
             // Convert the photo string to a bitmap
             String photoString = photo.getPhoto();
-            if (photoString == null || photoString.length() <= 0) {
-                return null; // TODO not sure if this is the best way to handle empty photos
+            if (photoString == null || photoString.isEmpty()) {
+                // Photo string not found
+                // Generate TextView with error message, add to view and return it
+                TextView textView = generateMessageTextView(false);
+                container.addView(textView);
+                return textView;
             }
             try {
                 byte[] encodeByte = Base64.decode(photoString, Base64.DEFAULT);
@@ -79,8 +104,18 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
 
             } catch (Exception e) {
                 Log.e(TAG, "Conversion from String to Bitmap: " + e.getMessage());
-                return null;
+                // Generate TextView with error message, add to view and return it
+                TextView textView = generateMessageTextView(false);
+                container.addView(textView);
+                return textView;
             }
+        }
+
+        if (bitmap == null) {
+            // Bitmap should be loaded and not null now.  This is a double check
+            TextView textView = generateMessageTextView(false);
+            container.addView(textView);
+            return textView;
         }
 
         imageView.setImageBitmap(bitmap);
@@ -91,6 +126,22 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
 
         return imageView;
 
+    }
+
+    // Returns a text view with a message for the viewpager to use for deleted/error photos
+    private TextView generateMessageTextView(boolean isDeleted) {
+        // If the photo string is not found, don't load the bitmap
+        // Instead show the text view, and set the text
+        TextView textView = new TextView(mContext);
+        textView.findViewById(R.id.text);
+        textView.setGravity(Gravity.CENTER);
+        textView.setTextSize(24f);
+        textView.setTypeface(Typeface.DEFAULT_BOLD);
+
+        // If the photo is deleted, show the "Deleted" message.  Otherwise, show the error message
+        textView.setText(isDeleted ? mContext.getString(R.string.message_photo_deleted) : mContext.getString(R.string.message_photo_deleted));
+
+        return textView;
     }
 
 
@@ -160,7 +211,7 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
      */
     //@Override
     //public int getItemPosition(Object object) {
-        //return super.getItemPosition(object);
+    //return super.getItemPosition(object);
         /*
         StackPhotoPagerFragment fragment = (StackPhotoPagerFragment) object;
         Bundle args = fragment.getArguments();

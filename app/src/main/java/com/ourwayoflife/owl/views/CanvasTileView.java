@@ -29,7 +29,8 @@ public class CanvasTileView extends View {
     private Bitmap mPhoto;
 
     private Paint mOutlinePaint;
-    private Paint mNameTextPaint;
+    private Paint mNameTextFillPaint;
+    private Paint mNameTextStrokePaint;
     //private Paint mSubheaderTextPaint;
 
     private Rect mOutlineRect;
@@ -161,12 +162,20 @@ public class CanvasTileView extends View {
 
 
         // Name text
-        mNameTextPaint.getTextBounds(getName(), 0, getName().length(), mNameTextBounds);
+        mNameTextFillPaint.getTextBounds(getName(), 0, getName().length(), mNameTextBounds);
         canvas.drawText(
                 getName(),
                 (getWidth() / 2), //- mNameTextBounds.exactCenterX(),
                 ((getHeight() / 8) * 3), // - mNameTextBounds.exactCenterY(),
-                mNameTextPaint
+                mNameTextFillPaint
+        );
+
+        mNameTextStrokePaint.getTextBounds(getName(), 0, getName().length(), mNameTextBounds);
+        canvas.drawText(
+                getName(),
+                (getWidth() / 2), //- mNameTextBounds.exactCenterX(),
+                ((getHeight() / 8) * 3), // - mNameTextBounds.exactCenterY(),
+                mNameTextStrokePaint
         );
 
 
@@ -198,11 +207,22 @@ public class CanvasTileView extends View {
         mOutlinePaint.setStyle(Paint.Style.STROKE);
         mOutlinePaint.setAlpha(125);
 
-        mNameTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mNameTextPaint.setColor(Color.WHITE);
-        mNameTextPaint.setTextAlign(Paint.Align.CENTER);
-        mNameTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        mNameTextPaint.setTextSize(40);
+
+        mNameTextFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mNameTextFillPaint.setStyle(Paint.Style.FILL);
+        mNameTextFillPaint.setColor(Color.WHITE);
+        mNameTextFillPaint.setTextAlign(Paint.Align.CENTER);
+        mNameTextFillPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        mNameTextFillPaint.setTextSize(40);
+
+        mNameTextStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mNameTextStrokePaint.setStyle(Paint.Style.STROKE);
+        mNameTextStrokePaint.setStrokeWidth(0.5f);
+        mNameTextStrokePaint.setColor(Color.BLACK);
+        mNameTextStrokePaint.setTextAlign(Paint.Align.CENTER);
+        mNameTextStrokePaint.setTypeface(Typeface.DEFAULT_BOLD);
+        mNameTextStrokePaint.setTextSize(40);
+
 
         /*
         mSubheaderTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);

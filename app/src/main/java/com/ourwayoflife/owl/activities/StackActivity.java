@@ -71,7 +71,7 @@ public class StackActivity extends AppCompatActivity
     private String stackId; // Used to store the StackId of the currently viewed stack
     private String userId; // Used to store the UserId of the owner of the viewed photo/stack
 
-    private PagerAdapter mPagerAdapter;
+    private StackPhotoPagerAdapter mPagerAdapter;
     private ArrayList<Photo> mDatasetPhotos = new ArrayList<>();
 
     private RecyclerView mRecyclerViewComments;
@@ -171,6 +171,7 @@ public class StackActivity extends AppCompatActivity
 
         mPagerAdapter = new StackPhotoPagerAdapter(this, mDatasetPhotos);
         pager.setAdapter(mPagerAdapter);
+
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout_stack);
         tabLayout.setupWithViewPager(pager, true);

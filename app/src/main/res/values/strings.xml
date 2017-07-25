@@ -77,8 +77,6 @@
 
 
 
-
-
     <!-- Strings related to login -->
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
@@ -124,6 +122,10 @@
     <string name="unfollow">Unfollow</string>
     <string name="edit_profile">Edit Profile</string>
 
+    <!-- Stack -->
+    <string name="message_photo_deleted">This photo has been deleted</string>
+    <string name="message_error_load_photo">Error loading photo</string>
+
     <!-- FeedCategoryView -->
     <string name="photos">Photos</string>
 
@@ -131,6 +133,7 @@
     <string name="hoots">Hoots</string>
     <string name="followers">Followers</string>
     <string name="following">Following</string>
+
 
 
     <string name="dialog_title_permission_requested">Permission Request</string>

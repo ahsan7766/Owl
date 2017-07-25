@@ -823,7 +823,7 @@ public class FeedFragment extends Fragment
             // Convert the photo list to a FeedItem list
             for (Photo photo : result) {
 
-                if(photo.isDeleted()) {
+                if (photo.isDeleted()) {
                     // Don't load photo if it's deleted
                     continue;
                 }
@@ -1187,7 +1187,7 @@ public class FeedFragment extends Fragment
     }
 
 
-    private class DownloadStackCoverPhotoTask extends AsyncTask<Integer, Void, Void> {
+    private class DownloadStackCoverPhotoTask extends AsyncTask<Integer, Integer, Void> {
 
         protected Void doInBackground(Integer... params) {
 
@@ -1229,19 +1229,16 @@ public class FeedFragment extends Fragment
                         continue;
                     }
 
-
                     StackPhoto queryStackPhoto = new StackPhoto();
                     queryStackPhoto.setStackId(stackId);
 
-
-                    // TODO need to make sure we are getting the most recent photo by sorting/indexing by AddedDate
                     DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                             .withHashKeyValues(queryStackPhoto)
+                            .withIndexName("StackId-AddedDate-index")
                             .withLimit(1) // Only want the first one
                             //.withRangeKeyCondition("Title", rangeKeyCondition)
                             .withScanIndexForward(false)
-                            .withConsistentRead(false);
-
+                            .withConsistentRead(false); // Can't use consistent read on GSI
 
                     PaginatedQueryList<StackPhoto> stackPhotoList = mapper.query(StackPhoto.class, queryExpression);
 
@@ -1251,25 +1248,14 @@ public class FeedFragment extends Fragment
                         continue;
                     }
 
-
-
-                    /*
-                    Photo queryPhoto = new Photo();
-                    queryPhoto.setPhotoId(stackPhotoList.get(0).getPhotoId());
-
-
-                    // Now use the PhotoId of the stack photo to query for the photo
-                    DynamoDBQueryExpression queryExpressionPhoto = new DynamoDBQueryExpression()
-                            .withIndexName("UserId-UploadDate-index")
-                            .withHashKeyValues(queryPhoto)
-                            //.withRangeKeyCondition("Title", rangeKeyCondition)
-                            .withConsistentRead(false)
-                            .withScanIndexForward(false);
-
-                    */
-
+                    // Load the photo
                     Photo photo = mapper.load(Photo.class, stackPhotoList.get(0).getPhotoId());
 
+                    // If the photo is deleted, don't set the bitmap. Just continue the loop
+                    if (photo.isDeleted()) {
+                        stackCount++;
+                        continue;
+                    }
 
                     Bitmap bitmap;
                     BitmapFactory.Options options = new BitmapFactory.Options();
@@ -1281,10 +1267,11 @@ public class FeedFragment extends Fragment
                     if (bitmap == null) {
                         //Bitmap is not cached.  Have to download
 
-
                         // Convert the photo string to a bitmap
                         String photoString = photo.getPhoto();
                         if (photoString == null || photoString.length() <= 0) {
+                            // Make sure we have a photo
+                            // If not, don't try to set image and continue to next stack
                             stackCount++;
                             continue;
                         }
@@ -1310,6 +1297,7 @@ public class FeedFragment extends Fragment
                     stackCount++;
                 }
 
+                publishProgress(i); // Publish progress (giving row number)
             }
 
             return null;
@@ -1321,12 +1309,20 @@ public class FeedFragment extends Fragment
             super.onPreExecute();
         }
 
+        @Override
+        protected void onProgressUpdate(Integer... values) {
+            super.onProgressUpdate(values);
+
+            int row = values[0];
+            mAdapter.notifyItemChanged(row);
+        }
+
         protected void onPostExecute(Void result) {
             // TODO: check this.exception
             // TODO: do something with the feed
 
             // Clear dataset, add new items, then notify
-            mAdapter.notifyDataSetChanged();
+            //mAdapter.notifyDataSetChanged();
             //mAdapter.notifyInnerDatasetRowsChanged();
         }
     }
