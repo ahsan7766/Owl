@@ -10,7 +10,7 @@ android {
         }
     }
     compileSdkVersion 26
-    buildToolsVersion "26.0.0"
+    buildToolsVersion "26.0.1"
     defaultConfig {
         applicationId "com.ourwayoflife.owl"
         minSdkVersion 19
@@ -43,12 +43,12 @@ dependencies {
     compile 'com.android.support:preference-v7:26.0.0'
     compile 'com.android.support:preference-v14:26.0.0'
     compile 'com.google.android.gms:play-services-auth:11.0.2'
-    compile 'com.amazonaws:aws-android-sdk-core:2.4.3'
-    compile 'com.amazonaws:aws-android-sdk-s3:2.4.3'
-    compile 'com.amazonaws:aws-android-sdk-cognito:2.4.3'
-    compile 'com.amazonaws:aws-android-sdk-cognitoidentityprovider:2.4.3'
-    compile 'com.amazonaws:aws-android-sdk-ddb:2.4.3'
-    compile 'com.amazonaws:aws-android-sdk-ddb-mapper:2.4.3'
+    compile 'com.amazonaws:aws-android-sdk-core:2.4.5'
+    compile 'com.amazonaws:aws-android-sdk-s3:2.4.5'
+    compile 'com.amazonaws:aws-android-sdk-cognito:2.4.5'
+    compile 'com.amazonaws:aws-android-sdk-cognitoidentityprovider:2.4.5'
+    compile 'com.amazonaws:aws-android-sdk-ddb:2.4.5'
+    compile 'com.amazonaws:aws-android-sdk-ddb-mapper:2.4.5'
     compile 'joda-time:joda-time:2.9.9'
     compile 'io.reactivex.rxjava2:rxjava:2.1.0'
     testCompile 'junit:junit:4.12'

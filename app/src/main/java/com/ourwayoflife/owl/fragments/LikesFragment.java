@@ -318,35 +318,6 @@ public class LikesFragment extends Fragment
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
 
-            // Query for photos
-            /*
-            Photo queryPhoto = new Photo();
-            queryPhoto.setUserId(LoginActivity.sUserId);
-
-            // Create our map of values
-            Map keyConditions = new HashMap();
-
-            String userId = LoginActivity.sUserId;
-
-            // Specify the key conditions
-            Condition hashKeyCondition = new Condition()
-                    .withComparisonOperator(ComparisonOperator.EQ.toString())
-                    .withAttributeValueList(new AttributeValue().withS(userId));
-
-            //keyConditions.put("UserId", hashKeyCondition);
-
-
-            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
-                    .withIndexName("UserId-UploadDate-index")
-                    .withHashKeyValues(queryPhoto)
-                    //.withRangeKeyCondition("Title", rangeKeyCondition)
-                    .withConsistentRead(false)
-                    .withScanIndexForward(false);
-
-            PaginatedQueryList<Photo> result = mapper.query(Photo.class, queryExpression);
-            */
-
-
             List<Photo> result = new ArrayList<>(); // Array that the results will be stored in
 
             // Show only the photos that this person has liked
@@ -365,7 +336,10 @@ public class LikesFragment extends Fragment
             // Now get the Photos using the PhotoId in the PhotoLike objects
             for (PhotoLike photoLike : photoLikeList) {
                 Photo photo = mapper.load(Photo.class, photoLike.getPhotoId());
-                result.add(photo);
+                if(!photo.isDeleted()) {
+                    // Only add photo to results if it isn't deleted
+                    result.add(photo);
+                }
             }
 
 
@@ -378,6 +352,7 @@ public class LikesFragment extends Fragment
 
                 if (photo.isDeleted()) {
                     // Don't load photo if it's deleted
+                    // Deleted photos already should already be filtered out in the query, this is a double check
                     continue;
                 }
 

@@ -37,8 +37,13 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.BatchGetItemRequest;
+import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
+import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.google.android.gms.auth.GoogleAuthUtil;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.ourwayoflife.owl.R;
@@ -49,6 +54,7 @@ import com.ourwayoflife.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.ourwayoflife.owl.adapters.FeedRecyclerAdapter;
 import com.ourwayoflife.owl.models.CanvasTile;
 import com.ourwayoflife.owl.models.FeedItem;
+import com.ourwayoflife.owl.models.Following;
 import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.PhotoLike;
 import com.ourwayoflife.owl.models.Stack;
@@ -61,6 +67,8 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +102,8 @@ public class FeedFragment extends Fragment
     private String mParam2;
 
     private static final String TAG = FeedFragment.class.getName();
+
+    private final int FEED_QUERY_DAYS_LIMIT = 7;
 
     // The different types of views for the data
     // These will be passed from the onClick of the options to the AsyncTask to determine what to query
@@ -757,18 +767,21 @@ public class FeedFragment extends Fragment
                     PhotoLike queryPhotoLike = new PhotoLike();
                     queryPhotoLike.setUserId(LoginActivity.sUserId);
 
-                    DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    DynamoDBQueryExpression queryExpressionLikes = new DynamoDBQueryExpression()
                             .withIndexName("UserId-LikeDate-index")
                             .withHashKeyValues(queryPhotoLike)
                             .withScanIndexForward(false) // Sort if by most recently liked first
                             .withConsistentRead(false); // Can't use consistent read on GSI
 
-                    List<PhotoLike> photoLikeList = mapper.query(PhotoLike.class, queryExpression);
+                    List<PhotoLike> photoLikeList = mapper.query(PhotoLike.class, queryExpressionLikes);
 
                     // Now get the Photos using the PhotoId in the PhotoLike objects
                     for (PhotoLike photoLike : photoLikeList) {
                         Photo photo = mapper.load(Photo.class, photoLike.getPhotoId());
-                        result.add(photo);
+                        if(!photo.isDeleted()) {
+                            // Only add photo to results if it isn't deleted
+                            result.add(photo);
+                        }
                     }
 
 
@@ -781,10 +794,57 @@ public class FeedFragment extends Fragment
                 case VIEW_FEED:
                 default:
                     // Handle default and VIEW_FEED the same
+                    /*
                     DynamoDBScanExpression scanExpression = new DynamoDBScanExpression()
                             .withLimit(15);
 
                     result = mapper.scan(Photo.class, scanExpression);
+                    */
+
+                    // Get the list of users this person is following so we know who's photos to retrieve
+                    Following queryFollowing = new Following();
+                    queryFollowing.setUserId(LoginActivity.sUserId);
+
+                    DynamoDBQueryExpression queryExpressionFollowing = new DynamoDBQueryExpression()
+                            .withHashKeyValues(queryFollowing);
+
+
+                    List<Following> followingList = mapper.query(Following.class, queryExpressionFollowing);
+
+
+                    // Loop through users that we are following
+                    for(Following following : followingList) {
+                        // Get the photos for the user and insert the photos into the results list
+                        result.addAll(queryForFeedPhotos(mapper, following.getFollowingId()));
+                    }
+
+                    // We also need to add the photos of the logged in user to the feed
+                    result.addAll(queryForFeedPhotos(mapper, LoginActivity.sUserId));
+
+
+                    // Sort the results by the photo upload date
+                    // Since we don't need to sort this more than once, I made an in-line asynchronous custom comparator
+                    /*
+                    Comparator<Photo> c = new Comparator<Photo>() {
+                        @Override
+                        public int compare(Photo o1, Photo o2) {
+                            return o1.getUploadDate().compareTo(o2.getUploadDate());
+                        }
+                    };
+                    */
+
+                    /*
+                    result.sort(new Comparator<Photo>() {
+                        @Override
+                        public int compare(Photo photo1, Photo photo2) {
+                            return photo1.getUploadDate().compareTo(photo2.getUploadDate());
+                        }
+                    });
+                    */
+
+                    // TODO once we're on java 8 we can do the comparison this way (much cleaner)
+                    //result.sort(Comparator.comparing(Photo::getUploadDate));
+
                     break;
 
             }
@@ -799,6 +859,7 @@ public class FeedFragment extends Fragment
 
                 if (photo.isDeleted()) {
                     // Don't load photo if it's deleted
+                    // Deleted photos already should already be filtered out in the query, this is a double check
                     continue;
                 }
 
@@ -896,6 +957,37 @@ public class FeedFragment extends Fragment
             return feedItems;
         }
 
+        private List<Photo> queryForFeedPhotos(DynamoDBMapper mapper, String userId) {
+            // Only want photos who were uploaded by this user
+            Photo queryPhoto = new Photo();
+            queryPhoto.setUserId(userId);
+
+            // Get date string of current date minus one day
+            DateTime dt = new DateTime(DateTimeZone.UTC);
+            dt = dt.minusDays(FEED_QUERY_DAYS_LIMIT);
+            DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+            final String dateString = fmt.print(dt);
+
+            Map<String, AttributeValue> expressionAttributeValueMap = new HashMap<>();
+            expressionAttributeValueMap.put(":isDeleted", new AttributeValue().withN("0"));
+
+            // Create condition for date to be greater than the dateString we just made
+            Condition rangeKeyCondition = new Condition()
+                    .withComparisonOperator(ComparisonOperator.GT.toString())
+                    .withAttributeValueList(new AttributeValue().withS(dateString));
+
+            DynamoDBQueryExpression queryExpressionPhoto = new DynamoDBQueryExpression()
+                    .withIndexName("UserId-UploadDate-index")
+                    .withHashKeyValues(queryPhoto)
+                    .withRangeKeyCondition("UploadDate", rangeKeyCondition) // Set filter on UploadDate
+                    .withFilterExpression(("IsDeleted = :isDeleted OR attribute_not_exists(IsDeleted)")) // Filter on photos that are not deleted
+                    .withExpressionAttributeValues(expressionAttributeValueMap) // Add filter expression attribute values
+                    .withScanIndexForward(false) // Sort so that the most recent photos are first
+                    .withConsistentRead(false); // Can't use consistent read on GSI
+
+            return mapper.query(Photo.class, queryExpressionPhoto);
+        }
+
         @Override
         protected void onProgressUpdate(FeedItem... values) {
             super.onProgressUpdate(values);
@@ -982,6 +1074,9 @@ public class FeedFragment extends Fragment
                 // If there are no photos, hide the recycler and show the empty view
                 mRecyclerViewFeed.setVisibility(View.GONE);
                 mTextEmptyFeed.setVisibility(View.VISIBLE);
+
+                // TODO once the empty view is working we can remove this
+                Toast.makeText(getContext(), "No photos", Toast.LENGTH_SHORT).show();
             } else {
                 // Otherwise, make sure the recycler is shown
                 mRecyclerViewFeed.setVisibility(View.VISIBLE);

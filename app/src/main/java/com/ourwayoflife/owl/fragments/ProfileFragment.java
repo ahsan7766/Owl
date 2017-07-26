@@ -409,6 +409,9 @@ public class ProfileFragment extends Fragment implements
 
                         if (bitmap != null) {
                             // Run task to upload profile picture
+                            if(mUpdateProfilePictureTask != null && mUpdateProfilePictureTask.getStatus() == AsyncTask.Status.RUNNING) {
+                                mUpdateProfilePictureTask.cancel(true);
+                            }
                             mUpdateProfilePictureTask = new UpdateProfilePictureTask();
                             mUpdateProfilePictureTask.execute(bitmap);
                         }
@@ -799,8 +802,7 @@ public class ProfileFragment extends Fragment implements
             queryFollowing.setUserId(mUserId);
 
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
-                    .withHashKeyValues(queryFollowing)
-                    .withConsistentRead(false); // Can't use consistent read on GSI
+                    .withHashKeyValues(queryFollowing);
 
             List<Following> followingList = mapper.query(Following.class, queryExpression);
 
