@@ -18,6 +18,8 @@ public class Stack {
     private String mUserId;
     private String mCreatedDate;
     private String mName;
+    private boolean mIsDeleted;
+    private String mDeletedDate;
 
     public Stack() {
     }
@@ -67,4 +69,23 @@ public class Stack {
     public void setName(String name) {
         mName = name;
     }
+
+    @DynamoDBAttribute(attributeName = "IsDeleted")
+    public boolean isDeleted() {
+        return mIsDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        mIsDeleted = deleted;
+    }
+
+    @DynamoDBAttribute(attributeName = "DeletedDate")
+    public String getDeletedDate() {
+        return mDeletedDate;
+    }
+
+    public void setDeletedDate(String deletedDate) {
+        mDeletedDate = deletedDate;
+    }
+
 }

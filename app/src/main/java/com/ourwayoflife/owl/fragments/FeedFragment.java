@@ -103,7 +103,7 @@ public class FeedFragment extends Fragment
 
     private static final String TAG = FeedFragment.class.getName();
 
-    private final int FEED_QUERY_DAYS_LIMIT = 7;
+    private final int FEED_QUERY_DAYS_LIMIT = 14;
 
     // The different types of views for the data
     // These will be passed from the onClick of the options to the AsyncTask to determine what to query
@@ -400,6 +400,9 @@ public class FeedFragment extends Fragment
 
         // Get the stacks for the user we are viewing
         // TODO Should we disable the drag and drop until this is done loading?
+        if (mGetStacksTask != null && mGetStacksTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+            mGetStacksTask.cancel(true);
+        }
         mGetStacksTask = new GetStacksTask();
         mGetStacksTask.execute();
     }
@@ -1204,10 +1207,15 @@ public class FeedFragment extends Fragment
             Stack queryStack = new Stack();
             queryStack.setUserId(LoginActivity.sUserId); // Set userId to the logged in user
 
+            // Create filter expression map
+            Map<String, AttributeValue> expressionAttributeValueMap = new HashMap<>();
+            expressionAttributeValueMap.put(":isDeleted", new AttributeValue().withN("0"));
+
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withIndexName("UserId-CreatedDate-index")
                     .withHashKeyValues(queryStack)
-                    //.withRangeKeyCondition("Title", rangeKeyCondition)
+                    .withFilterExpression(("IsDeleted = :isDeleted OR attribute_not_exists(IsDeleted)")) // Filter on Stacks that are not deleted
+                    .withExpressionAttributeValues(expressionAttributeValueMap) // Add filter expression attribute values
                     .withScanIndexForward(false)
                     .withConsistentRead(false); //Cannot use consistent read on GSI
 

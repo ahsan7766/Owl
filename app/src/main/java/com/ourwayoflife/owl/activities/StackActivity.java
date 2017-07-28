@@ -46,6 +46,7 @@ import com.ourwayoflife.owl.fragments.StackPhotoPagerFragment;
 import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.PhotoComment;
 import com.ourwayoflife.owl.models.PhotoLike;
+import com.ourwayoflife.owl.models.Stack;
 import com.ourwayoflife.owl.models.StackComment;
 import com.ourwayoflife.owl.models.StackLike;
 import com.ourwayoflife.owl.models.StackPhoto;
@@ -63,7 +64,6 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Stack;
 
 public class StackActivity extends AppCompatActivity
         implements StackPhotoPagerFragment.OnFragmentInteractionListener,
@@ -78,6 +78,7 @@ public class StackActivity extends AppCompatActivity
     private String stackId; // Used to store the StackId of the currently viewed stack
     private String userId; // Used to store the UserId of the owner of the viewed photo/stack
 
+    private ViewPager mViewPager;
     private StackPhotoPagerAdapter mPagerAdapter;
     private ArrayList<Photo> mDatasetPhotos = new ArrayList<>();
 
@@ -109,6 +110,8 @@ public class StackActivity extends AppCompatActivity
     private CheckStackLikeCountTask mCheckStackLikeCountTask;
     private DownloadStackPhotosTask mDownloadStackPhotosTask;
     private DeletePhotoTask mDeletePhotoTask;
+    private DeleteStackTask mDeleteStackTask;
+    private RemoveStackPhotoTask mRemoveStackPhotoTask;
     private DownloadUsersTask mDownloadUsersTask;
 
     @Override
@@ -121,11 +124,6 @@ public class StackActivity extends AppCompatActivity
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-
-        mTextLikeCount = findViewById(R.id.text_like_count);
-
-        mToggleButtonLike = findViewById(R.id.button_like);
-
         // Get extras data
         photoId = getIntent().getStringExtra("PHOTO_ID");
         stackId = getIntent().getStringExtra("STACK_ID");
@@ -136,6 +134,9 @@ public class StackActivity extends AppCompatActivity
             Log.wtf(TAG, "USER_ID not found, but StackActivity was launched. Finishing Activity...");
             finish();
         }
+
+        mTextLikeCount = findViewById(R.id.text_like_count);
+        mToggleButtonLike = findViewById(R.id.button_like);
 
         // If a photo was included in the extras, then the activity is in photo mode
         if (photoId != null && photoId.length() > 0) {
@@ -194,15 +195,15 @@ public class StackActivity extends AppCompatActivity
         }
 
 
-        ViewPager pager = findViewById(R.id.view_pager_stack);
+        mViewPager = findViewById(R.id.view_pager_stack);
         //mPagerAdapter = new StackPhotoPagerAdapter(getSupportFragmentManager(), mDatasetPhotos);
 
         mPagerAdapter = new StackPhotoPagerAdapter(this, mDatasetPhotos);
-        pager.setAdapter(mPagerAdapter);
+        mViewPager.setAdapter(mPagerAdapter);
 
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout_stack);
-        tabLayout.setupWithViewPager(pager, true);
+        TabLayout tabLayout = findViewById(R.id.tab_layout_stack);
+        tabLayout.setupWithViewPager(mViewPager, true);
 
 
         // TODO Change number of likes based on query
@@ -255,7 +256,7 @@ public class StackActivity extends AppCompatActivity
                 // Check that comment isn't empty
                 if (!comment.isEmpty()) {
 
-                    if(photoId != null) {
+                    if (photoId != null) {
                         // Photo mode
                         PhotoComment photoComment = new PhotoComment();
                         photoComment.setUserId(LoginActivity.sUserId);
@@ -272,7 +273,7 @@ public class StackActivity extends AppCompatActivity
                         mUploadPhotoCommentTask = new UploadPhotoCommentTask();
                         mUploadPhotoCommentTask.execute(photoComment);
 
-                    } else if(stackId != null) {
+                    } else if (stackId != null) {
                         // Stack mode
                         StackComment stackComment = new StackComment();
                         stackComment.setUserId(LoginActivity.sUserId);
@@ -288,7 +289,7 @@ public class StackActivity extends AppCompatActivity
                         // Upload the comment
                         mUploadStackCommentTask = new UploadStackCommentTask();
                         mUploadStackCommentTask.execute(stackComment);
-                    }else {
+                    } else {
                         Log.wtf(TAG, "PHOTO_ID and STACK_ID both not found, but trying to comment.  Finishing activity...");
                         finish();
                     }
@@ -305,10 +306,8 @@ public class StackActivity extends AppCompatActivity
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
 
-        // If we are viewing a photo and the UserId of the stack is the logged in user, show the delete photo option
-        if (photoId != null && !photoId.isEmpty() && userId.equals(LoginActivity.sUserId)) {
-            menu.findItem(R.id.action_delete).setVisible(true);
-        }
+        // If we are viewing a photo or stack of the logged in user, show the delete button
+        menu.findItem(R.id.action_delete).setVisible(userId.equals(LoginActivity.sUserId));
 
         // Associate searchable configuration with the SearchView
         SearchManager searchManager =
@@ -334,24 +333,113 @@ public class StackActivity extends AppCompatActivity
                 return true;
 
             case R.id.action_delete:
-                // Show confirmation
-                new AlertDialog.Builder(this)
-                        .setTitle(getString(R.string.dialog_title_delete_photo))
-                        .setMessage(getString(R.string.dialog_message_delete_photo))
-                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                // Run the delete photo task
-                                mDeletePhotoTask = new DeletePhotoTask();
-                                mDeletePhotoTask.execute();
-                            }
-                        })
-                        .setNegativeButton(android.R.string.no, null) // No listener for the negative option
-                        .setCancelable(true)
-                        .show(); // Show the dialog
+                if (photoId != null && !photoId.isEmpty()) {
+                    // Photo mode
+                    // Show confirmation to delete the photo
+                    new AlertDialog.Builder(this)
+                            .setTitle(getString(R.string.dialog_title_delete_photo))
+                            .setMessage(getString(R.string.dialog_message_delete_photo))
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    // Run the delete photo task
+                                    if(mDeletePhotoTask != null && mDeletePhotoTask.getStatus() == AsyncTask.Status.RUNNING) {
+                                        mDeletePhotoTask.cancel(true);
+                                    }
+                                    mDeletePhotoTask = new DeletePhotoTask();
+                                    mDeletePhotoTask.execute();
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, null) // No listener for the negative option
+                            .setCancelable(true)
+                            .show(); // Show the dialog
+                    return true;
+                }
 
 
-                return true;
+                if (stackId != null && !stackId.isEmpty()) {
+                    // Stack mode
+
+                    switch (mDatasetPhotos.size()) {
+                        case 0:
+                            // Check to make sure there is actually a photo in the stack
+                            // If somehow there isn't any photos, only allow the entire stack to be deleted
+                            // This shouldn't happen, but should be accounted for
+
+                            // Show confirmation to delete stack
+                            new AlertDialog.Builder(this)
+                                    .setTitle(getString(R.string.dialog_title_delete_stack))
+                                    .setMessage(getString(R.string.dialog_message_delete_stack))
+                                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+                                            // Run the delete stack task
+                                            if(mDeleteStackTask != null && mDeleteStackTask.getStatus() == AsyncTask.Status.RUNNING) {
+                                                mDeleteStackTask.cancel(true);
+                                            }
+                                            mDeleteStackTask = new DeleteStackTask();
+                                            mDeleteStackTask.execute();
+                                        }
+                                    })
+                                    .setNegativeButton(android.R.string.no, null) // No listener for the negative option
+                                    .setCancelable(true)
+                                    .show(); // Show the dialog
+                            return true;
+
+                        case 1:
+                            // If this is the only photo in the stack, we will be deleting the stack, however we will also delete the last StackPhoto for this stack
+
+                            // Show confirmation to delete stack
+                            new AlertDialog.Builder(this)
+                                    .setTitle(getString(R.string.dialog_title_delete_stack))
+                                    .setMessage(getString(R.string.dialog_message_delete_stack_last_photo))
+                                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+                                            // First run the task to delete the StackPhoto
+                                            // In the OnPostExecute, it will see that there are 0 photos left in the Stack and then run the task to delete the Stack
+                                            if(mRemoveStackPhotoTask != null && mRemoveStackPhotoTask.getStatus() == AsyncTask.Status.RUNNING) {
+                                                mRemoveStackPhotoTask.cancel(true);
+                                            }
+                                            mRemoveStackPhotoTask = new RemoveStackPhotoTask();
+                                            mRemoveStackPhotoTask.execute(mDatasetPhotos.get(mViewPager.getCurrentItem()).getPhotoId()); // Pass in the photoId
+                                        }
+                                    })
+                                    .setNegativeButton(android.R.string.no, null) // No listener for the negative option
+                                    .setCancelable(true)
+                                    .show(); // Show the dialog
+
+
+                            return true;
+
+                        default:
+                            // There are 2+ photos in the stack
+                            // We are only removing the photo from the stack, not deleting the entire stack
+
+                            // Show confirmation to delete stack
+                            new AlertDialog.Builder(this)
+                                    .setTitle(getString(R.string.dialog_title_remove_stack_photo))
+                                    .setMessage(getString(R.string.dialog_message_remove_stack_photo))
+                                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+                                            // First run the task to delete the StackPhoto
+                                            // In the OnPostExecute, it will see that there are 0 photos left in the Stack and then run the task to delete the Stack
+                                            if(mRemoveStackPhotoTask != null && mRemoveStackPhotoTask.getStatus() == AsyncTask.Status.RUNNING) {
+                                                mRemoveStackPhotoTask.cancel(true);
+                                            }
+                                            mRemoveStackPhotoTask = new RemoveStackPhotoTask();
+                                            mRemoveStackPhotoTask.execute(mDatasetPhotos.get(mViewPager.getCurrentItem()).getPhotoId()); // Pass in the photoId
+                                        }
+                                    })
+                                    .setNegativeButton(android.R.string.no, null) // No listener for the negative option
+                                    .setCancelable(true)
+                                    .show(); // Show the dialog
+                            return true;
+                    }
+
+                }
+
 
             default:
                 return super.onOptionsItemSelected(item);
@@ -388,7 +476,7 @@ public class StackActivity extends AppCompatActivity
         // Start the canvas fragment via the main activity
         Intent openFragmentBIntent = new Intent(this, MainActivity.class);
         openFragmentBIntent.putExtra(MainActivity.OPEN_FRAGMENT_CANVAS, true);
-        if(photoId != null) {
+        if (photoId != null) {
             // Photo mode
             openFragmentBIntent.putExtra("USER_ID", mDatasetPhotoComments.get(position).getUserId()); // Add the userId so we know who's canvas to open
         } else if (stackId != null) {
@@ -408,7 +496,7 @@ public class StackActivity extends AppCompatActivity
 
     // Used to format the number of likes on a photo
     private void updateLikeCountUI() {
-        // TODO evenually add formatting for large numbers with locale (Ex: 1k instead of 1,000)
+        // TODO eventually add formatting for large numbers with locale (Ex: 1k instead of 1,000)
         mTextLikeCount.setText(NumberFormat.getInstance().format(mIntLikeCount));
     }
 
@@ -416,7 +504,7 @@ public class StackActivity extends AppCompatActivity
         InputMethodManager inputManager =
                 (InputMethodManager) StackActivity.this.
                         getSystemService(Context.INPUT_METHOD_SERVICE);
-        if(StackActivity.this.getCurrentFocus() != null) {
+        if (StackActivity.this.getCurrentFocus() != null) {
             inputManager.hideSoftInputFromWindow(
                     StackActivity.this.getCurrentFocus().getWindowToken(),
                     InputMethodManager.HIDE_NOT_ALWAYS);
@@ -636,7 +724,7 @@ public class StackActivity extends AppCompatActivity
 
             // Download users
             // Even if there are no comments, we want to download the info for the logged in user in case they comment
-            if(mDownloadUsersTask != null && mDownloadUsersTask.getStatus() == Status.RUNNING) {
+            if (mDownloadUsersTask != null && mDownloadUsersTask.getStatus() == Status.RUNNING) {
                 mDownloadUsersTask.cancel(true);
             }
             mDownloadUsersTask = new DownloadUsersTask();
@@ -702,7 +790,7 @@ public class StackActivity extends AppCompatActivity
 
             // Download users
             // Even if there are no comments, we want to download the info for the logged in user in case they comment
-            if(mDownloadUsersTask != null &&  mDownloadUsersTask.getStatus() == Status.RUNNING) {
+            if (mDownloadUsersTask != null && mDownloadUsersTask.getStatus() == Status.RUNNING) {
                 mDownloadUsersTask.cancel(true);
             }
             mDownloadUsersTask = new DownloadUsersTask();
@@ -761,14 +849,14 @@ public class StackActivity extends AppCompatActivity
         protected void onPostExecute(Boolean success) {
 
             // Even if it isn't a success, notify the adapter anyway
-            if(!success) {
+            if (!success) {
                 Toast.makeText(StackActivity.this, "Error loading user data", Toast.LENGTH_SHORT).show();
             }
 
-            if(photoId != null) {
+            if (photoId != null) {
                 // Photo mode
                 mAdapterPhotoComments.notifyDataSetChanged();
-            } else if(stackId != null){
+            } else if (stackId != null) {
                 // Stack mode
                 mAdapterStackComments.notifyDataSetChanged();
             } else {
@@ -817,7 +905,7 @@ public class StackActivity extends AppCompatActivity
         }
 
         protected void onPostExecute(PhotoComment photoComment) {
-            if(photoComment == null) {
+            if (photoComment == null) {
                 // Comment was not posted
                 // Notify user and don't clear EditText or add comment to dataset
                 Toast.makeText(StackActivity.this, "Error posting comment.", Toast.LENGTH_SHORT).show();
@@ -835,7 +923,7 @@ public class StackActivity extends AppCompatActivity
             mAdapterPhotoComments.notifyItemInserted(mDatasetPhotoComments.size());
 
             // If the empty view is show (this is the first comment posted) hide the empty view and show the recycler
-            if(mTextEmptyComments.getVisibility() == View.VISIBLE) {
+            if (mTextEmptyComments.getVisibility() == View.VISIBLE) {
                 mTextEmptyComments.setVisibility(View.GONE);
                 mRecyclerViewComments.setVisibility(View.VISIBLE);
             }
@@ -881,7 +969,7 @@ public class StackActivity extends AppCompatActivity
         }
 
         protected void onPostExecute(StackComment stackComment) {
-            if(stackComment == null) {
+            if (stackComment == null) {
                 // Comment was not posted
                 // Notify user and don't clear EditText or add comment to dataset
                 Toast.makeText(StackActivity.this, "Error posting comment.", Toast.LENGTH_SHORT).show();
@@ -899,7 +987,7 @@ public class StackActivity extends AppCompatActivity
             mAdapterStackComments.notifyItemInserted(mDatasetStackComments.size());
 
             // If the empty view is show (this is the first comment posted) hide the empty view and show the recycler
-            if(mTextEmptyComments.getVisibility() == View.VISIBLE) {
+            if (mTextEmptyComments.getVisibility() == View.VISIBLE) {
                 mTextEmptyComments.setVisibility(View.GONE);
                 mRecyclerViewComments.setVisibility(View.VISIBLE);
             }
@@ -1228,13 +1316,15 @@ public class StackActivity extends AppCompatActivity
     private class DeletePhotoTask extends AsyncTask<Void, Void, Boolean> {
 
         protected Boolean doInBackground(Void... params) {
-            // Make sure we have a PhotoId
-            if (photoId == null || photoId.isEmpty() || mDatasetPhotos.get(0) == null) {
-                return false;
-            }
+
             // Since we are in Photo mode, there should only be 1 photo in the dataset
             // This will be the photo we are deleting
             Photo photo = mDatasetPhotos.get(0);
+
+            // Make sure we have a PhotoId
+            if (photoId == null || photoId.isEmpty() || photo == null) {
+                return false;
+            }
 
             // Double check to make sure the Photo's UserId is the same as the logged in user
             if (!photo.getUserId().equals(LoginActivity.sUserId)) {
@@ -1256,7 +1346,6 @@ public class StackActivity extends AppCompatActivity
 
             photo.setDeleted(true);
 
-            // We are adding a PhotoLike to the table
             // Get date string
             DateTime dt = new DateTime(DateTimeZone.UTC);
             DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
@@ -1284,4 +1373,140 @@ public class StackActivity extends AppCompatActivity
             }
         }
     }
+
+
+    private class DeleteStackTask extends AsyncTask<Void, Void, Boolean> {
+
+        protected Boolean doInBackground(Void... params) {
+            // Make sure we have a StackId
+            if (stackId == null || stackId.isEmpty()) {
+                return false;
+            }
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            // Retrieve the stack object that we will be deleting
+            Stack stack = mapper.load(Stack.class, stackId);
+
+            // Double check to make sure the Stack's UserId is the same as the logged in user
+            if (!stack.getUserId().equals(LoginActivity.sUserId)) {
+                return false;
+            }
+
+            // Set the deleted parameter of the Stack to "True"
+            stack.setDeleted(true);
+
+            // Get date string
+            DateTime dt = new DateTime(DateTimeZone.UTC);
+            DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+            final String dateString = fmt.print(dt);
+            stack.setDeletedDate(dateString);
+
+            // Save the Stack with the altered deleted attributes in the DB
+            mapper.save(stack);
+
+            return true;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Boolean success) {
+            if (success) {
+                Toast.makeText(StackActivity.this, "Stack Deleted", Toast.LENGTH_SHORT).show();
+                finish(); // Finish activity since this stack is now deleted
+            } else {
+                Toast.makeText(StackActivity.this, "Stack Deletion Unsuccessful", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
+    /**
+     * Removes a StackPhoto from a stack
+     */
+    private class RemoveStackPhotoTask extends AsyncTask<String, Void, Boolean> {
+
+        protected Boolean doInBackground(String... params) {
+
+            String removingPhotoId = params[0];
+
+            // Make sure we have a StackId and the PhotoId that we are removing from the stack
+            if (stackId == null || stackId.isEmpty() || removingPhotoId == null || removingPhotoId.isEmpty()) {
+                return false;
+            }
+
+            // Double check to make sure the Stack's UserId is the same as the logged in user
+            if (!userId.equals(LoginActivity.sUserId)) {
+                return false;
+            }
+
+            // Initialize the Amazon Cognito credentials provider
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    StackActivity.this, // Context
+                    getString(R.string.aws_account_id), // AWS Account ID
+                    getString(R.string.cognito_identity_pool), // Identity Pool ID
+                    getString(R.string.cognito_unauth_role), // Unauthenticated Role ARN
+                    getString(R.string.cognito_auth_role), // Authenticated Role ARN
+                    Regions.US_EAST_1 // Region
+            );
+
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            StackPhoto stackPhoto = new StackPhoto();
+            stackPhoto.setStackId(stackId);
+            stackPhoto.setPhotoId(removingPhotoId);
+
+            // Delete the StackPhoto from the DB
+            mapper.delete(stackPhoto);
+
+            return true;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            // TODO Auto-generated method stub
+            super.onPreExecute();
+        }
+
+        protected void onPostExecute(Boolean success) {
+            if (success) {
+                // Remove the photo from the dataset (it's the currently viewed photo)
+                mDatasetPhotos.remove(mViewPager.getCurrentItem());
+
+                if(mDatasetPhotos.size() <= 0){
+                    // The dataset is empty, so we removed the last photo from the stack
+                    // This means the stack should also be deleted
+                    // Run the delete stack tasks
+                    if(mDeleteStackTask != null && mDeleteStackTask.getStatus() == AsyncTask.Status.RUNNING) {
+                        mDeleteStackTask.cancel(true);
+                    }
+                    mDeleteStackTask = new DeleteStackTask();
+                    mDeleteStackTask.execute();
+                    return;
+                }
+
+                Toast.makeText(StackActivity.this, "Photo removed from Stack", Toast.LENGTH_SHORT).show();
+                mPagerAdapter.notifyDataSetChanged(); // Notify adapter that dataset changed
+            } else {
+                Toast.makeText(StackActivity.this, "Photo Removal Unsuccessful", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
 }

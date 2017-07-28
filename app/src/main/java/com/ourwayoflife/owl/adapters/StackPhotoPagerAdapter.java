@@ -56,17 +56,18 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
         ImageView imageView = new ImageView(mContext);
         imageView.findViewById(R.id.image);
 
-        // Check if photo is deleted
-        if (photo.isDeleted()) {
-            // If the photo is deleted, don't load the bitmap
+        // Check if the photo or the photo string is null
+        if (photo == null && photo.getPhoto() == null || photo.getPhoto().isEmpty()) {
+            // If the photo string is not found, don't load the bitmap
             // Instead show the text view, and set the text
             TextView textView = generateMessageTextView(true);
             container.addView(textView);
             return textView;
         }
 
-        if (photo.getPhoto() == null || photo.getPhoto().isEmpty()) {
-            // If the photo string is not found, don't load the bitmap
+        // Check if photo is deleted
+        if ( photo.isDeleted()) {
+            // If the photo is deleted, don't load the bitmap
             // Instead show the text view, and set the text
             TextView textView = generateMessageTextView(true);
             container.addView(textView);

@@ -32,8 +32,10 @@
         android:layout_height="30dp"
         android:layout_below="@id/tab_layout_stack"
         android:layout_margin="15dp"
+        android:paddingStart="15dp"
+        android:paddingEnd="15dp"
         android:orientation="horizontal"
-        android:weightSum="9">
+        android:weightSum="10">
 
         <TextView
             android:layout_width="0dp"
@@ -43,6 +45,11 @@
             android:text="Comments"
             android:textSize="20sp"
             android:textStyle="bold"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2"/>
 
         <TextView
             android:id="@+id/text_like_count"
@@ -57,12 +64,13 @@
             style="@style/toggleButtonLike"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="2"
+            android:layout_weight="3"
             android:background="@drawable/selector_like_bg"
             android:gravity="center"
             android:textOff=""
             android:textOn=""/>
 
+        <!--
         <Space
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -74,6 +82,7 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"/>
+            -->
     </LinearLayout>
 
 

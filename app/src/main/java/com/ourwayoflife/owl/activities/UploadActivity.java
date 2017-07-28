@@ -42,6 +42,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExp
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.adapters.UploadPhotosRecyclerAdapter;
 import com.ourwayoflife.owl.adapters.UploadStackRecyclerAdapter;
@@ -59,7 +60,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class UploadActivity extends AppCompatActivity
         implements UploadPhotosRecyclerAdapter.ItemClickListener,
@@ -792,10 +795,15 @@ public class UploadActivity extends AppCompatActivity
             Stack queryStack = new Stack();
             queryStack.setUserId(LoginActivity.sUserId);  // Set userId to the logged in user
 
+            // Create filter expression map
+            Map<String, AttributeValue> expressionAttributeValueMap = new HashMap<>();
+            expressionAttributeValueMap.put(":isDeleted", new AttributeValue().withN("0"));
+
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withIndexName("UserId-CreatedDate-index")
                     .withHashKeyValues(queryStack)
-                    //.withRangeKeyCondition("Title", rangeKeyCondition)
+                    .withFilterExpression(("IsDeleted = :isDeleted OR attribute_not_exists(IsDeleted)")) // Filter on Stacks that are not deleted
+                    .withExpressionAttributeValues(expressionAttributeValueMap) // Add filter expression attribute values
                     .withScanIndexForward(false)
                     .withConsistentRead(false); //Cannot use consistent read on GSI
 

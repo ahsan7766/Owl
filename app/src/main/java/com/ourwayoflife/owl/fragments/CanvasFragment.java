@@ -27,6 +27,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExp
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.LoginActivity;
 import com.ourwayoflife.owl.activities.StackActivity;
@@ -37,6 +38,9 @@ import com.ourwayoflife.owl.models.Stack;
 import com.ourwayoflife.owl.models.StackPhoto;
 import com.ourwayoflife.owl.models.User;
 import com.ourwayoflife.owl.views.ProfilePictureView;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Zach on 5/23/17.
@@ -219,6 +223,10 @@ public class CanvasFragment extends Fragment
         super.onViewCreated(view, savedInstanceState);
 
         // Get the stacks for the user we are viewing
+        // Refresh the stacks
+        if(mGetStacksTask != null && mGetStacksTask.getStatus() == AsyncTask.Status.RUNNING) {
+            mGetStacksTask.cancel(true);
+        }
         mGetStacksTask = new GetStacksTask();
         mGetStacksTask.execute();
     }
@@ -361,10 +369,15 @@ public class CanvasFragment extends Fragment
             Stack queryStack = new Stack();
             queryStack.setUserId(mUserId); // Set userId to the userId of the canvas we are viewing
 
+            // Create filter expression map
+            Map<String, AttributeValue> expressionAttributeValueMap = new HashMap<>();
+            expressionAttributeValueMap.put(":isDeleted", new AttributeValue().withN("0"));
+
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withIndexName("UserId-CreatedDate-index")
                     .withHashKeyValues(queryStack)
-                    //.withRangeKeyCondition("Title", rangeKeyCondition)
+                    .withFilterExpression(("IsDeleted = :isDeleted OR attribute_not_exists(IsDeleted)")) // Filter on Stacks that are not deleted
+                    .withExpressionAttributeValues(expressionAttributeValueMap) // Add filter expression attribute values
                     .withScanIndexForward(false)
                     .withConsistentRead(false); //Cannot use consistent read on GSI
 

@@ -172,10 +172,13 @@
     <string name="permission_rationale_storage">Device storage permissions
         are needed for uploading photos.</string>
 
-
     <string name="dialog_title_delete_photo">Delete Photo</string>
     <string name="dialog_message_delete_photo">Are you sure you want to delete this photo?</string>
-
+    <string name="dialog_title_delete_stack">Delete Stack</string>
+    <string name="dialog_message_delete_stack">Are you sure you want to delete this stack?</string>
+    <string name="dialog_message_delete_stack_last_photo">Removing the only photo in a stack will automatically delete the stack.  Are you sure you want to delete this stack?\n</string>
+    <string name="dialog_title_remove_stack_photo">Remove Photo</string>
+    <string name="dialog_message_remove_stack_photo">Are you sure you want to remove this photo from the stack?</string>
 
     <!--SettingsFragment -->
     <string name="pref_title_category_account">Account</string>
