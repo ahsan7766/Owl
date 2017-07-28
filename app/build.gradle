@@ -15,8 +15,8 @@ android {
         applicationId "com.ourwayoflife.owl"
         minSdkVersion 19
         targetSdkVersion 26
-        versionCode 6
-        versionName "0.0.6"
+        versionCode 7
+        versionName "0.0.7"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -42,7 +42,7 @@ dependencies {
     compile 'com.android.support:recyclerview-v7:26.0.0'
     compile 'com.android.support:preference-v7:26.0.0'
     compile 'com.android.support:preference-v14:26.0.0'
-    compile 'com.google.android.gms:play-services-auth:11.0.2'
+    compile 'com.google.android.gms:play-services-auth:11.0.4'
     compile 'com.amazonaws:aws-android-sdk-core:2.4.5'
     compile 'com.amazonaws:aws-android-sdk-s3:2.4.5'
     compile 'com.amazonaws:aws-android-sdk-cognito:2.4.5'

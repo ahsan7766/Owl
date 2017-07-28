@@ -821,9 +821,8 @@ public class FeedFragment extends Fragment
                     // We also need to add the photos of the logged in user to the feed
                     result.addAll(queryForFeedPhotos(mapper, LoginActivity.sUserId));
 
-                    ArrayList<Photo> sortedPhotos = (ArrayList<Photo>) result;
-
-                    Collections.sort(sortedPhotos, new Comparator<Photo>() {
+                    // Sort the photos by most recent first
+                    Collections.sort(result, new Comparator<Photo>() {
                         @Override
                         public int compare(Photo o1, Photo o2) {
                             return o2.getUploadDate().compareTo(o1.getUploadDate());
