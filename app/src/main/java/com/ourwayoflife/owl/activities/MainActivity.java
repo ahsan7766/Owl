@@ -94,9 +94,11 @@ public class MainActivity extends AppCompatActivity
         new DownloadUserTask().execute();
 
         // Open a fragment on startup
+        Fragment fragment = new FeedFragment();
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.flContent, new FeedFragment());
-        fragmentTransaction.commit();
+        fragmentTransaction.replace(R.id.flContent, fragment)
+                .addToBackStack(fragment.getClass().getName())
+                .commit();
         mNavigationView.getMenu().getItem(0).setChecked(true);
     }
 
@@ -119,7 +121,7 @@ public class MainActivity extends AppCompatActivity
             // Make sure we have a UserId
             final String USER_ID = getIntent().getStringExtra("USER_ID");
 
-            if(USER_ID == null || USER_ID.isEmpty()) {
+            if (USER_ID == null || USER_ID.isEmpty()) {
                 // No UserId found, don't open the canvas
                 Log.e(TAG, "Unable to open Canvas.  UserId was not passed.");
                 Toast.makeText(this, "Cannot open Canvas: User Not Found", Toast.LENGTH_SHORT).show();
@@ -131,7 +133,6 @@ public class MainActivity extends AppCompatActivity
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             Fragment fragment = fragmentManager.findFragmentByTag(CanvasFragment.class.getName());
-
 
 
             Bundle args = new Bundle(); // args we will pass to the fragment
@@ -253,8 +254,8 @@ public class MainActivity extends AppCompatActivity
                 break;
             case R.id.nav_messages:
                 return true;
-                //fragmentClass = MessagesFragment.class;
-                //break;
+            //fragmentClass = MessagesFragment.class;
+            //break;
             case R.id.nav_canvas:
                 fragmentClass = CanvasFragment.class;
                 args.putString("USER_ID", LoginActivity.sUserId);
@@ -435,7 +436,7 @@ public class MainActivity extends AppCompatActivity
             //final String USER_ID = getIntent().getStringExtra("USER_ID");
 
             // Make sure we have a userId
-            if(LoginActivity.sUserId == null || LoginActivity.sUserId.isEmpty()) {
+            if (LoginActivity.sUserId == null || LoginActivity.sUserId.isEmpty()) {
                 return null;
             }
 
