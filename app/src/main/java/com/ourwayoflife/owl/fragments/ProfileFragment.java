@@ -50,6 +50,7 @@ import org.joda.time.format.ISODateTimeFormat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
@@ -885,19 +886,69 @@ public class ProfileFragment extends Fragment implements
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
 
             try {
-                // Convert bitmap to String
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.WEBP, 10, baos);
-                byte[] b = baos.toByteArray();
-                String photoString = Base64.encodeToString(b, Base64.DEFAULT);
-
-                // Insert User to DB
                 // Make sure we have a UserId
                 if (mUser.getUserId() == null) {
                     return null;
                 }
-                mUser.setPhoto(photoString);
 
+                // Convert bitmap to String
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                //bitmap.compress(Bitmap.CompressFormat.WEBP, 10, baos);
+                //byte[] b = baos.toByteArray();
+                //String photoString = Base64.encodeToString(b, Base64.DEFAULT);
+                String photoString;
+
+                final int MAX_IMAGE_SIZE = 325000; // The max size of the photo string after compression (bytes)
+                int compressQuality = 100; // Initial compression quality (percentage)
+                do {
+                    try {
+                        baos.flush(); //to avoid out of memory error
+                        baos.reset();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    bitmap.compress(Bitmap.CompressFormat.WEBP, compressQuality, baos);
+                    byte[] byteArray = baos.toByteArray();
+
+                    Log.d(TAG, "Upload Quality: " + compressQuality);
+
+                    // Calculate the size of the string (in bytes)
+                    photoString = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                    int stringSize = 8 * ((((photoString.length()) * 2) + 45) / 8);
+                    Log.d(TAG, "Photo String Size (bytes): " + stringSize);
+
+                    if (stringSize <= MAX_IMAGE_SIZE) {
+                        // The photo has been compressed to a size below the max
+                        Log.d(TAG, "Photo has been compressed to a size below the max.");
+                        break;
+                    }
+
+                    if (compressQuality == 1) {
+                        // Compress quality is already at 1%, can't compress further
+                        return null;
+                    }
+
+
+                    if (stringSize > 5 * MAX_IMAGE_SIZE) {
+                        // If the image size is more than 5x max then compress it an extra 10 percent before next loop
+                        compressQuality -= 20;
+                    } else if (stringSize > 1.5 * MAX_IMAGE_SIZE) {
+                        // If the image size is more than double max then compress it an extra 10 percent before next loop
+                        compressQuality -= 10;
+                    }
+
+                    compressQuality -= 5;
+
+                    // Make sure compress quality doesn't fall below 1
+                    if (compressQuality < 1) {
+                        compressQuality = 1;
+                    }
+
+                } while (true);
+
+                mUser.setPhoto(photoString); // Set new user profile picture
+
+                // Insert User to DB
                 mapper.save(mUser);
 
             } catch (Exception e) {

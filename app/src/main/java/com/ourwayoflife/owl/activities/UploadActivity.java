@@ -675,11 +675,7 @@ public class UploadActivity extends AppCompatActivity
                         bitmap.compress(Bitmap.CompressFormat.WEBP, compressQuality, baos);
                         byte[] byteArray = baos.toByteArray();
 
-
                         Log.d(TAG, "Upload Quality: " + compressQuality);
-
-
-                        //Log.d(TAG, "Byte array size: " + baos.size());
 
                         // Calculate the size of the string (in bytes)
                         photoString = Base64.encodeToString(byteArray, Base64.DEFAULT);
