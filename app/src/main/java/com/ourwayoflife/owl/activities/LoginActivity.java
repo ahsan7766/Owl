@@ -540,7 +540,13 @@ public class LoginActivity extends AppCompatActivity implements
 
             sUserId = userId;
 
-            return mapper.load(User.class, userId);
+            try {
+                return mapper.load(User.class, userId);
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading user data: " + e);
+                e.printStackTrace();
+                return null;
+            }
         }
 
         @Override

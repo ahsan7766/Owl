@@ -4,9 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Base64;
@@ -140,7 +137,7 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
         textView.setTypeface(Typeface.DEFAULT_BOLD);
 
         // If the photo is deleted, show the "Deleted" message.  Otherwise, show the error message
-        textView.setText(isDeleted ? mContext.getString(R.string.message_photo_deleted) : mContext.getString(R.string.message_photo_deleted));
+        textView.setText(isDeleted ? mContext.getString(R.string.message_content_deleted) : mContext.getString(R.string.message_error_load_content));
 
         return textView;
     }

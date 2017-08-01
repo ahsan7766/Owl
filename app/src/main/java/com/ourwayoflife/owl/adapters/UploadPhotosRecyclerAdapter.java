@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +13,8 @@ import android.widget.ImageView;
 
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.UploadActivity;
+import com.ourwayoflife.owl.models.Photo;
+import com.ourwayoflife.owl.models.PhotoVideoHolder;
 
 import java.util.ArrayList;
 
@@ -21,14 +24,14 @@ import java.util.ArrayList;
 
 public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhotosRecyclerAdapter.ViewHolder> {
 
-    private ArrayList<Bitmap> mData = new ArrayList<>();
+    private ArrayList<PhotoVideoHolder> mData = new ArrayList<>();
     private LayoutInflater mInflater;
     private UploadPhotosRecyclerAdapter.ItemClickListener mClickListener;
 
     private Context mContext;
 
     // data is passed into the constructor
-    public UploadPhotosRecyclerAdapter(Context context, ArrayList<Bitmap> data) {
+    public UploadPhotosRecyclerAdapter(Context context, ArrayList<PhotoVideoHolder> data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
@@ -59,58 +62,20 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
 
                     // Allow user to select photo(s)
                     Intent intent = new Intent();
-                    intent.setType("image/*");
+                    intent.setType("image/* video/*");
+                    intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {"image/*", "video/*"});
                     intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                     intent.setAction(Intent.ACTION_GET_CONTENT);
                     ((Activity) mContext).startActivityForResult(
-                            Intent.createChooser(intent, "Select Picture(s)"),
+                            Intent.createChooser(intent, "Select Photos/Videos"),
                             UploadActivity.REQUEST_SELECT_PHOTOS);
                 }
             });
         } else {
             // Otherwise, set the ImageView to the selected photo
-            /*
-            String path = mData.get(position); // Path to the selected image
-            //holder.mProfilePictureView.setBackgroundPicture(R.drawable.trees);
+            Bitmap bitmap = mData.get(position).getPhoto();
 
-            File imgFile = new File(path);
-
-            if (imgFile.exists()) {
-
-                // Crop bitmap before displaying
-                Bitmap srcBmp = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-                Bitmap dstBmp;
-
-                if (srcBmp.getWidth() >= srcBmp.getHeight()){
-
-                    dstBmp = Bitmap.createBitmap(
-                            srcBmp,
-                            srcBmp.getWidth()/2 - srcBmp.getHeight()/2,
-                            0,
-                            srcBmp.getHeight(),
-                            srcBmp.getHeight()
-                    );
-
-                }else{
-
-                    dstBmp = Bitmap.createBitmap(
-                            srcBmp,
-                            0,
-                            srcBmp.getHeight()/2 - srcBmp.getWidth()/2,
-                            srcBmp.getWidth(),
-                            srcBmp.getWidth()
-                    );
-                }
-
-                holder.mImageView.setImageBitmap(dstBmp);
-
-
-            }
-            */
-
-            Bitmap bitmap = mData.get(position);
             holder.mImageView.setImageBitmap(bitmap);
-
         }
 
     }
@@ -139,7 +104,7 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
     }
 
     // convenience method for getting data at click position
-    public Bitmap getItem(int id) {
+    public PhotoVideoHolder getItem(int id) {
         return mData.get(id);
     }
 

@@ -9,6 +9,8 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaMetadataRetriever;
+import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -36,17 +38,30 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSSessionCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.S3Link;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
+import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.adapters.UploadPhotosRecyclerAdapter;
 import com.ourwayoflife.owl.adapters.UploadStackRecyclerAdapter;
 import com.ourwayoflife.owl.models.Photo;
+import com.ourwayoflife.owl.models.PhotoVideoHolder;
 import com.ourwayoflife.owl.models.Stack;
 import com.ourwayoflife.owl.models.StackPhoto;
 
@@ -77,7 +92,7 @@ public class UploadActivity extends AppCompatActivity
     private RecyclerView mRecyclerViewPhotos;
     private LinearLayoutManager mLayoutManagerPhotos;
     private UploadPhotosRecyclerAdapter mAdapterPhotos;
-    private ArrayList<Bitmap> mDatasetPhotos = new ArrayList<>();
+    private ArrayList<PhotoVideoHolder> mDatasetPhotos = new ArrayList<>();
 
     private RecyclerView mRecyclerViewStack;
     private LinearLayoutManager mLayoutManagerStack;
@@ -127,8 +142,7 @@ public class UploadActivity extends AppCompatActivity
         mRecyclerViewStack = (RecyclerView) findViewById(R.id.recycler_upload_stack);
 
         // Initialize Stack Dataset
-        // TODO Initialize Dataset
-        initDatasetStacks();
+        new GetStacksTask().execute();
 
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
@@ -160,7 +174,6 @@ public class UploadActivity extends AppCompatActivity
                     Toast.makeText(UploadActivity.this, "No Photos Selected", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
 
                 /*
                 // Do not allow upload if no stack is selected
@@ -378,37 +391,124 @@ public class UploadActivity extends AppCompatActivity
                     Uri selectedImage = imageReturnedIntent.getData();
                     //String[] filePathColumn = { MediaStore.Images.Media.DATA };
 
+
+                    // If imageReturnedIntent.getData() returns something, then there was exactly 1 photo/video selected
                     if (selectedImage != null) {
                         // One image was selected
-                        Bitmap bitmap;
 
-                        // Check if the photo is locally stored
-                        if (selectedImage.toString().startsWith("content://com.google.android.apps.photos.content")) {
-                            // The photo is NOT locally stored (Could be using Google Photos, etc...
-                            InputStream is;
-                            try {
-                                is = getContentResolver().openInputStream(selectedImage);
-                            } catch (FileNotFoundException e) {
-                                Log.e(TAG, "Could not find file. " + e);
-                                e.printStackTrace();
-                                Toast.makeText(this, "Unable to upload photo.", Toast.LENGTH_SHORT).show();
+                        if (selectedImage.toString().contains("image")) {
+                            // Item is an image
+                            Bitmap bitmap;
+
+                            // Check if the photo is locally stored.  Probably is, but check anyway.
+                            if (selectedImage.toString().startsWith("content://com.google.android.apps.photos.content")) {
+                                // The photo is NOT locally stored (Could be using Google Photos, etc...
+                                InputStream is;
+                                try {
+                                    is = getContentResolver().openInputStream(selectedImage);
+                                } catch (FileNotFoundException e) {
+                                    Log.e(TAG, "Could not find file. " + e);
+                                    e.printStackTrace();
+                                    Toast.makeText(this, "Unable to upload photo.", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+
+                                Bitmap tempBitmap = BitmapFactory.decodeStream(is);
+                                bitmap = generateCroppedBitmap(tempBitmap);
+
+                            } else {
+                                // The photo we are downloading is stored locally
+                                String path = getRealPathFromURI(this, selectedImage);
+                                bitmap = generateCroppedBitmap(path);
+                            }
+
+                            if (bitmap != null) {
+                                // Add a new PhotoVideoHolder to the dataset with photo type and the bitmap
+                                mDatasetPhotos.add(new PhotoVideoHolder(true, bitmap, null));
+                                mAdapterPhotos.notifyItemInserted(mDatasetPhotos.size() - 1);
+                            }
+
+
+                        } else if (selectedImage.toString().contains("video")) {
+                            // Item is a video
+
+                            // Check to make sure video is under time limit
+                            if (!isVideoUnderTimeLimit(this, selectedImage)) {
+                                Toast.makeText(this, "Could not load video.  Max length is 20 seconds", Toast.LENGTH_SHORT).show();
                                 return;
                             }
 
-                            Bitmap tempBitmap = BitmapFactory.decodeStream(is);
-                            bitmap = generateCroppedBitmap(tempBitmap);
+                            // Get the path
+                            String path = getRealVideoPathFromURI(this, selectedImage);
+
+                            if (path == null || path.isEmpty()) {
+                                Log.e(TAG, "Error getting full video path.");
+                                Toast.makeText(this, "Error loading video.", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            // Get a thumbnail of the video
+                            Bitmap thumb = ThumbnailUtils.createVideoThumbnail(path,
+                                    MediaStore.Images.Thumbnails.MINI_KIND);
+
+                            // Add the bitmap thumbnail to the dataset
+                            if (thumb == null) {
+                                Log.e(TAG, "Error getting video thumbnail.");
+                                Toast.makeText(this, "Error loading video thumbnail.", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            // Load a new PhotoVideoHolder into the dataset with video type, the thumb and path of the video
+                            mDatasetPhotos.add(new PhotoVideoHolder(false, thumb, path));
+                            mAdapterPhotos.notifyItemInserted(mDatasetPhotos.size() - 1);
+
+
+                        } else if (selectedImage.toString().startsWith("content://com.google.android.apps.photos.content")) {
+                            // Item is from cloud storage
+                            // TODO This only handles photos from cloud, not videos
+                            // TODO remember to check video length here
+
+                            Bitmap bitmap;
+
+                            // Check if the photo is locally stored
+                            if (selectedImage.toString().startsWith("content://com.google.android.apps.photos.content")) {
+                                // The photo is NOT locally stored (Could be using Google Photos, etc...
+                                InputStream is;
+                                try {
+                                    is = getContentResolver().openInputStream(selectedImage);
+                                } catch (FileNotFoundException e) {
+                                    Log.e(TAG, "Could not find file. " + e);
+                                    e.printStackTrace();
+                                    Toast.makeText(this, "Unable to upload photo.", Toast.LENGTH_SHORT).show();
+                                    return;
+                                }
+
+                                Bitmap tempBitmap = BitmapFactory.decodeStream(is);
+                                bitmap = generateCroppedBitmap(tempBitmap);
+
+                            } else {
+                                // The photo we are downloading is stored locally
+                                String path = getRealPathFromURI(this, selectedImage);
+                                bitmap = generateCroppedBitmap(path);
+                            }
+
+                            if (bitmap != null) {
+                                // Add a new PhotoVideoHolder to the dataset with photo type and the bitmap
+                                mDatasetPhotos.add(new PhotoVideoHolder(true, bitmap, null));
+                                mAdapterPhotos.notifyItemInserted(mDatasetPhotos.size() - 1);
+                            }
+
 
                         } else {
-                            // The photo we are downloading is stored locally
-                            String path = getRealPathFromURI(this, selectedImage);
-                            bitmap = generateCroppedBitmap(path);
+                            // Item is not a local image or video, and is not from cloud storage. Skip it.
+                            Toast.makeText(this, "Unsupported file type selected.", Toast.LENGTH_SHORT).show();
+                            return;
                         }
 
-                        if (bitmap != null) {
-                            mDatasetPhotos.add(bitmap);
-                        }
+
                     } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
                         // Multiple images selected
+
 
                         ClipData clipData = imageReturnedIntent.getClipData();
 
@@ -417,7 +517,120 @@ public class UploadActivity extends AppCompatActivity
                             ClipData.Item item = clipData.getItemAt(i);
                             Uri uri = item.getUri();
 
+                            // Make sure URI isn't null
+                            if (uri == null) {
+                                Log.e(TAG, "Unable to find URI of photo/video.");
+                                Toast.makeText(this, "Could not load media. Skipping...", Toast.LENGTH_SHORT).show();
+                                continue;
+                            }
 
+                            if (uri.toString().contains("image")) {
+                                // Item is an image
+
+                                // Check if the photo is locally stored.  Probably is, but check anyway.
+                                if (uri.toString().startsWith("content://com.google.android.apps.photos.content")) {
+                                    // The photo is NOT locally stored (Could be using Google Photos, etc...
+                                    InputStream is;
+                                    try {
+                                        is = getContentResolver().openInputStream(uri);
+                                    } catch (FileNotFoundException e) {
+                                        Log.e(TAG, "Could not find file. " + e);
+                                        e.printStackTrace();
+                                        Toast.makeText(this, "Unable to upload photo.", Toast.LENGTH_SHORT).show();
+                                        continue;
+                                    }
+
+                                    Bitmap tempBitmap = BitmapFactory.decodeStream(is);
+                                    bitmap = generateCroppedBitmap(tempBitmap);
+
+                                } else {
+                                    // The photo we are downloading is stored locally
+                                    String path = getRealPathFromURI(this, uri);
+                                    bitmap = generateCroppedBitmap(path);
+                                }
+
+                                if (bitmap != null) {
+                                    // Add a new PhotoVideoHolder to the dataset with photo type and the bitmap
+                                    mDatasetPhotos.add(new PhotoVideoHolder(true, bitmap, null));
+                                    mAdapterPhotos.notifyItemInserted(mDatasetPhotos.size() - 1);
+                                }
+
+
+                            } else if (uri.toString().contains("video")) {
+                                // Item is a video
+
+                                // Check to make sure video is under time limit
+                                if (!isVideoUnderTimeLimit(this, uri)) {
+                                    Toast.makeText(this, "Could not load video.  Max length is 20 seconds", Toast.LENGTH_SHORT).show();
+                                    continue;
+                                }
+
+                                // Get the path
+                                String path = getRealVideoPathFromURI(this, uri);
+
+                                if (path == null || path.isEmpty()) {
+                                    Log.e(TAG, "Error getting full video path.");
+                                    Toast.makeText(this, "Error loading video.", Toast.LENGTH_SHORT).show();
+                                    continue;
+                                }
+
+                                // Get a thumbnail of the video
+                                Bitmap thumb = ThumbnailUtils.createVideoThumbnail(path,
+                                        MediaStore.Images.Thumbnails.MINI_KIND);
+
+                                // Add the bitmap thumbnail to the dataset
+                                if (thumb == null) {
+                                    Log.e(TAG, "Error getting video thumbnail.");
+                                    Toast.makeText(this, "Error loading video thumbnail.", Toast.LENGTH_SHORT).show();
+                                    continue;
+                                }
+
+                                // Load a new PhotoVideoHolder into the dataset with video type, the thumb and path of the video
+                                mDatasetPhotos.add(new PhotoVideoHolder(false, thumb, path));
+                                mAdapterPhotos.notifyItemInserted(mDatasetPhotos.size() - 1);
+
+
+                            } else if (uri.toString().startsWith("content://com.google.android.apps.photos.content")) {
+                                // Item is from cloud storage
+                                // TODO This only handles photos from cloud, not videos
+
+                                // Check if the photo is locally stored
+                                if (uri.toString().startsWith("content://com.google.android.apps.photos.content")) {
+                                    // The photo is NOT locally stored (Could be using Google Photos, etc...
+                                    InputStream is;
+                                    try {
+                                        is = getContentResolver().openInputStream(uri);
+                                    } catch (FileNotFoundException e) {
+                                        Log.e(TAG, "Could not find file. " + e);
+                                        e.printStackTrace();
+                                        Toast.makeText(this, "Unable to upload photo.", Toast.LENGTH_SHORT).show();
+                                        continue;
+                                    }
+
+                                    Bitmap tempBitmap = BitmapFactory.decodeStream(is);
+                                    bitmap = generateCroppedBitmap(tempBitmap);
+
+                                } else {
+                                    // The photo we are downloading is stored locally
+                                    String path = getRealPathFromURI(this, uri);
+                                    bitmap = generateCroppedBitmap(path);
+                                }
+
+                                if (bitmap != null) {
+                                    // Add a new PhotoVideoHolder to the dataset with photo type and the bitmap
+                                    mDatasetPhotos.add(new PhotoVideoHolder(true, bitmap, null));
+                                    mAdapterPhotos.notifyItemInserted(mDatasetPhotos.size() - 1);
+                                }
+
+
+                            } else {
+                                // Item is not a local image or video, and is not from cloud storage. Skip it.
+                                Toast.makeText(this, "Unsupported file type selected for one of the files. Skipping...", Toast.LENGTH_SHORT).show();
+                                continue;
+                            }
+
+
+                            /*
                             // Check if the photo is locally stored
                             if (uri.toString().startsWith("content://com.google.android.apps.photos.content")) {
                                 // The photo is NOT locally stored (Could be using Google Photos, etc...
@@ -441,14 +654,28 @@ public class UploadActivity extends AppCompatActivity
                             }
 
                             if (bitmap != null) {
-                                mDatasetPhotos.add(bitmap);
+                                // Add a new PhotoVideoHolder to the dataset with photo type and the bitmap
+                                mDatasetPhotos.add(new PhotoVideoHolder(true, bitmap, null));
                             }
-                        }
+
+                            */
+
+                        } // for loop through selected items
+
+                    } else {
+                        Log.wtf(TAG, "Unable to recognize if a single or multiple items selected");
+                        Toast.makeText(this, "Error loading media.", Toast.LENGTH_SHORT).show();
+                        return;
                     }
 
-                    mAdapterPhotos.notifyDataSetChanged();
+                    // Instead of this, notify each time one is inserted
+                    //mAdapterPhotos.notifyDataSetChanged();
+
+                    // Scroll to the end
+                    mRecyclerViewPhotos.smoothScrollToPosition(mDatasetPhotos.size());
                 }
                 break;
+
         }
     }
 
@@ -497,6 +724,27 @@ public class UploadActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Returns true if the video is under the max time limit
+     *
+     * @param context context
+     * @param uri     video uri
+     * @return true if video length is under time limit
+     */
+    public boolean isVideoUnderTimeLimit(Context context, Uri uri) {
+
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        //use one of overloaded setDataSource() functions to set your data source
+        retriever.setDataSource(context, uri);
+        String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+        long timeInMillisec = Long.parseLong(time);
+        retriever.release();
+
+        final int MAX_VIDEO_LENGTH = 20000; // Max video length (in milliseconds)
+
+        return timeInMillisec <= MAX_VIDEO_LENGTH;
+    }
+
     public static String getRealPathFromURI(Context context, Uri uri) {
         String filePath = "";
         String wholeID = DocumentsContract.getDocumentId(uri);
@@ -526,6 +774,37 @@ public class UploadActivity extends AppCompatActivity
         cursor.close();
         return filePath;
     }
+
+    public static String getRealVideoPathFromURI(Context context, Uri uri) {
+        String filePath = "";
+        String wholeID = DocumentsContract.getDocumentId(uri);
+
+        // Split at colon, use second item in the array
+        String id = wholeID.split(":")[1];
+
+        String[] column = {MediaStore.Images.Media.DATA};
+
+        // where id is equal to
+        String sel = MediaStore.Images.Media._ID + "=?";
+
+        Cursor cursor = context.getContentResolver().query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                column, sel, new String[]{id}, null);
+
+        if (cursor == null) {
+            // There was a problem creating the cursor.  Potentially invalid context
+            Log.e(TAG, "In getRealPathFromURI: Error creating cursor.");
+            return null;
+        }
+
+        int columnIndex = cursor.getColumnIndex(column[0]);
+
+        if (cursor.moveToFirst()) {
+            filePath = cursor.getString(columnIndex);
+        }
+        cursor.close();
+        return filePath;
+    }
+
 
     public static Bitmap generateCroppedBitmap(String path) {
         File imgFile = new File(path);
@@ -567,16 +846,6 @@ public class UploadActivity extends AppCompatActivity
         return dstBmp;
     }
 
-    /**
-     * Initialize stack dataset
-     * Retrieve the list of the user's stacks
-     */
-    private void initDatasetStacks() {
-        // TODO replace fake data generation with pull form web
-        //mDatasetStack =  new String[] { "Stack Name 1", "Stack Name 2", "Stack Name 3", "Stack Name 4", "Stack Name 5"};
-        new GetStacksTask().execute();
-    }
-
 
     private class UploadTask extends AsyncTask<String, Void, Boolean> {
 
@@ -596,9 +865,6 @@ public class UploadActivity extends AppCompatActivity
                     Regions.US_EAST_1 // Region
             );
 
-            //AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
-            //TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
-
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
@@ -608,148 +874,286 @@ public class UploadActivity extends AppCompatActivity
             try {
 
                 datasetLoop:
-                for (Bitmap bitmap : mDatasetPhotos) {
+                for (PhotoVideoHolder photoVideoHolder : mDatasetPhotos) {
+
+                    if (photoVideoHolder.isPhotoType()) {
+                        // We are uploading a photo
 
 
-                    /*
-                    Bitmap bitmap = mDatasetPhotos.get(0);
-                    File f = new File(getCacheDir(), "temp"); // Test is file name
-                    FileOutputStream fos = new FileOutputStream(f);
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos);
+                        Bitmap bitmap = photoVideoHolder.getPhoto();
 
-
-                    // Upload file
-                    TransferObserver observer = transferUtility.upload(
-                            "owl-aws",     // The bucket to upload to
-                            "1" + ".bmp",    // The key for the uploaded object
-                            f        // The file where the data to upload exists
-                    );
-
-
-                    observer.setTransferListener(new TransferListener() {
-                        @Override
-                        public void onStateChanged(int id, TransferState state) {
-                            Log.d(TAG, "StateChanged: " + state);
-                            if (TransferState.COMPLETED.equals(state)) {
-                                // Upload Completed
-                                Log.d(TAG, "Upload finished");
-
-
-                                // TODO Go to the stack/photo that was just uploaded and also show a message saying upload is complete
-                                finish();
+                        // Convert bitmap to String
+                        String photoString;
+                        final int MAX_IMAGE_SIZE = 350000; // The max size of the photo string after compression (bytes)
+                        int compressQuality = 100; // Initial compression quality (percentage)
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        do {
+                            try {
+                                baos.flush(); //to avoid out of memory error
+                                baos.reset();
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             }
+                            bitmap.compress(Bitmap.CompressFormat.WEBP, compressQuality, baos);
+                            byte[] byteArray = baos.toByteArray();
+
+                            Log.d(TAG, "Upload Quality: " + compressQuality);
+
+                            // Calculate the size of the string (in bytes)
+                            photoString = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                            int stringSize = 8 * ((((photoString.length()) * 2) + 45) / 8);
+                            Log.d(TAG, "Photo String Size (bytes): " + stringSize);
+
+                            if (stringSize <= MAX_IMAGE_SIZE) {
+                                // The photo has been compressed to a size below the max
+                                Log.d(TAG, "Photo has been compressed to a size below the max.");
+                                break;
+                            }
+
+                            if (compressQuality == 1) {
+                                // Compress quality is already at 1%, can't compress further
+                                success = false;
+                                continue datasetLoop;
+                            }
+
+
+                            if (stringSize > 5 * MAX_IMAGE_SIZE) {
+                                // If the image size is more than 5x max then compress it an extra 10 percent before next loop
+                                compressQuality -= 20;
+                            } else if (stringSize > 1.5 * MAX_IMAGE_SIZE) {
+                                // If the image size is more than double max then compress it an extra 10 percent before next loop
+                                compressQuality -= 10;
+                            }
+
+                            compressQuality -= 5;
+
+
+                            // Make sure compress quality doesn't fall below 1
+                            if (compressQuality < 1) {
+                                compressQuality = 1;
+                            }
+
+                        } while (true);
+
+
+                        // Convert bitmap to String
+                        /*
+                        Bitmap bitmap = mDatasetPhotos.get(0);
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        bitmap.compress(Bitmap.CompressFormat.WEBP, 10, baos);
+                        byte[] b = baos.toByteArray();
+                        String photoString = Base64.encodeToString(b, Base64.DEFAULT);
+                        */
+
+                        // Get date string
+                        DateTime dt = new DateTime(DateTimeZone.UTC);
+                        DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                        final String dateString = fmt.print(dt);
+
+                        // Insert photo to DB
+                        Photo photo = new Photo();
+                        photo.setUserId(LoginActivity.sUserId); // Set user ID to the logged in user
+                        photo.setUploadDate(dateString);
+                        photo.setPhoto(photoString);
+
+                        mapper.save(photo);
+
+
+                        // If photo is in a stack, then insert to the StackPhoto table
+                        if (STACK_ID != null && !STACK_ID.isEmpty()) {
+                            StackPhoto stackPhoto = new StackPhoto();
+                            stackPhoto.setStackId(STACK_ID);
+                            stackPhoto.setPhotoId(photo.getPhotoId());
+                            stackPhoto.setAddedDate(dateString);
+
+                            mapper.save(stackPhoto);
                         }
 
-                        @Override
-                        public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
-                            // TODO make a progress bar that uses this data
-                        }
+                    } else {
+                        // We are uploading a video
 
-                        @Override
-                        public void onError(int id, Exception ex) {
-                            Log.e(TAG, "Error on upload: " + ex);
+                        // First, upload a Photo object with the thumbnail as the Photo
+                        // We need to do this before we upload to S3 so we can get a PhotoId
 
-                        }
-                    });
-                    */
+                        Bitmap bitmap = photoVideoHolder.getPhoto();
+
+                        // Convert bitmap to String
+                        String photoString;
+                        final int MAX_IMAGE_SIZE = 350000; // The max size of the photo string after compression (bytes)
+                        int compressQuality = 100; // Initial compression quality (percentage)
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        do {
+                            try {
+                                baos.flush(); //to avoid out of memory error
+                                baos.reset();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            bitmap.compress(Bitmap.CompressFormat.WEBP, compressQuality, baos);
+                            byte[] byteArray = baos.toByteArray();
+
+                            Log.d(TAG, "Upload Quality: " + compressQuality);
+
+                            // Calculate the size of the string (in bytes)
+                            photoString = Base64.encodeToString(byteArray, Base64.DEFAULT);
+                            int stringSize = 8 * ((((photoString.length()) * 2) + 45) / 8);
+                            Log.d(TAG, "Photo String Size (bytes): " + stringSize);
+
+                            if (stringSize <= MAX_IMAGE_SIZE) {
+                                // The photo has been compressed to a size below the max
+                                Log.d(TAG, "Photo has been compressed to a size below the max.");
+                                break;
+                            }
+
+                            if (compressQuality == 1) {
+                                // Compress quality is already at 1%, can't compress further
+                                success = false;
+                                continue datasetLoop;
+                            }
 
 
-                    // Convert bitmap to String
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    //bitmap.compress(Bitmap.CompressFormat.WEBP, 10, baos);
-                    //byte[] b = baos.toByteArray();
-                    //String photoString = Base64.encodeToString(b, Base64.DEFAULT);
-                    String photoString;
+                            if (stringSize > 5 * MAX_IMAGE_SIZE) {
+                                // If the image size is more than 5x max then compress it an extra 10 percent before next loop
+                                compressQuality -= 20;
+                            } else if (stringSize > 1.5 * MAX_IMAGE_SIZE) {
+                                // If the image size is more than double max then compress it an extra 10 percent before next loop
+                                compressQuality -= 10;
+                            }
+
+                            compressQuality -= 5;
 
 
-                    final int MAX_IMAGE_SIZE = 350000; // The max size of the photo string after compression (bytes)
-                    int compressQuality = 100; // Initial compression quality (percentage)
-                    //ByteArrayOutputStream bmpStream = new ByteArrayOutputStream();
-                    do {
-                        try {
-                            baos.flush(); //to avoid out of memory error
-                            baos.reset();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        bitmap.compress(Bitmap.CompressFormat.WEBP, compressQuality, baos);
-                        byte[] byteArray = baos.toByteArray();
+                            // Make sure compress quality doesn't fall below 1
+                            if (compressQuality < 1) {
+                                compressQuality = 1;
+                            }
 
-                        Log.d(TAG, "Upload Quality: " + compressQuality);
+                        } while (true);
 
-                        // Calculate the size of the string (in bytes)
-                        photoString = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                        int stringSize = 8 * ((((photoString.length()) * 2) + 45) / 8);
-                        Log.d(TAG, "Photo String Size (bytes): " + stringSize);
+                        // Get date string
+                        DateTime dt = new DateTime(DateTimeZone.UTC);
+                        DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                        final String dateString = fmt.print(dt);
 
-                        if (stringSize <= MAX_IMAGE_SIZE) {
-                            // The photo has been compressed to a size below the max
-                            Log.d(TAG, "Photo has been compressed to a size below the max.");
-                            break;
-                        }
 
-                        if (compressQuality == 1) {
-                            // Compress quality is already at 1%, can't compress further
+                        // Insert photo to DB
+                        Photo photo = new Photo();
+                        photo.setUserId(LoginActivity.sUserId); // Set user ID to the logged in user
+                        photo.setUploadDate(dateString);
+                        photo.setPhoto(photoString);
+
+
+
+                        mapper.save(photo);
+
+
+
+
+                        // Upload the video to s3 now that we (allegedly) have a photoId
+
+                        AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
+                        TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
+
+
+
+                        File file = new File(photoVideoHolder.getVideoPath()); // Test is file name
+
+                        if(photo.getPhotoId() == null || photo.getPhotoId().isEmpty()) {
+                            // We need a photoId
                             success = false;
-                            continue datasetLoop;
+                            Log.e(TAG, "Error uploading video.  Don't have a PhotoId");
+                            continue;
+                        }
+
+                        final String PHOTO_ID = photo.getPhotoId();
+
+                        final String FILE_EXTENSION = file.getName().substring(file.getName().lastIndexOf(".") + 1, file.getName().length());
+
+                        final String FILE_NAME_PLUS_EXTENSION = photo.getPhotoId() + "." + FILE_EXTENSION;
+
+
+                        
+
+                        // Now update the photo object we have for this video to include the video link
+                        S3Link s3link = mapper.createS3Link(getString(R.string.s3_bucket_name), FILE_NAME_PLUS_EXTENSION);
+                        photo.setVideo(s3link);
+                        mapper.save(photo);
+
+
+                        // If photo is in a stack, then insert to the StackPhoto table
+                        if (STACK_ID != null && !STACK_ID.isEmpty()) {
+                            StackPhoto stackPhoto = new StackPhoto();
+                            stackPhoto.setStackId(STACK_ID);
+                            stackPhoto.setPhotoId(photo.getPhotoId());
+                            stackPhoto.setAddedDate(dateString);
+
+                            mapper.save(stackPhoto);
                         }
 
 
-                        if (stringSize > 5 * MAX_IMAGE_SIZE) {
-                            // If the image size is more than 5x max then compress it an extra 10 percent before next loop
-                            compressQuality -= 20;
-                        } else if (stringSize > 1.5 * MAX_IMAGE_SIZE) {
-                            // If the image size is more than double max then compress it an extra 10 percent before next loop
-                            compressQuality -= 10;
-                        }
 
-                        compressQuality -= 5;
+                        ObjectMetadata objectMetadata = new ObjectMetadata();
+
+                        //create a map to store user metadata
+                        Map<String, String> userMetadata = new HashMap<>();
+                        userMetadata.put("UploadDate", dateString);
+                        userMetadata.put("UserId", LoginActivity.sUserId);
+                        userMetadata.put("PhotoId", PHOTO_ID);
+
+                        //call setUserMetadata on our ObjectMetadata object, passing it our map
+                        objectMetadata.setUserMetadata(userMetadata);
+
+                        // Upload file
+                        TransferObserver observer = transferUtility.upload(
+                                getString(R.string.s3_bucket_name),     // The bucket to upload to
+                                FILE_NAME_PLUS_EXTENSION,    // The key for the uploaded object
+                                file,        // The file where the data to upload exists
+                                objectMetadata //Metadata
+                        );
+
+                        observer.setTransferListener(new TransferListener() {
+                            @Override
+                            public void onStateChanged(int id, TransferState state) {
+                                Log.d(TAG, "StateChanged: " + state);
+                                if (TransferState.COMPLETED.equals(state)) {
+                                    // Upload Completed
+                                    Log.d(TAG, "Upload finished");
+
+                                }
+                            }
+
+                            @Override
+                            public void onProgressChanged(int id, long bytesCurrent, long bytesTotal) {
+                                // TODO make a progress bar that uses this data
+                            }
+
+                            @Override
+                            public void onError(int id, Exception ex) {
+                                Log.e(TAG, "Error on upload: " + ex);
+
+                                // Delete the photo object we created for this video
+                                // TODO how to get this to work on the main thread? Getting NetworkOnMainThreadException
+                                /*
+                                Photo photo = new Photo();
+                                photo.setPhotoId(PHOTO_ID);
+                                mapper.delete(photo);
+                                */
+
+                                Toast.makeText(UploadActivity.this, "Error uploading video", Toast.LENGTH_SHORT).show();
 
 
-                        // Make sure compress quality doesn't fall below 1
-                        if (compressQuality < 1) {
-                            compressQuality = 1;
-                        }
-
-                    } while (true);
+                            }
 
 
-                    // Convert bitmap to String
-                    /*
-                    Bitmap bitmap = mDatasetPhotos.get(0);
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.WEBP, 10, baos);
-                    byte[] b = baos.toByteArray();
-                    String photoString = Base64.encodeToString(b, Base64.DEFAULT);
-                    */
-
-                    // Get date string
-                    DateTime dt = new DateTime(DateTimeZone.UTC);
-                    DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
-                    final String dateString = fmt.print(dt);
-
-                    // Insert photo to DB
-                    Photo photo = new Photo();
-                    photo.setUserId(LoginActivity.sUserId); // Set user ID to the logged in user
-                    photo.setUploadDate(dateString);
-                    photo.setPhoto(photoString);
-
-                    mapper.save(photo);
+                        });
 
 
-                    // If photo is in a stack, then insert to the StackPhoto table
-                    if (STACK_ID != null && !STACK_ID.isEmpty()) {
-                        StackPhoto stackPhoto = new StackPhoto();
-                        stackPhoto.setStackId(STACK_ID);
-                        stackPhoto.setPhotoId(photo.getPhotoId());
-                        stackPhoto.setAddedDate(dateString);
 
-                        mapper.save(stackPhoto);
                     }
 
-                }
+                } // for loop through dataset
             } catch (Exception e) {
-                Log.e(TAG, "Error on Upload Photo: " + e);
+                Log.e(TAG, "Error on Upload Photo/Video: " + e);
                 success = false;
             }
 

@@ -44,6 +44,10 @@
     <string name="cognito_identity_pool">us-east-1:4c7583cd-9c5a-4175-b39e-8690323a893e</string>
 
 
+    <string name="s3_bucket_name">owl-aws</string>
+
+
+
 
     <!-- Sign-in status messages -->
     <string name="signed_in_fmt">Signed in as: %s</string>
@@ -144,8 +148,8 @@
     <!-- Stack -->
     <string name="photo">Photo</string>
     <string name="stack">Stack</string>
-    <string name="message_photo_deleted">This photo has been deleted</string>
-    <string name="message_error_load_photo">Error loading photo</string>
+    <string name="message_content_deleted">This content has been deleted</string>
+    <string name="message_error_load_content">Error loading content</string>
 
 
     <!-- Friends -->

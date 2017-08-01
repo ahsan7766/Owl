@@ -6,6 +6,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBHashKey;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBIndexHashKey;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBIndexRangeKey;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBTable;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.S3Link;
 
 /**
  * Created by Zach on 6/5/17.
@@ -17,6 +18,7 @@ public class Photo {
     private String mUploadDate;
     private String mUserId;
     private String mPhoto;
+    private S3Link mVideo;
     private boolean mIsDeleted;
     private String mDeletedDate;
 
@@ -61,6 +63,15 @@ public class Photo {
 
     public void setPhoto(String photo) {
         mPhoto = photo;
+    }
+
+    @DynamoDBAttribute(attributeName = "Video")
+    public S3Link getVideo() {
+        return mVideo;
+    }
+
+    public void setVideo(S3Link video) {
+        mVideo = video;
     }
 
     @DynamoDBAttribute(attributeName = "IsDeleted")
