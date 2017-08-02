@@ -35,6 +35,7 @@ import android.widget.ToggleButton;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.S3Link;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.ourwayoflife.owl.R;
@@ -58,6 +59,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.w3c.dom.Text;
 
+import java.net.URL;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
@@ -67,6 +69,7 @@ import java.util.List;
 
 public class StackActivity extends AppCompatActivity
         implements StackPhotoPagerFragment.OnFragmentInteractionListener,
+        StackPhotoPagerAdapter.PageClickListener,
         PhotoCommentsRecyclerAdapter.ItemClickListener,
         StackCommentsRecyclerAdapter.ItemClickListener,
         CanvasFragment.OnFragmentInteractionListener {
@@ -200,6 +203,7 @@ public class StackActivity extends AppCompatActivity
 
         mPagerAdapter = new StackPhotoPagerAdapter(this, mDatasetPhotos);
         mViewPager.setAdapter(mPagerAdapter);
+        mPagerAdapter.setClickListener(this);
 
 
         TabLayout tabLayout = findViewById(R.id.tab_layout_stack);
@@ -343,7 +347,7 @@ public class StackActivity extends AppCompatActivity
                                 @Override
                                 public void onClick(DialogInterface dialogInterface, int i) {
                                     // Run the delete photo task
-                                    if(mDeletePhotoTask != null && mDeletePhotoTask.getStatus() == AsyncTask.Status.RUNNING) {
+                                    if (mDeletePhotoTask != null && mDeletePhotoTask.getStatus() == AsyncTask.Status.RUNNING) {
                                         mDeletePhotoTask.cancel(true);
                                     }
                                     mDeletePhotoTask = new DeletePhotoTask();
@@ -374,7 +378,7 @@ public class StackActivity extends AppCompatActivity
                                         @Override
                                         public void onClick(DialogInterface dialogInterface, int i) {
                                             // Run the delete stack task
-                                            if(mDeleteStackTask != null && mDeleteStackTask.getStatus() == AsyncTask.Status.RUNNING) {
+                                            if (mDeleteStackTask != null && mDeleteStackTask.getStatus() == AsyncTask.Status.RUNNING) {
                                                 mDeleteStackTask.cancel(true);
                                             }
                                             mDeleteStackTask = new DeleteStackTask();
@@ -398,7 +402,7 @@ public class StackActivity extends AppCompatActivity
                                         public void onClick(DialogInterface dialogInterface, int i) {
                                             // First run the task to delete the StackPhoto
                                             // In the OnPostExecute, it will see that there are 0 photos left in the Stack and then run the task to delete the Stack
-                                            if(mRemoveStackPhotoTask != null && mRemoveStackPhotoTask.getStatus() == AsyncTask.Status.RUNNING) {
+                                            if (mRemoveStackPhotoTask != null && mRemoveStackPhotoTask.getStatus() == AsyncTask.Status.RUNNING) {
                                                 mRemoveStackPhotoTask.cancel(true);
                                             }
                                             mRemoveStackPhotoTask = new RemoveStackPhotoTask();
@@ -425,7 +429,7 @@ public class StackActivity extends AppCompatActivity
                                         public void onClick(DialogInterface dialogInterface, int i) {
                                             // First run the task to delete the StackPhoto
                                             // In the OnPostExecute, it will see that there are 0 photos left in the Stack and then run the task to delete the Stack
-                                            if(mRemoveStackPhotoTask != null && mRemoveStackPhotoTask.getStatus() == AsyncTask.Status.RUNNING) {
+                                            if (mRemoveStackPhotoTask != null && mRemoveStackPhotoTask.getStatus() == AsyncTask.Status.RUNNING) {
                                                 mRemoveStackPhotoTask.cancel(true);
                                             }
                                             mRemoveStackPhotoTask = new RemoveStackPhotoTask();
@@ -446,6 +450,38 @@ public class StackActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Handles clicking of the view in the pager
+     * @param view
+     * @param position
+     */
+    @Override
+    public void onPageClick(View view, int position) {
+        // If the page is a video, play the video
+        Photo photo = mDatasetPhotos.get(position);
+
+        if(photo.getVideo() == null) {
+            // If not video, don't do anything
+            return;
+        }
+
+        S3Link s3Link = photo.getVideo();
+        URL url = s3Link.getUrl(); // Get the URL of the video
+
+        Uri uri = Uri.parse(url.toString());
+
+        Intent intent = new Intent(Intent.ACTION_VIEW );
+        intent.setDataAndType(uri, "video/*");
+        startActivity(intent);
+
+
+    }
+
+    /**
+     * Handles clicking of a user in the comments
+     * @param view
+     * @param position
+     */
     @Override
     public void onItemClick(View view, int position) {
         // User picture was pressed
@@ -510,6 +546,8 @@ public class StackActivity extends AppCompatActivity
                     InputMethodManager.HIDE_NOT_ALWAYS);
         }
     }
+
+
 
 
     private class DownloadPhotoTask extends AsyncTask<Void, Void, Void> {
@@ -1489,11 +1527,11 @@ public class StackActivity extends AppCompatActivity
                 // Remove the photo from the dataset (it's the currently viewed photo)
                 mDatasetPhotos.remove(mViewPager.getCurrentItem());
 
-                if(mDatasetPhotos.size() <= 0){
+                if (mDatasetPhotos.size() <= 0) {
                     // The dataset is empty, so we removed the last photo from the stack
                     // This means the stack should also be deleted
                     // Run the delete stack tasks
-                    if(mDeleteStackTask != null && mDeleteStackTask.getStatus() == AsyncTask.Status.RUNNING) {
+                    if (mDeleteStackTask != null && mDeleteStackTask.getStatus() == AsyncTask.Status.RUNNING) {
                         mDeleteStackTask.cancel(true);
                     }
                     mDeleteStackTask = new DeleteStackTask();

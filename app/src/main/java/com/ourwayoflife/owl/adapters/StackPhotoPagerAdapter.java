@@ -28,6 +28,8 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
 
     private static final String TAG = StackPhotoPagerAdapter.class.getName();
 
+    private StackPhotoPagerAdapter.PageClickListener mClickListener;
+
     private Context mContext;
     private ArrayList<Photo> mData = new ArrayList<>();
 
@@ -43,7 +45,7 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
     }
 
     @Override
-    public Object instantiateItem(ViewGroup container, int position) {
+    public Object instantiateItem(ViewGroup container, final int position) {
         Photo photo = mData.get(position);
 
         //Bitmap bitmap = mData.get(position);
@@ -121,6 +123,15 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
         container.addView(imageView);
 
         //imageView.setTag(photo);
+
+
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mClickListener != null) mClickListener.onPageClick(view, position);
+            }
+        });
+
 
         return imageView;
 
@@ -243,5 +254,15 @@ public class StackPhotoPagerAdapter extends PagerAdapter { //extends FragmentSta
         return mData.size();
     }
 
+
+    // allows clicks events to be caught
+    public void setClickListener(StackPhotoPagerAdapter.PageClickListener pageClickListener) {
+        this.mClickListener = pageClickListener;
+    }
+
+    // parent activity will implement this method to respond to click events
+    public interface PageClickListener {
+        void onPageClick(View view, int position);
+    }
 
 }
