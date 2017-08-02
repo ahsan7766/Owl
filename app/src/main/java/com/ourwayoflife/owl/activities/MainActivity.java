@@ -430,7 +430,7 @@ public class MainActivity extends AppCompatActivity
             }
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Query for User
             //final String USER_ID = getIntent().getStringExtra("USER_ID");

@@ -529,7 +529,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Query for photos
             Photo result = mapper.load(Photo.class, photoId);
@@ -590,7 +590,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Get the StackPhotos
             StackPhoto queryStackPhoto = new StackPhoto();
@@ -682,7 +682,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Query for PhotoComments
             PhotoComment queryPhotoComment = new PhotoComment();
@@ -749,7 +749,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Query for PhotoComments
             StackComment queryStackComment = new StackComment();
@@ -842,7 +842,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            mapper = new DynamoDBMapper(ddbClient);
+            mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
         }
 
@@ -886,7 +886,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Save PhotoComment
             mapper.save(photoComment);
@@ -950,7 +950,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Save StackComment
             mapper.save(stackComment);
@@ -1020,7 +1020,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Query the PhotoLike table
             PhotoLike photoLike = mapper.load(PhotoLike.class, photoId, LoginActivity.sUserId);
@@ -1070,7 +1070,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Query the StackLike table
             StackLike stackLike = mapper.load(StackLike.class, stackId, LoginActivity.sUserId);
@@ -1118,7 +1118,7 @@ public class StackActivity extends AppCompatActivity
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             PhotoLike queryPhotoLike = new PhotoLike();
             queryPhotoLike.setPhotoId(photoId);
@@ -1164,7 +1164,7 @@ public class StackActivity extends AppCompatActivity
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             StackLike queryStackLike = new StackLike();
             queryStackLike.setStackId(stackId);
@@ -1211,7 +1211,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             PhotoLike photoLike = new PhotoLike();
             photoLike.setPhotoId(photoId);
@@ -1271,7 +1271,7 @@ public class StackActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             StackLike stackLike = new StackLike();
             stackLike.setStackId(stackId);
@@ -1342,7 +1342,7 @@ public class StackActivity extends AppCompatActivity
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             photo.setDeleted(true);
 
@@ -1394,7 +1394,7 @@ public class StackActivity extends AppCompatActivity
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Retrieve the stack object that we will be deleting
             Stack stack = mapper.load(Stack.class, stackId);
@@ -1466,7 +1466,7 @@ public class StackActivity extends AppCompatActivity
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             StackPhoto stackPhoto = new StackPhoto();
             stackPhoto.setStackId(stackId);

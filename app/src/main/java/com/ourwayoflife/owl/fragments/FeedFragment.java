@@ -726,7 +726,7 @@ public class FeedFragment extends Fragment
             }
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
 
             // Query for photos
@@ -1125,7 +1125,7 @@ public class FeedFragment extends Fragment
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             PhotoLike photoLike = new PhotoLike();
             photoLike.setPhotoId(mDatasetFeed.get(position).getPhotoId());
@@ -1201,7 +1201,7 @@ public class FeedFragment extends Fragment
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Query for stacks
             Stack queryStack = new Stack();
@@ -1293,7 +1293,7 @@ public class FeedFragment extends Fragment
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
 
             // First get the photoIds for each tile by querying the StackPhoto table
@@ -1439,7 +1439,7 @@ public class FeedFragment extends Fragment
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
 
             // Get date string

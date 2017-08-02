@@ -587,7 +587,7 @@ public class ProfileFragment extends Fragment implements
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Load user
             return mapper.load(User.class, mUserId);
@@ -666,7 +666,7 @@ public class ProfileFragment extends Fragment implements
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Load user
             return mapper.load(Following.class, LoginActivity.sUserId, mUserId);
@@ -709,7 +709,7 @@ public class ProfileFragment extends Fragment implements
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             PhotoLike queryPhotoLike = new PhotoLike();
             queryPhotoLike.setUserId(mUserId);
@@ -754,7 +754,7 @@ public class ProfileFragment extends Fragment implements
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             Following queryFollowing = new Following();
             queryFollowing.setFollowingId(mUserId);
@@ -797,7 +797,7 @@ public class ProfileFragment extends Fragment implements
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             Following queryFollowing = new Following();
             queryFollowing.setUserId(mUserId);
@@ -843,7 +843,7 @@ public class ProfileFragment extends Fragment implements
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
 
             // Save user
@@ -883,7 +883,7 @@ public class ProfileFragment extends Fragment implements
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             try {
                 // Make sure we have a UserId
@@ -1000,7 +1000,7 @@ public class ProfileFragment extends Fragment implements
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
 
 

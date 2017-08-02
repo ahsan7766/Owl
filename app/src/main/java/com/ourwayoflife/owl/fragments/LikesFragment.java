@@ -315,7 +315,7 @@ public class LikesFragment extends Fragment
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
 
             List<Photo> result = new ArrayList<>(); // Array that the results will be stored in
@@ -352,7 +352,6 @@ public class LikesFragment extends Fragment
 
                 if (photo.isDeleted()) {
                     // Don't load photo if it's deleted
-                    // Deleted photos already should already be filtered out in the query, this is a double check
                     continue;
                 }
 
@@ -573,7 +572,7 @@ public class LikesFragment extends Fragment
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             PhotoLike photoLike = new PhotoLike();
             photoLike.setPhotoId(mDatasetFeed.get(position).getPhotoId());

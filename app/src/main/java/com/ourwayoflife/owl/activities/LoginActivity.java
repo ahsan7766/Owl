@@ -341,7 +341,7 @@ public class LoginActivity extends AppCompatActivity implements
             }
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withIndexName("GoogleId-index")
@@ -483,7 +483,7 @@ public class LoginActivity extends AppCompatActivity implements
             }
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             User queryUser = new User();
             queryUser.setGoogleId(idToken);

@@ -325,7 +325,7 @@ public class FriendsFragment extends Fragment
             );
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // First load the list of users that this user is following/followed by (depends on which mode we are in)
             List<Following> followingList;

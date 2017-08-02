@@ -868,7 +868,14 @@ public class UploadActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+
+            // Get credentials for S3
+            //AWSSessionCredentials sessionCredentials = credentialsProvider.getCredentials();
+            //AWSCredentials s3Credentials = new BasicAWSCredentials(sessionCredentials.getAWSAccessKeyId(), sessionCredentials.getAWSSecretKey());
+
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
 
             try {
@@ -1055,7 +1062,6 @@ public class UploadActivity extends AppCompatActivity
                         TransferUtility transferUtility = new TransferUtility(s3, getApplicationContext());
 
 
-
                         File file = new File(photoVideoHolder.getVideoPath()); // Test is file name
 
                         if(photo.getPhotoId() == null || photo.getPhotoId().isEmpty()) {
@@ -1072,7 +1078,6 @@ public class UploadActivity extends AppCompatActivity
                         final String FILE_NAME_PLUS_EXTENSION = photo.getPhotoId() + "." + FILE_EXTENSION;
 
 
-                        
 
                         // Now update the photo object we have for this video to include the video link
                         S3Link s3link = mapper.createS3Link(getString(R.string.s3_bucket_name), FILE_NAME_PLUS_EXTENSION);
@@ -1209,7 +1214,7 @@ public class UploadActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Stack object that will be used to upload new stack to the DB
             Stack stack = new Stack();
@@ -1273,7 +1278,7 @@ public class UploadActivity extends AppCompatActivity
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient, credentialsProvider);
 
             // Query for stacks
             Stack queryStack = new Stack();
