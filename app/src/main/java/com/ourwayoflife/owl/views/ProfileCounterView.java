@@ -9,18 +9,16 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
 import com.ourwayoflife.owl.R;
-import com.ourwayoflife.owl.adapters.CanvasOuterRecyclerAdapter;
 
 /**
  * Created by Zach on 5/22/17.
  */
 
-public class ProfileCounterView extends View  {
+public class ProfileCounterView extends View {
 
     private static final String TAG = ProfileCounterView.class.getName();
 
@@ -50,7 +48,6 @@ public class ProfileCounterView extends View  {
     }
 
 
-
     // parent activity will implement this method to respond to drag events
     public void setOnTouchListener(OnTouchListener onTouchListener) {
         this.mOnTouchListener = onTouchListener;
@@ -59,7 +56,9 @@ public class ProfileCounterView extends View  {
 
     public interface OnTouchListener {
         boolean OnTouchLikes();
+
         boolean OnTouchFollowers();
+
         boolean OnTouchFollowing();
     }
 
@@ -179,8 +178,6 @@ public class ProfileCounterView extends View  {
         */
 
 
-
-        
         int width = getWidth() - getPaddingStart() - getPaddingEnd();
         int height = getHeight() - getPaddingTop() - getPaddingBottom();
 
@@ -193,7 +190,7 @@ public class ProfileCounterView extends View  {
                 height + getPaddingBottom(),
                 mLinePaint
         );
-        
+
         // Second divider line
         canvas.drawLine(
                 ((width / 3) * 2) + getPaddingStart(),
@@ -291,34 +288,56 @@ public class ProfileCounterView extends View  {
 
     }
 
+    // Records where click down was located
+    private float startX;
+    private float startY;
+
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
-        // We only want the up clicks
-        if(event.getAction() != MotionEvent.ACTION_DOWN) {
-            return false;
+        // If it's a down event, record where the click was
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                //Record the X and Y positions that were clicked
+                startX = event.getX();
+                startY = event.getY();
+                return true; // Need to return true so the ACTION_UP event will be detected
+
+            case MotionEvent.ACTION_UP:
+
+                float endX = event.getX();
+                float endY = event.getY();
+                if (isAClick(startX, endX, startY, endY)) {
+                    // We have a click (touch down and up in same area)
+
+                    //final float xClick = event.getX();
+                    final int width = getWidth() - getPaddingStart() - getPaddingEnd();
+
+                    if (endX < (width / 3) + getPaddingStart()) {
+                        // Click was in the first third of the view
+                        return mOnTouchListener != null && mOnTouchListener.OnTouchLikes();
+
+                    } else if (endX >= (width / 3) + getPaddingStart() && endX <= ((width / 3) * 2) + getPaddingStart()) {
+                        // Click was in the second third of the view
+                        return mOnTouchListener != null && mOnTouchListener.OnTouchFollowers();
+
+                    } else if (endX > ((width / 3) * 2) + getPaddingStart()) {
+                        // Click was in the last third of the view
+                        return mOnTouchListener != null && mOnTouchListener.OnTouchFollowing();
+                    }
+                }
+
+            default:
+                return super.onTouchEvent(event);
         }
-
-        final float xClick = event.getX();
-        final int width = getWidth() - getPaddingStart() - getPaddingEnd();
-
-        if(xClick < (width / 3) + getPaddingStart() ) {
-            // Click was in the first third of the view
-            return mOnTouchListener != null && mOnTouchListener.OnTouchLikes();
-
-        } else if (xClick >= (width / 3) + getPaddingStart() && xClick <= ((width / 3) * 2) + getPaddingStart()) {
-            // Click was in the second third of the view
-            return mOnTouchListener != null && mOnTouchListener.OnTouchFollowers();
-
-        } else if (xClick > ((width / 3) * 2) + getPaddingStart() ) {
-            // Click was in the last third of the view
-            return mOnTouchListener != null && mOnTouchListener.OnTouchFollowing();
-        }
-
-        return false;
-
-        //return super.onTouchEvent(event);
     }
 
+    final int CLICK_ACTION_THRESHOLD = 5;
+
+    private boolean isAClick(float startX, float endX, float startY, float endY) {
+        float differenceX = Math.abs(startX - endX);
+        float differenceY = Math.abs(startY - endY);
+        return !(differenceX > CLICK_ACTION_THRESHOLD || differenceY > CLICK_ACTION_THRESHOLD);
+    }
 
 }

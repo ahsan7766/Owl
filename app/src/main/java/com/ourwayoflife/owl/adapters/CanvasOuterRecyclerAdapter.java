@@ -1,7 +1,6 @@
 package com.ourwayoflife.owl.adapters;
 
 import android.content.Context;
-import android.content.Intent;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -11,7 +10,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.ourwayoflife.owl.R;
-import com.ourwayoflife.owl.activities.StackActivity;
 import com.ourwayoflife.owl.fragments.CanvasFragment;
 import com.ourwayoflife.owl.managers.CanvasInnerLinearLayoutManager;
 import com.ourwayoflife.owl.models.CanvasTile;

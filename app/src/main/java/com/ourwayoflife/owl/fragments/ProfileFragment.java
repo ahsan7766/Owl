@@ -13,9 +13,9 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.PermissionChecker;
 import android.support.v7.app.AlertDialog;
@@ -360,6 +360,9 @@ public class ProfileFragment extends Fragment implements
 
         mUser.setName(dialog.getName());
         mUser.setBio(dialog.getBio());
+
+        // Need to update the user's name in the nav drawer
+
 
         mUpdateUserTask = new UpdateUserTask();
         mUpdateUserTask.execute();
@@ -861,6 +864,13 @@ public class ProfileFragment extends Fragment implements
         protected void onPostExecute(Void result) {
             mTextUserName.setText(mUser.getName());
             mTextUserBio.setText(mUser.getBio());
+
+
+            //Update the name text in the nav drawer
+            NavigationView navigationView = getActivity().findViewById(R.id.nav_view);
+            View headerView = navigationView.getHeaderView(0);
+            TextView textUserName = headerView.findViewById(R.id.text_user_name);
+            textUserName.setText(mUser.getName());
         }
     }
 

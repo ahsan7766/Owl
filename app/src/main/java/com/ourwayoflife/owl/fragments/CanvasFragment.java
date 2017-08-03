@@ -29,7 +29,6 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.ourwayoflife.owl.R;
-import com.ourwayoflife.owl.activities.LoginActivity;
 import com.ourwayoflife.owl.activities.StackActivity;
 import com.ourwayoflife.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.ourwayoflife.owl.models.CanvasTile;

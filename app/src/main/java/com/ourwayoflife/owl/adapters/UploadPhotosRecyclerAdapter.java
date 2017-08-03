@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.provider.MediaStore;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,7 +12,6 @@ import android.widget.ImageView;
 
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.UploadActivity;
-import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.PhotoVideoHolder;
 
 import java.util.ArrayList;

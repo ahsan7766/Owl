@@ -12,7 +12,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.ourwayoflife.owl.R;
-import com.ourwayoflife.owl.models.PhotoComment;
 import com.ourwayoflife.owl.models.StackComment;
 import com.ourwayoflife.owl.models.User;
 import com.ourwayoflife.owl.views.ProfilePictureView;

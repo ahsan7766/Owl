@@ -28,7 +28,6 @@ import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.MainActivity;
 import com.ourwayoflife.owl.adapters.FriendsRecyclerAdapter;
 import com.ourwayoflife.owl.models.Following;
-import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.User;
 
 import java.util.ArrayList;

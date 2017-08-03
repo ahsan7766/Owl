@@ -1,27 +1,19 @@
 package com.ourwayoflife.owl.fragments;
 
-import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Typeface;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.util.LruCache;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Base64;
 import android.util.Log;
-import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,16 +24,12 @@ import android.widget.Toast;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.google.android.gms.auth.GoogleAuthUtil;
-import com.google.android.gms.common.GoogleApiAvailability;
 import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.activities.LoginActivity;
 import com.ourwayoflife.owl.activities.MainActivity;
 import com.ourwayoflife.owl.activities.StackActivity;
-import com.ourwayoflife.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.ourwayoflife.owl.adapters.FeedRecyclerAdapter;
 import com.ourwayoflife.owl.models.FeedItem;
 import com.ourwayoflife.owl.models.Photo;
@@ -56,7 +44,6 @@ import org.joda.time.format.ISODateTimeFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by Zach on 7/25/17.

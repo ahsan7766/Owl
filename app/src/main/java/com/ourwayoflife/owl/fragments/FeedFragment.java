@@ -35,13 +35,11 @@ import android.widget.Toast;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.BatchGetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.google.android.gms.auth.GoogleAuthUtil;
@@ -597,6 +595,11 @@ public class FeedFragment extends Fragment
 
                 // Add the photo to the stack
                 mAddStackPhotoTask = new AddStackPhotoTask();
+                CanvasTile canvasTile = mDatasetCanvas[row][column];
+                // Make sure we have a canvas tile here
+                if(canvasTile == null || canvasTile.getStackId().isEmpty()) {
+                    return true;
+                }
                 mAddStackPhotoTask.execute(mDatasetCanvas[row][column].getStackId(), mDatasetFeed.get(mDraggingPosition).getPhotoId());
                 return true;
 
@@ -781,8 +784,8 @@ public class FeedFragment extends Fragment
                     // Now get the Photos using the PhotoId in the PhotoLike objects
                     for (PhotoLike photoLike : photoLikeList) {
                         Photo photo = mapper.load(Photo.class, photoLike.getPhotoId());
-                        if(!photo.isDeleted()) {
-                            // Only add photo to results if it isn't deleted
+                        if(photo != null && !photo.isDeleted()) {
+                            // Only add photo to results if it isn't deleted (and make sure we actually have a photo)
                             result.add(photo);
                         }
                     }
