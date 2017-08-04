@@ -220,14 +220,20 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            FragmentManager fragmentManager = getSupportFragmentManager();
-            fragmentManager.
-                    beginTransaction()
-                    .replace(R.id.flContent, new SettingsFragment())
-                    .addToBackStack(SettingsFragment.class.getName())
-                    .commit();
-            return true;
+        switch (id) {
+            case R.id.action_settings:
+                FragmentManager fragmentManager = getSupportFragmentManager();
+                fragmentManager.
+                        beginTransaction()
+                        .replace(R.id.flContent, new SettingsFragment())
+                        .addToBackStack(SettingsFragment.class.getName())
+                        .commit();
+                return true;
+
+            case R.id.search :
+                // TODO remove this or else search will not work
+                Toast.makeText(this, "Searching coming soon", Toast.LENGTH_SHORT).show();
+                return true;
         }
 
         return super.onOptionsItemSelected(item);

@@ -9,6 +9,9 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.util.AttributeSet;
 import android.util.Base64;
 import android.util.Log;
@@ -32,6 +35,13 @@ public class CanvasTileView extends View {
     private Paint mNameTextFillPaint;
     private Paint mNameTextStrokePaint;
     //private Paint mSubheaderTextPaint;
+
+
+    private TextPaint mTextPaintNameFill;
+    private TextPaint mTextPaintNameStroke;
+
+    private StaticLayout mStaticFill;
+    private StaticLayout mStaticStroke;
 
     private Rect mOutlineRect;
     private Rect mNameTextBounds;
@@ -153,6 +163,7 @@ public class CanvasTileView extends View {
         }
 
 
+
         // Temp outline of border
         canvas.drawRect(
                 mOutlineRect,
@@ -160,7 +171,7 @@ public class CanvasTileView extends View {
         );
 
 
-
+        /*
         // Name text
         mNameTextFillPaint.getTextBounds(getName(), 0, getName().length(), mNameTextBounds);
         canvas.drawText(
@@ -177,8 +188,20 @@ public class CanvasTileView extends View {
                 ((getHeight() / 8) * 3), // - mNameTextBounds.exactCenterY(),
                 mNameTextStrokePaint
         );
+        */
 
 
+        canvas.save();
+        canvas.translate(getWidth() / 2, (getHeight() / 8) * 3);
+
+        //StaticLayout staticLayoutFill = new StaticLayout(getName(), mTextPaintNameFill, length, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        mStaticFill = new StaticLayout(getName(), mTextPaintNameFill, length, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        mStaticFill.draw(canvas);
+
+        mStaticStroke = new StaticLayout(getName(), mTextPaintNameStroke, length, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+        mStaticStroke.draw(canvas);
+
+        canvas.restore();
 
         /*
         // Sub-header text
@@ -205,7 +228,7 @@ public class CanvasTileView extends View {
         mOutlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mOutlinePaint.setColor(Color.BLACK);
         mOutlinePaint.setStyle(Paint.Style.STROKE);
-        mOutlinePaint.setAlpha(125);
+        mOutlinePaint.setAlpha(110);
 
 
         mNameTextFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -213,16 +236,26 @@ public class CanvasTileView extends View {
         mNameTextFillPaint.setColor(Color.WHITE);
         mNameTextFillPaint.setTextAlign(Paint.Align.CENTER);
         mNameTextFillPaint.setTypeface(Typeface.DEFAULT_BOLD);
-        mNameTextFillPaint.setTextSize(40);
+        mNameTextFillPaint.setTextSize(50);
 
         mNameTextStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mNameTextStrokePaint.setStyle(Paint.Style.STROKE);
-        mNameTextStrokePaint.setStrokeWidth(0.5f);
+        mNameTextStrokePaint.setStrokeWidth(0.6f);
         mNameTextStrokePaint.setColor(Color.BLACK);
         mNameTextStrokePaint.setTextAlign(Paint.Align.CENTER);
         mNameTextStrokePaint.setTypeface(Typeface.DEFAULT_BOLD);
-        mNameTextStrokePaint.setTextSize(40);
+        mNameTextStrokePaint.setTextSize(50);
 
+
+        mTextPaintNameFill = new TextPaint(mNameTextFillPaint);
+
+        mTextPaintNameStroke = new TextPaint(mNameTextStrokePaint);
+
+
+        int length = Math.min(getWidth(), getHeight());
+        mStaticFill = new StaticLayout(getName(), mTextPaintNameFill, length, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
+
+        mStaticStroke = new StaticLayout(getName(), mTextPaintNameStroke, length, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false);
 
         /*
         mSubheaderTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);

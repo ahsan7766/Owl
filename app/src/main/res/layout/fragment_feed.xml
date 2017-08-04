@@ -11,7 +11,7 @@
         android:id="@+id/recycler_feed_canvas_outer"
         android:layout_width="match_parent"
         android:layout_height="150dp"
-        android:visibility="gone"/>
+        android:visibility="visible"/>
 
     <LinearLayout
         android:id="@+id/layout_feed_buttons"

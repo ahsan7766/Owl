@@ -85,7 +85,8 @@ public class FeedFragment extends Fragment
         FeedRecyclerAdapter.ProfileClickListener,
         FeedRecyclerAdapter.ItemLongClickListener,
         FeedRecyclerAdapter.ItemCheckedChangeListener,
-        CanvasOuterRecyclerAdapter.ItemInnerDragListener {
+        CanvasOuterRecyclerAdapter.ItemInnerDragListener,
+        CanvasOuterRecyclerAdapter.OuterItemClickListener {
     //FeedRecyclerAdapter.ItemDragListener,
     //CanvasInnerRecyclerAdapter.ItemDragListener {
 
@@ -134,7 +135,7 @@ public class FeedFragment extends Fragment
     protected RecyclerView mRecyclerViewFeed;
     protected TextView mTextEmptyFeed;
     protected FeedRecyclerAdapter mAdapterFeed;
-    protected RecyclerView.LayoutManager mLayoutManagerFeed;
+    protected LinearLayoutManager mLayoutManagerFeed;
     protected ArrayList<FeedItem> mDatasetFeed = new ArrayList<>();
 
     private HashMap<String, User> mUserHashMap = new HashMap<>(); // Used so we don't have to repeat querying for user data
@@ -231,9 +232,17 @@ public class FeedFragment extends Fragment
         mAdapterCanvas = new CanvasOuterRecyclerAdapter(getActivity(), mDatasetCanvas);
         //mAdapterCanvas.setClickListener(this);
         mAdapterCanvas.setInnerDragListener(this);
+        mAdapterCanvas.setInnerClickListener(this);
 
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerViewCanvas.setAdapter(mAdapterCanvas);
+
+
+
+
+        mSwipeRefreshLayout = rootView.findViewById(R.id.swipe_refresh);
+
+
 
 
         // Set up recycler and its empty view
@@ -243,7 +252,8 @@ public class FeedFragment extends Fragment
         // LinearLayoutManager is used here, this will layout the elements in a similar fashion
         // to the way ListView would layout elements. The RecyclerView.LayoutManager defines how
         // elements are laid out.
-        mLayoutManagerFeed = new GridLayoutManager(getActivity(), SPAN_COUNT);
+        //mLayoutManagerFeed = new GridLayoutManager(getActivity(), SPAN_COUNT);
+        mLayoutManagerFeed = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
 
         // set up the RecyclerView
         mRecyclerViewFeed.setLayoutManager(mLayoutManagerFeed);
@@ -257,9 +267,34 @@ public class FeedFragment extends Fragment
         // Set CustomAdapter as the adapter for RecyclerView.
         mRecyclerViewFeed.setAdapter(mAdapterFeed);
 
+        // Only show the canvas when we are scrolled to the top
+        mRecyclerViewFeed.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            /**
+             * Callback method to be invoked when the RecyclerView has been scrolled. This will be
+             * called after the scroll has completed.
+             * <p>
+             * This callback will also be called if visible item range changes after a layout
+             * calculation. In that case, dx and dy will be 0.
+             *
+             * @param recyclerView The RecyclerView which scrolled.
+             * @param dx           The amount of horizontal scroll.
+             * @param dy           The amount of vertical scroll.
+             */
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
 
-        mSwipeRefreshLayout = rootView.findViewById(R.id.swipe_refresh);
+                int firstVisibleItem = mLayoutManagerFeed.findFirstCompletelyVisibleItemPosition();
 
+                if(firstVisibleItem == 0){
+                    // We are scrolled to top
+                    // Show the canvas
+                    mRecyclerViewCanvas.setVisibility(View.VISIBLE);
+                } else {
+                    mRecyclerViewCanvas.setVisibility(View.GONE);
+                }
+            }
+        });
 
         // Set up show/hide animation for fab
         final FloatingActionButton fab = ((MainActivity) getActivity()).getFloatingActionButton();
@@ -539,6 +574,30 @@ public class FeedFragment extends Fragment
         getActivity().setTitle(getString(R.string.title_fragment_canvas));
     }
 
+    // Handles clicks from in the canvas
+    @Override
+    public void onOuterItemClick(View view, int row, int column) {
+        Log.d(TAG, "CANVAS ITEM CLICKED: Row " + row + ", Col " + column);
+
+        CanvasTile canvasTile = mDatasetCanvas[row][column];
+        if (canvasTile == null) {
+            // Don't start stack activity if we don't have a canvasTile in the position that was clicked
+            return;
+        }
+
+        final String STACK_ID = mDatasetCanvas[row][column].getStackId();
+        if (STACK_ID == null || STACK_ID.isEmpty()) {
+            // Don't start stack activity if we don't have a stackId to pass it
+            return;
+        }
+
+        // Send the user to the StackActivity for the stack the just clicked on
+        Intent intent = new Intent(view.getContext(), StackActivity.class);
+        intent.putExtra("USER_ID", LoginActivity.sUserId); //Since we're on the feed, the UserId will always be the logged in user since we can only see their canvas
+        intent.putExtra("STACK_ID", STACK_ID);
+        view.getContext().startActivity(intent);
+    }
+
     // Handle an item in the feed being long clicked
     @Override
     public boolean onItemLongClick(View view, int position) {
@@ -606,8 +665,15 @@ public class FeedFragment extends Fragment
             case DragEvent.ACTION_DRAG_ENDED:
                 // the drag has ended
 
-                // Hide the top canvas
-                mRecyclerViewCanvas.setVisibility(View.GONE);
+                // Hide the top canvas, only if we aren't scrolled to the top of the feed
+                int firstVisibleItem = mLayoutManagerFeed.findFirstCompletelyVisibleItemPosition();
+
+                if(firstVisibleItem != 0){
+                    // We are NOT scrolled to top
+                    // Hide the canvas
+                    mRecyclerViewCanvas.setVisibility(View.GONE);
+                }
+
                 return false;
         }
         return false;
@@ -1405,7 +1471,7 @@ public class FeedFragment extends Fragment
             super.onProgressUpdate(values);
 
             int row = values[0];
-            mAdapterFeed.notifyItemChanged(row);
+            mAdapterCanvas.notifyItemChanged(row);
         }
 
         protected void onPostExecute(Void result) {
@@ -1413,8 +1479,8 @@ public class FeedFragment extends Fragment
             // TODO: do something with the feed
 
             // Clear dataset, add new items, then notify
-            //mAdapterFeed.notifyDataSetChanged();
-            //mAdapterFeed.notifyInnerDatasetRowsChanged();
+            //mAdapterCanvas.notifyDataSetChanged();
+            //mAdapterCanvas.notifyInnerDatasetRowsChanged();
         }
     }
 

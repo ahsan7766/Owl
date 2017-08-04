@@ -38,6 +38,7 @@ import com.google.android.gms.common.api.OptionalPendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.ourwayoflife.owl.R;
+import com.ourwayoflife.owl.models.Photo;
 import com.ourwayoflife.owl.models.User;
 
 import org.joda.time.DateTime;
@@ -299,11 +300,6 @@ public class LoginActivity extends AppCompatActivity implements
 
 
 
-
-
-
-
-
             /*
 
             // Skipping token verification for now
@@ -527,10 +523,10 @@ public class LoginActivity extends AppCompatActivity implements
                 mapper.save(newUser);  //Add user to the user table
 
                 userId = newUser.getUserId(); //Now that the User is saved, we should have a UserId for them now
+
             } else {
                 userId = user.getUserId();
             }
-
 
             // Make sure we have a UserId at this point
             if(userId == null) {

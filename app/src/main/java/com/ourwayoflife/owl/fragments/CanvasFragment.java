@@ -29,6 +29,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.ourwayoflife.owl.R;
+import com.ourwayoflife.owl.activities.LoginActivity;
 import com.ourwayoflife.owl.activities.StackActivity;
 import com.ourwayoflife.owl.adapters.CanvasOuterRecyclerAdapter;
 import com.ourwayoflife.owl.models.CanvasTile;
@@ -223,7 +224,7 @@ public class CanvasFragment extends Fragment
 
         // Get the stacks for the user we are viewing
         // Refresh the stacks
-        if(mGetStacksTask != null && mGetStacksTask.getStatus() == AsyncTask.Status.RUNNING) {
+        if (mGetStacksTask != null && mGetStacksTask.getStatus() == AsyncTask.Status.RUNNING) {
             mGetStacksTask.cancel(true);
         }
         mGetStacksTask = new GetStacksTask();
@@ -432,6 +433,13 @@ public class CanvasFragment extends Fragment
             if (stackCount > 0) {
                 mDownloadStackCoverPhotoTask = new DownloadStackCoverPhotoTask();
                 mDownloadStackCoverPhotoTask.execute(stackCount);
+            } else if (mUserId.equals(LoginActivity.sUserId)) {
+                // The person has no stacks
+                // If we are viewing the logged in user, create a "Dummy" stack to display
+                Bitmap bitmap = BitmapFactory.decodeResource(getContext().getResources(),
+                        R.drawable.img_owl_eye);
+                mDataset[0][0] = new CanvasTile(null, "Sample", bitmap);
+                mAdapter.notifyItemChanged(0);
             }
         }
     }
