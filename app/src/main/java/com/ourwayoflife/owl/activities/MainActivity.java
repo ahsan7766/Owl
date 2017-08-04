@@ -38,6 +38,7 @@ import com.ourwayoflife.owl.R;
 import com.ourwayoflife.owl.fragments.CanvasFragment;
 import com.ourwayoflife.owl.fragments.FeedFragment;
 import com.ourwayoflife.owl.fragments.FriendsFragment;
+import com.ourwayoflife.owl.fragments.MessageFragment;
 import com.ourwayoflife.owl.fragments.ProfileFragment;
 import com.ourwayoflife.owl.fragments.SettingsFragment;
 import com.ourwayoflife.owl.models.User;
@@ -49,6 +50,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
         FeedFragment.OnFragmentInteractionListener,
         ProfileFragment.OnFragmentInteractionListener,
+        MessageFragment.OnFragmentInteractionListener,
         CanvasFragment.OnFragmentInteractionListener,
         FriendsFragment.OnFragmentInteractionListener {
 
@@ -97,7 +99,8 @@ public class MainActivity extends AppCompatActivity
         Fragment fragment = new FeedFragment();
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.flContent, fragment)
-                .addToBackStack(fragment.getClass().getName())
+                //.addToBackStack(fragment.getClass().getName())
+                // NOTE: Do NOT add initial fragment to back stack!!
                 .commit();
         mNavigationView.getMenu().getItem(0).setChecked(true);
     }
@@ -188,7 +191,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -230,8 +233,8 @@ public class MainActivity extends AppCompatActivity
                         .commit();
                 return true;
 
-            case R.id.search :
-                // TODO remove this or else search will not work
+            case R.id.search:
+                // TODO remove this for searching
                 Toast.makeText(this, "Searching coming soon", Toast.LENGTH_SHORT).show();
                 return true;
         }
@@ -246,7 +249,7 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         // Create a new fragment and specify the fragment to show based on nav item clicked
-        Fragment fragment = null;
+        Fragment fragment;
         Class fragmentClass;
         FragmentManager fragmentManager = getSupportFragmentManager();
         Bundle args = new Bundle(); // args we will pass to the fragment (if needed)
@@ -259,9 +262,8 @@ public class MainActivity extends AppCompatActivity
                 args.putString("USER_ID", LoginActivity.sUserId);
                 break;
             case R.id.nav_messages:
-                return true;
-            //fragmentClass = MessagesFragment.class;
-            //break;
+                fragmentClass = MessageFragment.class;
+                break;
             case R.id.nav_canvas:
                 fragmentClass = CanvasFragment.class;
                 args.putString("USER_ID", LoginActivity.sUserId);
