@@ -837,6 +837,9 @@ public class StackActivity extends AppCompatActivity
 
             // Iterate through users and load their info
             Iterator it = mUserHashMap.keySet().iterator();
+
+            // Need to store the user's in a temp list or else we will probably get a ConcurrentModificationException
+            ArrayList<User> userList = new ArrayList<>();
             try {
                 while (it.hasNext()) {
                     String key = (String) it.next();
@@ -846,12 +849,19 @@ public class StackActivity extends AppCompatActivity
                     User user = mapper.load(User.class, key);
 
                     if (user != null && !user.getUserId().isEmpty()) {
-                        mUserHashMap.put(key, user);
+                        //mUserHashMap.put(key, user);
+                        userList.add(user);
                     }
+
                 }
             } catch (ConcurrentModificationException e) {
                 Log.e(TAG, "Error loading Users: " + e);
                 return false;
+            }
+
+            // Now add all the loaded users from the temp list to the map
+            for(User user : userList) {
+                mUserHashMap.put(user.getUserId(), user);
             }
 
             return true;

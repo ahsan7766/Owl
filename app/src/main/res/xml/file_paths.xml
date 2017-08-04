@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- <external-path name="my_images" path="Android/data/com.ourwayoflife.owl/files/Pictures" /> --> <!-- This if for getExternalFilesDir -->
+    <external-path name="images" path="." /> <!-- This if for getExternalStoragePublicDirectory -->
+</paths>

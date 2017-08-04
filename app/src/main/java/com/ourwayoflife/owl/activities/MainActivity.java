@@ -57,8 +57,8 @@ public class MainActivity extends AppCompatActivity
     public static final String OPEN_FRAGMENT_CANVAS = "OPEN_FRAGMENT_CANVAS";
 
     public static final int PERMISSION_READ_EXTERNAL_STORAGE = 100;
-
-    public static final int RESULT_OPEN_FRAGMENT_CANVAS = 200;
+    public static final int PERMISSION_WRITE_EXTERNAL_STORAGE = 200;
+    public static final int RESULT_OPEN_FRAGMENT_CANVAS = 300;
 
 
     private NavigationView mNavigationView;

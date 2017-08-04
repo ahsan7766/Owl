@@ -84,4 +84,5 @@
         app:layout_constraintRight_toRightOf="@+id/recycler_upload_photos"
         app:layout_constraintTop_toBottomOf="@+id/text_select_stack"/>
 
+
 </android.support.constraint.ConstraintLayout>

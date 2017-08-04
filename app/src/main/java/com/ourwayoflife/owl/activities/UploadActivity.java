@@ -14,12 +14,14 @@ import android.media.ThumbnailUtils;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.content.PermissionChecker;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -35,6 +37,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -70,7 +73,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,7 +86,13 @@ public class UploadActivity extends AppCompatActivity
 
     private static final String TAG = UploadActivity.class.getName();
 
+
     public static final int REQUEST_SELECT_PHOTOS = 100;
+    public static final int REQUEST_IMAGE_CAPTURE = 200;
+    public static final int REQUEST_VIDEO_CAPTURE = 300;
+
+
+    private ProgressBar mProgressBar;
 
     private RecyclerView mRecyclerViewPhotos;
     private LinearLayoutManager mLayoutManagerPhotos;
@@ -105,9 +116,11 @@ public class UploadActivity extends AppCompatActivity
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
+        mProgressBar = findViewById(R.id.progress_bar);
+
         // Setup Photos Recycler
         // Initialize RecyclerView
-        mRecyclerViewPhotos = (RecyclerView) findViewById(R.id.recycler_upload_photos);
+        mRecyclerViewPhotos = findViewById(R.id.recycler_upload_photos);
 
         // Initialize Dataset
         // TODO Initialize Dataset
@@ -133,7 +146,7 @@ public class UploadActivity extends AppCompatActivity
 
         // Setup Stack Recycler
         // Initialize RecyclerView
-        mRecyclerViewStack = (RecyclerView) findViewById(R.id.recycler_upload_stack);
+        mRecyclerViewStack = findViewById(R.id.recycler_upload_stack);
 
         // Initialize Stack Dataset
         new GetStacksTask().execute();
@@ -173,6 +186,7 @@ public class UploadActivity extends AppCompatActivity
                 // Do not allow upload if no stack is selected
                 if (mAdapterStack.getSelectedPos() <= -1) {
                     Toast.makeText(UploadActivity.this, "No Stack Selected", Toast.LENGTH_SHORT).show();
+                    mFab.setEnabled(true); // re-enable
                     return;
                 }
                 */
@@ -257,43 +271,6 @@ public class UploadActivity extends AppCompatActivity
                 String stackId = mAdapterStack.getSelectedPos() < 0 ? null : mDatasetStack.get(mAdapterStack.getSelectedPos()).getStackId();
                 new UploadTask().execute(stackId);
 
-                /*
-                // Loop through each file to upload
-                int count = 1;
-                for(Bitmap bitmap : mDatasetPhotos) {
-                    // Convert bitmap to file
-
-                    try {
-                        File f = new File(getCacheDir(), "test"); // Test is file name
-                        FileOutputStream fos = new FileOutputStream(f);  // TODO flush and close fos
-                        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fos); //Note: quality is ignored for PNGs
-
-                        // Upload file
-                        TransferObserver observer = transferUtility.upload(
-                                "owl-aws",     // The bucket to upload to
-                                count + ".jpg",    // The key for the uploaded object
-                                f        // The file where the data to upload exists
-                        );
-
-                        Toast.makeText(UploadActivity.this, "Photo Uploaded", Toast.LENGTH_SHORT).show();
-
-
-                        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString() + "/" + "trees.jpg");
-
-                        TransferObserver observer2 = transferUtility.download(
-                                "owl-aws",     // The bucket to download from
-                                "trees.jpg",    // The key for the object to download
-                                file        // The file to download the object to
-                        );
-
-
-                    }catch (IOException e) {
-                        Log.e(TAG, "Error during conversion from bitmap to file.");
-                    }
-                    count++;
-                }
-                */
-
             }
         });
 
@@ -329,26 +306,41 @@ public class UploadActivity extends AppCompatActivity
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         switch (requestCode) {
-            case MainActivity.PERMISSION_READ_EXTERNAL_STORAGE: {
+            case MainActivity.PERMISSION_READ_EXTERNAL_STORAGE:
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                     // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                    //Toast.makeText(this, "Permission Granted", Toast.LENGTH_SHORT).show();
+                    // storage-related task you need to do.
+                    // In this case, just don't close the activity
 
                 } else {
-
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
 
-                    //Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
                     // Finish the activity
                     finish();
                 }
                 return;
-            }
+
+            case MainActivity.PERMISSION_WRITE_EXTERNAL_STORAGE:
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // storage-related task you need to do.
+                    // In this case, just don't close the activity
+
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+
+                    // Finish the activity
+                    finish();
+                }
+                return;
 
             // other 'case' lines to check for other
             // permissions this app might request
@@ -383,8 +375,7 @@ public class UploadActivity extends AppCompatActivity
             case REQUEST_SELECT_PHOTOS:
                 if (resultCode == RESULT_OK) {
                     Uri selectedImage = imageReturnedIntent.getData();
-                    //String[] filePathColumn = { MediaStore.Images.Media.DATA };
-
+                    // String[] filePathColumn = { MediaStore.Images.Media.DATA };
 
                     // If imageReturnedIntent.getData() returns something, then there was exactly 1 photo/video selected
                     if (selectedImage != null) {
@@ -670,6 +661,80 @@ public class UploadActivity extends AppCompatActivity
                 }
                 break;
 
+            case REQUEST_IMAGE_CAPTURE:
+                // A photo was taken with the camera
+                if(resultCode == RESULT_OK) {
+                    checkPermissionWriteExternalStorage(); // Make sure we can save the photo they took
+
+                    /*
+                    // Create an image file name
+                    // Get timestamp string
+                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+
+                    DateTime dt = new DateTime(DateTimeZone.UTC);
+                    DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
+                    //final String dateString = fmt.print(dt);
+
+                    String imageFileName = "OWL_" + timeStamp;
+                    File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+                    File image;
+                    try {
+                        image = File.createTempFile(
+                                imageFileName,  // prefix
+                                ".jpg",         // suffix
+                                storageDir      // directory
+                        );
+                    } catch (IOException e) {
+                        Log.e(TAG, "Failed to create file from captured photo.");
+                        return;
+                    }
+                    */
+
+                    //String path = image.getPath();
+                    //Log.d(TAG, "PATH: " + path);
+
+                    /*
+                    Uri photoUri = FileProvider.getUriForFile(this,
+                            "com.ourwayoflife.owl.fileprovider",
+                            image);*/
+
+                    // Get the path that the image was saved to
+                    String path = mAdapterPhotos.getCapturedPhotoPath();  // getRealPathFromURI(this, photoUri);
+
+                    if(path == null){
+                        Toast.makeText(this, "Failed to load image", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Add the photo to the phone's gallery (it's good practice to save the photo they took)
+                    // Note: Saving the file alone will not add it to the gallery because we saved it in the app's private directory
+                    Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                    File f = new File(path);
+                    Uri contentUri = Uri.fromFile(f);
+                    mediaScanIntent.setData(contentUri);
+                    this.sendBroadcast(mediaScanIntent);
+
+
+                    // Generate a bitmap of the photo and add it to the dataset
+                    Bitmap bitmap = generateCroppedBitmap(path);
+                    mDatasetPhotos.add(new PhotoVideoHolder(true, bitmap, null));
+                    mAdapterPhotos.notifyItemInserted(mDatasetPhotos.size() - 1);
+
+                    /*
+                    // This gets a lower-quality thumbnail
+                    // Get the bitmap of the image that was taken and add it to the dataset
+                    Bundle extras = imageReturnedIntent.getExtras();
+                    Bitmap origBitmap = (Bitmap) extras.get("data");
+                    Bitmap croppedBitmap = generateCroppedBitmap(origBitmap);
+                    mDatasetPhotos.add(new PhotoVideoHolder(true, origBitmap, null));
+                    mAdapterPhotos.notifyItemInserted(mDatasetPhotos.size() - 1);
+                    */
+                }
+                break;
+
+            case REQUEST_VIDEO_CAPTURE:
+
+                break;
         }
     }
 
@@ -713,6 +778,52 @@ public class UploadActivity extends AppCompatActivity
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
+            }
+
+        }
+    }
+
+
+    private void checkPermissionWriteExternalStorage() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PermissionChecker.PERMISSION_GRANTED) {
+            // The permission is not granted.  Request from the user.
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                AlertDialog dialog = new AlertDialog.Builder(this)
+                        .setTitle(getString(R.string.dialog_title_permission_requested))
+                        .setMessage(getString(R.string.permission_rationale_storage))
+                        .setPositiveButton(getString(android.R.string.ok), new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Positive button has same
+                                dialog.dismiss();
+                            }
+                        })
+                        .setOnDismissListener(new DialogInterface.OnDismissListener() {
+                            @Override
+                            public void onDismiss(DialogInterface dialog) {
+                                // When the dialog is dismissed, request the permission
+                                ActivityCompat.requestPermissions(UploadActivity.this,
+                                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                        MainActivity.PERMISSION_READ_EXTERNAL_STORAGE);
+                            }
+                        })
+                        .create();
+                dialog.show(); // Show the dialog
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        MainActivity.PERMISSION_WRITE_EXTERNAL_STORAGE);
             }
 
         }
@@ -861,7 +972,6 @@ public class UploadActivity extends AppCompatActivity
 
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-
 
 
             // Get credentials for S3
@@ -1044,10 +1154,7 @@ public class UploadActivity extends AppCompatActivity
                         photo.setPhoto(photoString);
 
 
-
                         mapper.save(photo);
-
-
 
 
                         // Upload the video to s3 now that we (allegedly) have a photoId
@@ -1058,7 +1165,7 @@ public class UploadActivity extends AppCompatActivity
 
                         File file = new File(photoVideoHolder.getVideoPath()); // Test is file name
 
-                        if(photo.getPhotoId() == null || photo.getPhotoId().isEmpty()) {
+                        if (photo.getPhotoId() == null || photo.getPhotoId().isEmpty()) {
                             // We need a photoId
                             success = false;
                             Log.e(TAG, "Error uploading video.  Don't have a PhotoId");
@@ -1070,7 +1177,6 @@ public class UploadActivity extends AppCompatActivity
                         final String FILE_EXTENSION = file.getName().substring(file.getName().lastIndexOf(".") + 1, file.getName().length());
 
                         final String FILE_NAME_PLUS_EXTENSION = photo.getPhotoId() + "." + FILE_EXTENSION;
-
 
 
                         // Now update the photo object we have for this video to include the video link
@@ -1088,7 +1194,6 @@ public class UploadActivity extends AppCompatActivity
 
                             mapper.save(stackPhoto);
                         }
-
 
 
                         ObjectMetadata objectMetadata = new ObjectMetadata();
@@ -1147,7 +1252,6 @@ public class UploadActivity extends AppCompatActivity
                         });
 
 
-
                     }
 
                 } // for loop through dataset
@@ -1164,8 +1268,9 @@ public class UploadActivity extends AppCompatActivity
             // TODO Auto-generated method stub
             super.onPreExecute();
 
-            // Disable the FAB
-            mFab.setEnabled(false);
+            mProgressBar.setVisibility(View.VISIBLE);
+            mFab.setEnabled(false); // re-enable
+            mFab.hide();
         }
 
         protected void onPostExecute(Boolean success) {
@@ -1181,8 +1286,9 @@ public class UploadActivity extends AppCompatActivity
 
             finish(); // End the upload activity
 
-            // Re-enable the FAB
-            mFab.setEnabled(true);
+            mProgressBar.setVisibility(View.INVISIBLE);
+            mFab.setEnabled(true); // re-enable
+            mFab.show();
 
         }
     }
@@ -1238,20 +1344,22 @@ public class UploadActivity extends AppCompatActivity
         protected void onPreExecute() {
             // TODO Auto-generated method stub
             super.onPreExecute();
-
-
+            mFab.setEnabled(false); //Don't allow double-clicking
+            mProgressBar.setVisibility(View.VISIBLE);
         }
 
         protected void onPostExecute(String stackId) {
             // If stackId is null/empty, then the stack was not uploaded to the DB
             if (stackId == null || stackId.isEmpty()) {
                 Toast.makeText(UploadActivity.this, "Error: Stack was not created", Toast.LENGTH_SHORT).show();
+                mProgressBar.setVisibility(View.INVISIBLE);
+                mFab.setEnabled(true); // re-enable
+                mFab.show();
             } else {
                 // Stack was created, now upload the photos
                 Toast.makeText(UploadActivity.this, "Stack Created.  Uploading photos...", Toast.LENGTH_SHORT).show();
                 new UploadTask().execute(stackId);
             }
-
 
         }
     }
