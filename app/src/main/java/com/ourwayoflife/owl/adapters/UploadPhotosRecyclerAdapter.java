@@ -63,8 +63,8 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
     @Override
     public void onBindViewHolder(UploadPhotosRecyclerAdapter.ViewHolder holder, int position) {
 
-        if (position == getItemCount() - 2) {
-            // If it is the next to last item in the list, then it is the "Add" item
+        if (position == getItemCount() - 3) {
+            // If it is the next to next to last item in the list, then it is the "Add" item
             holder.mImageView.setImageResource(R.drawable.ic_add);
             final int padding = 25;
             holder.mImageView.setPadding(padding, padding, padding, padding);
@@ -93,22 +93,17 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
                 }
             });
 
-        } else if(position == getItemCount() - 1) {
-            // If it is the last item in the list, then it is the "Take Photo" item
+        } else if(position == getItemCount() - 2) {
+            // If it is the next to last item in the list, then it is the "Take Photo" item
             holder.mImageView.setImageResource(R.drawable.ic_camera);
-            final int padding = 35;
+            final int padding = 40;
             holder.mImageView.setPadding(padding, padding, padding, padding);
 
             holder.mImageView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    // Allow user to select photos/videos
+                    // Allow user to take a new photo
                     Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    /*
-                    if (takePictureIntent.resolveActivity(mContext.getPackageManager()) != null) {
-                        ((Activity) mContext).startActivityForResult(takePictureIntent, UploadActivity.REQUEST_IMAGE_CAPTURE);
-                    }
-                    */
 
                     // Ensure that there's a camera activity to handle the intent
                     if (takePictureIntent.resolveActivity(mContext.getPackageManager()) != null) {
@@ -127,7 +122,6 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
                             );
 
                             // Save a file: path for use with ACTION_VIEW intents
-                            //String path = photoFile.getAbsolutePath();
                             setCapturedPhotoPath(photoFile.getAbsolutePath());
 
                         } catch (IOException ex) {
@@ -156,6 +150,35 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
                 }
             });
 
+        } else if (position == getItemCount() - 1) {
+            // If it is the last item in the list, then it is the "Take Video" item
+            holder.mImageView.setImageResource(R.drawable.ic_videocam);
+            final int padding = 35;
+            holder.mImageView.setPadding(padding, padding, padding, padding);
+
+            holder.mImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // Allow user to take a new video
+                    Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+                    // Make sure we have an app installed to handle this intent.
+                    if (takeVideoIntent.resolveActivity(mContext.getPackageManager()) != null) {
+                        ((Activity) mContext).startActivityForResult(takeVideoIntent, UploadActivity.REQUEST_VIDEO_CAPTURE);
+                    } else {
+                        Toast.makeText(mContext, "Unable to capture video.", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
+            holder.mImageView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View view) {
+                    // On long click, make a toast explaining the action that a click does
+                    Toast.makeText(mContext, "Take a new Video", Toast.LENGTH_SHORT).show();
+                    return true; // return true so the event receiver and the event is not propagated to the other views in the tree
+                }
+            });
+
         } else {
             // Otherwise, it is a picture that they added.  Set the ImageView to the selected photo
             // TODO maybe scale it down before displaying it?
@@ -178,7 +201,7 @@ public class UploadPhotosRecyclerAdapter extends RecyclerView.Adapter<UploadPhot
     @Override
     public int getItemCount() {
         // Add 2 for the "Add" and "Take Picture" options
-        return mData.size() + 2;
+        return mData.size() + 3;
     }
 
 

@@ -21,6 +21,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.CursorLoader;
 import android.support.v4.content.FileProvider;
 import android.support.v4.content.PermissionChecker;
 import android.support.v7.app.AlertDialog;
@@ -369,15 +370,15 @@ public class UploadActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
-        super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
         switch (requestCode) {
             case REQUEST_SELECT_PHOTOS:
                 if (resultCode == RESULT_OK) {
-                    Uri selectedImage = imageReturnedIntent.getData();
+                    Uri selectedImage = intent.getData();
                     // String[] filePathColumn = { MediaStore.Images.Media.DATA };
 
-                    // If imageReturnedIntent.getData() returns something, then there was exactly 1 photo/video selected
+                    // If intent.getData() returns something, then there was exactly 1 photo/video selected
                     if (selectedImage != null) {
                         // One image/video was selected
 
@@ -491,11 +492,11 @@ public class UploadActivity extends AppCompatActivity
                         }
 
 
-                    } else if (imageReturnedIntent.getClipData().getItemCount() > 1) {
+                    } else if (intent.getClipData().getItemCount() > 1) {
                         // Multiple images selected
 
 
-                        ClipData clipData = imageReturnedIntent.getClipData();
+                        ClipData clipData = intent.getClipData();
 
                         for (int i = 0; i < clipData.getItemCount(); i++) {
                             Bitmap bitmap;
@@ -666,38 +667,6 @@ public class UploadActivity extends AppCompatActivity
                 if(resultCode == RESULT_OK) {
                     checkPermissionWriteExternalStorage(); // Make sure we can save the photo they took
 
-                    /*
-                    // Create an image file name
-                    // Get timestamp string
-                    String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-
-                    DateTime dt = new DateTime(DateTimeZone.UTC);
-                    DateTimeFormatter fmt = ISODateTimeFormat.basicDateTime();
-                    //final String dateString = fmt.print(dt);
-
-                    String imageFileName = "OWL_" + timeStamp;
-                    File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-                    File image;
-                    try {
-                        image = File.createTempFile(
-                                imageFileName,  // prefix
-                                ".jpg",         // suffix
-                                storageDir      // directory
-                        );
-                    } catch (IOException e) {
-                        Log.e(TAG, "Failed to create file from captured photo.");
-                        return;
-                    }
-                    */
-
-                    //String path = image.getPath();
-                    //Log.d(TAG, "PATH: " + path);
-
-                    /*
-                    Uri photoUri = FileProvider.getUriForFile(this,
-                            "com.ourwayoflife.owl.fileprovider",
-                            image);*/
-
                     // Get the path that the image was saved to
                     String path = mAdapterPhotos.getCapturedPhotoPath();  // getRealPathFromURI(this, photoUri);
 
@@ -723,7 +692,7 @@ public class UploadActivity extends AppCompatActivity
                     /*
                     // This gets a lower-quality thumbnail
                     // Get the bitmap of the image that was taken and add it to the dataset
-                    Bundle extras = imageReturnedIntent.getExtras();
+                    Bundle extras = intent.getExtras();
                     Bitmap origBitmap = (Bitmap) extras.get("data");
                     Bitmap croppedBitmap = generateCroppedBitmap(origBitmap);
                     mDatasetPhotos.add(new PhotoVideoHolder(true, origBitmap, null));
@@ -733,7 +702,54 @@ public class UploadActivity extends AppCompatActivity
                 break;
 
             case REQUEST_VIDEO_CAPTURE:
+                if(resultCode == RESULT_OK) {
+                    // Get the video
+                    Uri uri = intent.getData();
 
+                    // Check to make sure video is under time limit
+                    if (!isVideoUnderTimeLimit(this, uri)) {
+                        Toast.makeText(this, "Could not load video.  Max length is 20 seconds", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Get the path
+                    //String path = getRealVideoPathFromURI(this, uri);
+                    //String path = uri.getPath();
+
+
+                    String[] proj = { MediaStore.Images.Media.DATA };
+                    CursorLoader loader = new CursorLoader(this, uri, proj, null, null, null);
+                    Cursor cursor = loader.loadInBackground();
+                    int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                    cursor.moveToFirst();
+                    String path = cursor.getString(column_index);
+                    cursor.close();
+
+
+                    Log.d(TAG, "PATH: " + path);
+
+                    if (path == null || path.isEmpty()) {
+                        Log.e(TAG, "Error getting full video path.");
+                        Toast.makeText(this, "Error loading video.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Get a thumbnail of the video
+                    Bitmap thumb = ThumbnailUtils.createVideoThumbnail(path,
+                            MediaStore.Images.Thumbnails.MINI_KIND);
+
+                    // Add the bitmap thumbnail to the dataset
+                    if (thumb == null) {
+                        Log.e(TAG, "Error getting video thumbnail.");
+                        Toast.makeText(this, "Error loading video thumbnail.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // Load a new PhotoVideoHolder into the dataset with video type, the thumb and path of the video
+                    mDatasetPhotos.add(new PhotoVideoHolder(false, thumb, path));
+                    mAdapterPhotos.notifyItemInserted(mDatasetPhotos.size() - 1);
+
+                }
                 break;
         }
     }
